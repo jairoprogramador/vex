@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jairoprogramador/fastdeploy/internal/infrastructure/execution"
+	"github.com/jairoprogramador/vex/internal/infrastructure/execution"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

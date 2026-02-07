@@ -1,15 +1,15 @@
 package aggregates
 
 import (
-	"github.com/jairoprogramador/fastdeploy/internal/domain/project/vos"
+	"github.com/jairoprogramador/vex/internal/domain/project/vos"
 )
 
 type Project struct {
-	id                    vos.ProjectID
-	data                  vos.ProjectData
-	templateRepo          vos.TemplateRepository
-	projectLocalPath      string
-	isIDDirty             bool
+	id               vos.ProjectID
+	data             vos.ProjectData
+	templateRepo     vos.TemplateRepository
+	projectLocalPath string
+	isIDDirty        bool
 }
 
 func NewProject(
@@ -18,10 +18,10 @@ func NewProject(
 	templateRepo vos.TemplateRepository,
 	projectLocalPath string) *Project {
 	return &Project{
-		id:                    id,
-		data:                  data,
-		templateRepo:          templateRepo,
-		projectLocalPath:      projectLocalPath,
+		id:               id,
+		data:             data,
+		templateRepo:     templateRepo,
+		projectLocalPath: projectLocalPath,
 	}
 }
 

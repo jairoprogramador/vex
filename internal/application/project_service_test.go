@@ -5,9 +5,9 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/jairoprogramador/fastdeploy/internal/application"
-	"github.com/jairoprogramador/fastdeploy/internal/domain/project/ports"
-	"github.com/jairoprogramador/fastdeploy/internal/domain/project/vos"
+	"github.com/jairoprogramador/vex/internal/application"
+	"github.com/jairoprogramador/vex/internal/domain/project/ports"
+	"github.com/jairoprogramador/vex/internal/domain/project/vos"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -38,7 +38,7 @@ func (f *fakeProjectRepository) Save(ctx context.Context, path string, data *por
 func newValidMockDTO(modifiers ...func(*ports.ProjectConfigDTO)) *ports.ProjectConfigDTO {
 	// 1. Define los datos base y consistentes
 	projectName := "test-project"
-	projectOrganization := "fastdeploy"
+	projectOrganization := "vex"
 	projectTeam := "shikigami"
 	expectedID := vos.GenerateProjectID(projectName, projectOrganization, projectTeam)
 

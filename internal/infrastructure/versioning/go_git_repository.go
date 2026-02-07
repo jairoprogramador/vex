@@ -11,8 +11,8 @@ import (
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
-	"github.com/jairoprogramador/fastdeploy/internal/domain/versioning/ports"
-	"github.com/jairoprogramador/fastdeploy/internal/domain/versioning/vos"
+	"github.com/jairoprogramador/vex/internal/domain/versioning/ports"
+	"github.com/jairoprogramador/vex/internal/domain/versioning/vos"
 )
 
 // semverTagRegex es una expresión regular para validar y extraer versiones de tags.

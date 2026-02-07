@@ -3,9 +3,9 @@ package mapper
 import (
 	"errors"
 
-	"github.com/jairoprogramador/fastdeploy/internal/domain/logger/entities"
-	"github.com/jairoprogramador/fastdeploy/internal/domain/logger/vos"
-	"github.com/jairoprogramador/fastdeploy/internal/infrastructure/logger/dto"
+	"github.com/jairoprogramador/vex/internal/domain/logger/entities"
+	"github.com/jairoprogramador/vex/internal/domain/logger/vos"
+	"github.com/jairoprogramador/vex/internal/infrastructure/logger/dto"
 )
 
 func StepToDTO(step *entities.StepRecord) dto.StepDTO {
@@ -18,13 +18,13 @@ func StepToDTO(step *entities.StepRecord) dto.StepDTO {
 		errString = step.Error().Error()
 	}
 	return dto.StepDTO{
-		Name: step.Name(),
-		Status: step.Status().String(),
+		Name:      step.Name(),
+		Status:    step.Status().String(),
 		StartTime: step.StartTime(),
-		EndTime: step.EndTime(),
-		Reason: step.Reason(),
-		Tasks: tasks,
-		Err: errString,
+		EndTime:   step.EndTime(),
+		Reason:    step.Reason(),
+		Tasks:     tasks,
+		Err:       errString,
 	}
 }
 

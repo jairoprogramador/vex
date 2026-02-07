@@ -8,10 +8,10 @@ import (
 	"path/filepath"
 	"sort"
 
-	"github.com/jairoprogramador/fastdeploy/internal/domain/definition/aggregates"
-	"github.com/jairoprogramador/fastdeploy/internal/domain/definition/entities"
-	"github.com/jairoprogramador/fastdeploy/internal/domain/definition/ports"
-	"github.com/jairoprogramador/fastdeploy/internal/domain/definition/vos"
+	"github.com/jairoprogramador/vex/internal/domain/definition/aggregates"
+	"github.com/jairoprogramador/vex/internal/domain/definition/entities"
+	"github.com/jairoprogramador/vex/internal/domain/definition/ports"
+	"github.com/jairoprogramador/vex/internal/domain/definition/vos"
 )
 
 type PlanBuilder struct {

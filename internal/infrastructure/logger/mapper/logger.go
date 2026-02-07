@@ -1,10 +1,10 @@
 package mapper
 
 import (
-	"github.com/jairoprogramador/fastdeploy/internal/domain/logger/aggregates"
-	"github.com/jairoprogramador/fastdeploy/internal/infrastructure/logger/dto"
-	"github.com/jairoprogramador/fastdeploy/internal/domain/logger/entities"
-	"github.com/jairoprogramador/fastdeploy/internal/domain/logger/vos"
+	"github.com/jairoprogramador/vex/internal/domain/logger/aggregates"
+	"github.com/jairoprogramador/vex/internal/domain/logger/entities"
+	"github.com/jairoprogramador/vex/internal/domain/logger/vos"
+	"github.com/jairoprogramador/vex/internal/infrastructure/logger/dto"
 )
 
 func LoggerToDTO(logger *aggregates.Logger) dto.LoggerDTO {
@@ -13,12 +13,12 @@ func LoggerToDTO(logger *aggregates.Logger) dto.LoggerDTO {
 		steps = append(steps, StepToDTO(step))
 	}
 	return dto.LoggerDTO{
-		Status: logger.Status().String(),
+		Status:    logger.Status().String(),
 		StartTime: logger.StartTime(),
-		EndTime: logger.EndTime(),
-		Steps: steps,
-		Context: logger.Context(),
-		Revision: logger.Revision(),
+		EndTime:   logger.EndTime(),
+		Steps:     steps,
+		Context:   logger.Context(),
+		Revision:  logger.Revision(),
 	}
 }
 

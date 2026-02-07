@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/jairoprogramador/fastdeploy/internal/domain/execution/entities"
-	"github.com/jairoprogramador/fastdeploy/internal/domain/execution/ports"
-	"github.com/jairoprogramador/fastdeploy/internal/domain/execution/vos"
+	"github.com/jairoprogramador/vex/internal/domain/execution/entities"
+	"github.com/jairoprogramador/vex/internal/domain/execution/ports"
+	"github.com/jairoprogramador/vex/internal/domain/execution/vos"
 )
 
 type StepExecutor struct {

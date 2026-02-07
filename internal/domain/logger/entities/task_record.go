@@ -5,18 +5,18 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/jairoprogramador/fastdeploy/internal/domain/logger/vos"
+	"github.com/jairoprogramador/vex/internal/domain/logger/vos"
 )
 
 type TaskRecord struct {
-	id          uuid.UUID
-	name        string
-	status      vos.Status
-	command     string
-	startTime   time.Time
-	endTime     time.Time
-	output      []vos.OutputLine
-	err         error
+	id        uuid.UUID
+	name      string
+	status    vos.Status
+	command   string
+	startTime time.Time
+	endTime   time.Time
+	output    []vos.OutputLine
+	err       error
 }
 
 func NewTaskRecord(name string) (*TaskRecord, error) {
@@ -49,14 +49,14 @@ func HydrateTaskRecord(
 		return nil, fmt.Errorf("could not generate uuid for task record: %w", err)
 	}
 	return &TaskRecord{
-		id:     id,
-		name:   name,
-		status: status,
-		command: command,
+		id:        id,
+		name:      name,
+		status:    status,
+		command:   command,
 		startTime: startTime,
-		endTime: endTime,
-		output: output,
-		err: err,
+		endTime:   endTime,
+		output:    output,
+		err:       err,
 	}, nil
 }
 

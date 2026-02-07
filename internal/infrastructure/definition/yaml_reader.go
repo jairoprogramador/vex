@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/jairoprogramador/fastdeploy/internal/domain/definition/ports"
-	"github.com/jairoprogramador/fastdeploy/internal/domain/definition/vos"
-	"github.com/jairoprogramador/fastdeploy/internal/infrastructure/definition/dto"
+	"github.com/jairoprogramador/vex/internal/domain/definition/ports"
+	"github.com/jairoprogramador/vex/internal/domain/definition/vos"
+	"github.com/jairoprogramador/vex/internal/infrastructure/definition/dto"
 	"gopkg.in/yaml.v3"
 )
 

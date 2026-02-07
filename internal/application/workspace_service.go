@@ -1,8 +1,8 @@
 package application
 
 import (
-	"github.com/jairoprogramador/fastdeploy/internal/domain/workspace/aggregates"
-	"github.com/jairoprogramador/fastdeploy/internal/domain/workspace/vos"
+	"github.com/jairoprogramador/vex/internal/domain/workspace/aggregates"
+	"github.com/jairoprogramador/vex/internal/domain/workspace/vos"
 )
 
 // WorkspaceService es responsable de crear y gestionar el agregado Workspace.
@@ -14,8 +14,8 @@ func NewWorkspaceService() *WorkspaceService {
 }
 
 // Load crea una instancia del agregado Workspace a partir de los datos proporcionados.
-func (s *WorkspaceService) NewWorkspace(rootFastdeployPath, projectName, templateName string) (*aggregates.Workspace, error) {
-	wsRootPath, err := vos.NewRootPath(rootFastdeployPath)
+func (s *WorkspaceService) NewWorkspace(rootVexPath, projectName, templateName string) (*aggregates.Workspace, error) {
+	wsRootPath, err := vos.NewRootPath(rootVexPath)
 	if err != nil {
 		return nil, err
 	}

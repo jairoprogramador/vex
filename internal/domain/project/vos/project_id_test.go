@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/jairoprogramador/fastdeploy/internal/domain/project/vos"
+	"github.com/jairoprogramador/vex/internal/domain/project/vos"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -25,8 +25,8 @@ func TestNewProjectID(t *testing.T) {
 func TestGenerateProjectID(t *testing.T) {
 	t.Run("should generate a consistent ID for the same inputs", func(t *testing.T) {
 		// Arrange
-		name := "fastdeploy"
-		organization := "fastdeploy"
+		name := "vex"
+		organization := "vex"
 		team := "itachi"
 
 		// Act

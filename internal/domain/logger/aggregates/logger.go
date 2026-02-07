@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/jairoprogramador/fastdeploy/internal/domain/logger/entities"
-	"github.com/jairoprogramador/fastdeploy/internal/domain/logger/vos"
+	"github.com/jairoprogramador/vex/internal/domain/logger/entities"
+	"github.com/jairoprogramador/vex/internal/domain/logger/vos"
 )
 
 type Logger struct {
@@ -40,12 +40,12 @@ func HydrateLogger(
 	revision string) (*Logger, error) {
 
 	logger := &Logger{
-		status: status,
+		status:    status,
 		startTime: startTime,
-		endTime: endTime,
-		steps: steps,
-		context: context,
-		revision: revision,
+		endTime:   endTime,
+		steps:     steps,
+		context:   context,
+		revision:  revision,
 	}
 	logger.RebuildIndex()
 	return logger, nil

@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/jairoprogramador/fastdeploy/internal/domain/logger/vos"
+	"github.com/jairoprogramador/vex/internal/domain/logger/vos"
 )
 
 type StepRecord struct {
@@ -49,14 +49,14 @@ func HydrateStepRecord(
 		return nil, fmt.Errorf("could not generate uuid for step record: %w", err)
 	}
 	return &StepRecord{
-		id:     id,
-		name:   name,
-		status: status,
+		id:        id,
+		name:      name,
+		status:    status,
 		startTime: startTime,
-		endTime: endTime,
-		reason: reason,
-		tasks: tasks,
-		err: StepErr,
+		endTime:   endTime,
+		reason:    reason,
+		tasks:     tasks,
+		err:       StepErr,
 	}, nil
 }
 

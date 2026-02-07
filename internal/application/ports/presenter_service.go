@@ -1,8 +1,8 @@
 package ports
 
 import (
-	"github.com/jairoprogramador/fastdeploy/internal/domain/logger/aggregates"
-	"github.com/jairoprogramador/fastdeploy/internal/domain/logger/entities"
+	"github.com/jairoprogramador/vex/internal/domain/logger/aggregates"
+	"github.com/jairoprogramador/vex/internal/domain/logger/entities"
 )
 
 type PresenterService interface {

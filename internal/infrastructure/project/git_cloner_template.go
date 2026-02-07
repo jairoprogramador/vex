@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"runtime"
 
-	"github.com/jairoprogramador/fastdeploy/internal/domain/project/ports"
+	"github.com/jairoprogramador/vex/internal/domain/project/ports"
 )
 
 type GitClonerTemplate struct {

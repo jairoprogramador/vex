@@ -3,7 +3,7 @@ package ports
 import (
 	"context"
 
-	"github.com/jairoprogramador/fastdeploy/internal/domain/versioning/vos"
+	"github.com/jairoprogramador/vex/internal/domain/versioning/vos"
 )
 
 // GitRepository define la interfaz para interactuar con un repositorio Git.

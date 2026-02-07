@@ -1,7 +1,7 @@
 package execution
 
 import (
-	"github.com/jairoprogramador/fastdeploy/internal/domain/execution/vos"
+	"github.com/jairoprogramador/vex/internal/domain/execution/vos"
 )
 
 // VarEntryDTO es el objeto de transferencia de datos para la entidad VarEntry.

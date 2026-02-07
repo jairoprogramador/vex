@@ -3,7 +3,7 @@ package aggregates
 import (
 	"path/filepath"
 
-	"github.com/jairoprogramador/fastdeploy/internal/domain/workspace/vos"
+	"github.com/jairoprogramador/vex/internal/domain/workspace/vos"
 )
 
 type Workspace struct {

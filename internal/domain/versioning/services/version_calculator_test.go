@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/jairoprogramador/fastdeploy/internal/domain/versioning/vos"
+	"github.com/jairoprogramador/vex/internal/domain/versioning/vos"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

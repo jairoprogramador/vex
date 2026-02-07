@@ -3,8 +3,8 @@ package ports
 import (
 	"context"
 
-	"github.com/jairoprogramador/fastdeploy/internal/domain/execution/entities"
-	"github.com/jairoprogramador/fastdeploy/internal/domain/execution/vos"
+	"github.com/jairoprogramador/vex/internal/domain/execution/entities"
+	"github.com/jairoprogramador/vex/internal/domain/execution/vos"
 )
 
 // StepExecutor define la interfaz para ejecutar un único paso de un plan de ejecución.

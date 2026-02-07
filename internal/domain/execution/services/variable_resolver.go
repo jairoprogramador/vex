@@ -1,12 +1,12 @@
 package services
 
 import (
-	"regexp"
 	"fmt"
+	"regexp"
 	"strings"
 
-	"github.com/jairoprogramador/fastdeploy/internal/domain/execution/ports"
-	"github.com/jairoprogramador/fastdeploy/internal/domain/execution/vos"
+	"github.com/jairoprogramador/vex/internal/domain/execution/ports"
+	"github.com/jairoprogramador/vex/internal/domain/execution/vos"
 )
 
 var variableInterpolationRegex = regexp.MustCompile(`\$\{var\.`)
@@ -30,7 +30,7 @@ func (vr *VariableResolver) Resolve(initialVars, varsToResolve vos.VariableSet) 
 		}
 	}
 
-	if len(unresolvedVars) == 0  {
+	if len(unresolvedVars) == 0 {
 		return varsToResolve, nil
 	}
 

@@ -3,8 +3,8 @@ package services_test
 import (
 	"testing"
 
-	"github.com/jairoprogramador/fastdeploy/internal/domain/execution/services"
-	"github.com/jairoprogramador/fastdeploy/internal/domain/execution/vos"
+	"github.com/jairoprogramador/vex/internal/domain/execution/services"
+	"github.com/jairoprogramador/vex/internal/domain/execution/vos"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -44,10 +44,10 @@ func TestInterpolator_Interpolate(t *testing.T) {
 			expectError:    false,
 		},
 		{
-			name:          "Variable Faltante",
-			input:         "Hola, ${var.nombre}. ¿Cómo estás?",
-			vars:          newVarsFromMap(map[string]string{"otro": "valor"}),
-			expectError:   true,
+			name:        "Variable Faltante",
+			input:       "Hola, ${var.nombre}. ¿Cómo estás?",
+			vars:        newVarsFromMap(map[string]string{"otro": "valor"}),
+			expectError: true,
 		},
 		{
 			name:           "Sin Variables en Input",
@@ -64,10 +64,10 @@ func TestInterpolator_Interpolate(t *testing.T) {
 			expectError:    false,
 		},
 		{
-			name:          "Error de Interpolacion Malformada",
-			input:         "Esto tiene una variable ${var.malformada}.",
-			vars:          vos.NewVariableSet(),
-			expectError:   true,
+			name:        "Error de Interpolacion Malformada",
+			input:       "Esto tiene una variable ${var.malformada}.",
+			vars:        vos.NewVariableSet(),
+			expectError: true,
 		},
 		{
 			name:           "Variable al Inicio y al Final",
@@ -77,10 +77,10 @@ func TestInterpolator_Interpolate(t *testing.T) {
 			expectError:    false,
 		},
 		{
-			name:          "Mapa de Variables Vacio",
-			input:         "El valor es ${var.valor}",
-			vars:          vos.NewVariableSet(),
-			expectError:   true,
+			name:        "Mapa de Variables Vacio",
+			input:       "El valor es ${var.valor}",
+			vars:        vos.NewVariableSet(),
+			expectError: true,
 		},
 	}
 

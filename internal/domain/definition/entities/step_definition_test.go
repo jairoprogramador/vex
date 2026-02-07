@@ -3,8 +3,8 @@ package entities_test
 import (
 	"testing"
 
-	"github.com/jairoprogramador/fastdeploy/internal/domain/definition/entities"
-	"github.com/jairoprogramador/fastdeploy/internal/domain/definition/vos"
+	"github.com/jairoprogramador/vex/internal/domain/definition/entities"
+	"github.com/jairoprogramador/vex/internal/domain/definition/vos"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

@@ -1,4 +1,4 @@
-module github.com/jairoprogramador/fastdeploy
+module github.com/jairoprogramador/vex
 
 go 1.23.0
 

@@ -1,9 +1,9 @@
 package mapper
 
 import (
-	"github.com/jairoprogramador/fastdeploy/internal/domain/logger/entities"
-	"github.com/jairoprogramador/fastdeploy/internal/domain/logger/vos"
-	"github.com/jairoprogramador/fastdeploy/internal/infrastructure/logger/dto"
+	"github.com/jairoprogramador/vex/internal/domain/logger/entities"
+	"github.com/jairoprogramador/vex/internal/domain/logger/vos"
+	"github.com/jairoprogramador/vex/internal/infrastructure/logger/dto"
 )
 
 func TaskToDTO(task *entities.TaskRecord) dto.TaskDTO {
@@ -12,13 +12,13 @@ func TaskToDTO(task *entities.TaskRecord) dto.TaskDTO {
 		outputs = append(outputs, OutputToDTO(&output))
 	}
 	return dto.TaskDTO{
-		Name: task.Name(),
-		Status: task.Status().String(),
-		Command: task.Command(),
+		Name:      task.Name(),
+		Status:    task.Status().String(),
+		Command:   task.Command(),
 		StartTime: task.StartTime(),
-		EndTime: task.EndTime(),
-		Output: outputs,
-		Err: task.Error(),
+		EndTime:   task.EndTime(),
+		Output:    outputs,
+		Err:       task.Error(),
 	}
 }
 

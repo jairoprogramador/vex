@@ -3,7 +3,7 @@ package vos_test
 import (
 	"testing"
 
-	"github.com/jairoprogramador/fastdeploy/internal/domain/project/vos"
+	"github.com/jairoprogramador/vex/internal/domain/project/vos"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -74,18 +74,18 @@ func TestTemplateRepository_DirName(t *testing.T) {
 	}{
 		{
 			name:        "https url with .git suffix",
-			repoURL:     "https://github.com/jairoprogramador/fastdeploy-templates.git",
-			expectedDir: "fastdeploy-templates",
+			repoURL:     "https://github.com/jairoprogramador/vex-templates.git",
+			expectedDir: "vex-templates",
 		},
 		{
 			name:        "https url without .git suffix",
-			repoURL:     "https://github.com/jairoprogramador/fastdeploy-templates",
-			expectedDir: "fastdeploy-templates",
+			repoURL:     "https://github.com/jairoprogramador/vex-templates",
+			expectedDir: "vex-templates",
 		},
 		{
 			name:        "ssh url",
-			repoURL:     "git@github.com:jairoprogramador/fastdeploy-templates.git",
-			expectedDir: "fastdeploy-templates",
+			repoURL:     "git@github.com:jairoprogramador/vex-templates.git",
+			expectedDir: "vex-templates",
 		},
 		{
 			name:        "url with nested path",

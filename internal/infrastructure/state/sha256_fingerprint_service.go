@@ -3,16 +3,16 @@ package state
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
-	"errors"
 
-	"github.com/jairoprogramador/fastdeploy/internal/domain/state/ports"
-	"github.com/jairoprogramador/fastdeploy/internal/domain/state/vos"
+	"github.com/jairoprogramador/vex/internal/domain/state/ports"
+	"github.com/jairoprogramador/vex/internal/domain/state/vos"
 	gitignore "github.com/sabhiram/go-gitignore"
 )
 

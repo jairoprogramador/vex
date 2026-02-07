@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/jairoprogramador/fastdeploy/internal/domain/definition/vos"
+	"github.com/jairoprogramador/vex/internal/domain/definition/vos"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -39,29 +39,29 @@ func TestNewStepNameDefinition(t *testing.T) {
 			expectError:   false,
 		},
 		{
-			name:          "should return error for format without hyphen",
-			input:         "01test",
-			expectError:   true,
+			name:        "should return error for format without hyphen",
+			input:       "01test",
+			expectError: true,
 		},
 		{
-			name:          "should return error for format without number",
-			input:         "test-deploy",
-			expectError:   true,
+			name:        "should return error for format without number",
+			input:       "test-deploy",
+			expectError: true,
 		},
 		{
-			name:          "should return error for format with non-numeric order",
-			input:         "aa-test",
-			expectError:   true,
+			name:        "should return error for format with non-numeric order",
+			input:       "aa-test",
+			expectError: true,
 		},
 		{
-			name:          "should return error for empty name after hyphen",
-			input:         "03-",
-			expectError:   true,
+			name:        "should return error for empty name after hyphen",
+			input:       "03-",
+			expectError: true,
 		},
 		{
-			name:          "should return error for empty input",
-			input:         "",
-			expectError:   true,
+			name:        "should return error for empty input",
+			input:       "",
+			expectError: true,
 		},
 	}
 

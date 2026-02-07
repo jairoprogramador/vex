@@ -3,10 +3,10 @@ package application
 import (
 	"fmt"
 
-	defEnt "github.com/jairoprogramador/fastdeploy/internal/domain/definition/entities"
-	defVos "github.com/jairoprogramador/fastdeploy/internal/domain/definition/vos"
-	execEnt "github.com/jairoprogramador/fastdeploy/internal/domain/execution/entities"
-	execVos "github.com/jairoprogramador/fastdeploy/internal/domain/execution/vos"
+	defEnt "github.com/jairoprogramador/vex/internal/domain/definition/entities"
+	defVos "github.com/jairoprogramador/vex/internal/domain/definition/vos"
+	execEnt "github.com/jairoprogramador/vex/internal/domain/execution/entities"
+	execVos "github.com/jairoprogramador/vex/internal/domain/execution/vos"
 )
 
 func mapToExecutionStep(defStep *defEnt.StepDefinition, workspaceStep, workspaceShared string) (*execEnt.Step, error) {

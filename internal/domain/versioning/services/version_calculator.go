@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jairoprogramador/fastdeploy/internal/domain/versioning/ports"
-	"github.com/jairoprogramador/fastdeploy/internal/domain/versioning/vos"
+	"github.com/jairoprogramador/vex/internal/domain/versioning/ports"
+	"github.com/jairoprogramador/vex/internal/domain/versioning/vos"
 )
 
 // Regexp para parsear tags SemVer como v1.2.3

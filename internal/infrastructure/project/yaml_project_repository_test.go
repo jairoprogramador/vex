@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/jairoprogramador/fastdeploy/internal/domain/project/ports"
-	"github.com/jairoprogramador/fastdeploy/internal/infrastructure/project"
+	"github.com/jairoprogramador/vex/internal/domain/project/ports"
+	"github.com/jairoprogramador/vex/internal/infrastructure/project"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

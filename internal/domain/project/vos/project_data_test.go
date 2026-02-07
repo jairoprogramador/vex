@@ -3,7 +3,7 @@ package vos_test
 import (
 	"testing"
 
-	"github.com/jairoprogramador/fastdeploy/internal/domain/project/vos"
+	"github.com/jairoprogramador/vex/internal/domain/project/vos"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

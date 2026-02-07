@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"regexp"
 
-	"github.com/jairoprogramador/fastdeploy/internal/domain/execution/ports"
-	"github.com/jairoprogramador/fastdeploy/internal/domain/execution/vos"
+	"github.com/jairoprogramador/vex/internal/domain/execution/ports"
+	"github.com/jairoprogramador/vex/internal/domain/execution/vos"
 )
 
 type CommandExecutor struct {
@@ -110,9 +110,9 @@ func (ce *CommandExecutor) Execute(
 	}
 
 	return &vos.ExecutionResult{
-		Status:        vos.Success,
-		Logs:          cmdResult.CombinedOutput(),
-		OutputVars:    outputVars,
+		Status:     vos.Success,
+		Logs:       cmdResult.CombinedOutput(),
+		OutputVars: outputVars,
 	}
 }
 

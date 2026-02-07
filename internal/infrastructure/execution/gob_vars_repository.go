@@ -8,8 +8,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/jairoprogramador/fastdeploy/internal/domain/execution/ports"
-	"github.com/jairoprogramador/fastdeploy/internal/domain/execution/vos"
+	"github.com/jairoprogramador/vex/internal/domain/execution/ports"
+	"github.com/jairoprogramador/vex/internal/domain/execution/vos"
 )
 
 // GobVarsRepository es una implementación de VarsRepository que usa gob para la persistencia.

@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 )
 
-const defaultRootDir = ".fastdeploy"
+const DefaultRootDir = ".vex"
 
 type RootPath struct {
 	path string
@@ -18,7 +18,7 @@ func NewRootPath(path string) (RootPath, error) {
 		if err != nil {
 			return RootPath{}, fmt.Errorf("could not get user home directory: %w", err)
 		}
-		path = filepath.Join(userHomeDir, defaultRootDir)
+		path = filepath.Join(userHomeDir, DefaultRootDir)
 	}
 	return RootPath{path: path}, nil
 }

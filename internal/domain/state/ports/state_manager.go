@@ -1,7 +1,7 @@
 package ports
 
 import (
-	"github.com/jairoprogramador/fastdeploy/internal/domain/state/vos"
+	"github.com/jairoprogramador/vex/internal/domain/state/vos"
 )
 
 // StateManager define la interfaz para gestionar el estado de los pasos.

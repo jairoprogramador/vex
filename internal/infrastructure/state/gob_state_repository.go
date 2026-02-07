@@ -8,8 +8,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/jairoprogramador/fastdeploy/internal/domain/state/aggregates"
-	"github.com/jairoprogramador/fastdeploy/internal/domain/state/ports"
+	"github.com/jairoprogramador/vex/internal/domain/state/aggregates"
+	"github.com/jairoprogramador/vex/internal/domain/state/ports"
 )
 
 type GobStateRepository struct{}

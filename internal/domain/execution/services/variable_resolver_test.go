@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/jairoprogramador/fastdeploy/internal/domain/execution/services"
-	"github.com/jairoprogramador/fastdeploy/internal/domain/execution/vos"
+	"github.com/jairoprogramador/vex/internal/domain/execution/services"
+	"github.com/jairoprogramador/vex/internal/domain/execution/vos"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -52,13 +52,13 @@ func TestVariableResolver_Resolve(t *testing.T) {
 		{
 			name: "deberia_resolver_variables_simples",
 			initialVars: vos.VariableSet{
-				"project_name": newVar("project_name", "fastdeploy"),
+				"project_name": newVar("project_name", "vex"),
 			},
 			varsToResolve: vos.VariableSet{
 				"welcome_message": newVar("welcome_message", "Hello, ${var.project_name}!"),
 			},
 			expectedVars: vos.VariableSet{
-				"welcome_message": newVar("welcome_message", "Hello, fastdeploy!"),
+				"welcome_message": newVar("welcome_message", "Hello, vex!"),
 			},
 			expectError: false,
 		},

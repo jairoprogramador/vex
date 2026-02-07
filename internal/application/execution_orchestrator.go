@@ -3,41 +3,41 @@ package application
 import (
 	"context"
 	"fmt"
-	defAgg "github.com/jairoprogramador/fastdeploy/internal/domain/definition/aggregates"
-	defPrt "github.com/jairoprogramador/fastdeploy/internal/domain/definition/ports"
-	defVos "github.com/jairoprogramador/fastdeploy/internal/domain/definition/vos"
-	exePrt "github.com/jairoprogramador/fastdeploy/internal/domain/execution/ports"
-	exeVos "github.com/jairoprogramador/fastdeploy/internal/domain/execution/vos"
-	proAgg "github.com/jairoprogramador/fastdeploy/internal/domain/project/aggregates"
-	proPrt "github.com/jairoprogramador/fastdeploy/internal/domain/project/ports"
-	staPrt "github.com/jairoprogramador/fastdeploy/internal/domain/state/ports"
-	staVos "github.com/jairoprogramador/fastdeploy/internal/domain/state/vos"
-	verPrt "github.com/jairoprogramador/fastdeploy/internal/domain/versioning/ports"
-	worAgg "github.com/jairoprogramador/fastdeploy/internal/domain/workspace/aggregates"
+	defAgg "github.com/jairoprogramador/vex/internal/domain/definition/aggregates"
+	defPrt "github.com/jairoprogramador/vex/internal/domain/definition/ports"
+	defVos "github.com/jairoprogramador/vex/internal/domain/definition/vos"
+	exePrt "github.com/jairoprogramador/vex/internal/domain/execution/ports"
+	exeVos "github.com/jairoprogramador/vex/internal/domain/execution/vos"
+	proAgg "github.com/jairoprogramador/vex/internal/domain/project/aggregates"
+	proPrt "github.com/jairoprogramador/vex/internal/domain/project/ports"
+	staPrt "github.com/jairoprogramador/vex/internal/domain/state/ports"
+	staVos "github.com/jairoprogramador/vex/internal/domain/state/vos"
+	verPrt "github.com/jairoprogramador/vex/internal/domain/versioning/ports"
+	worAgg "github.com/jairoprogramador/vex/internal/domain/workspace/aggregates"
 )
 
 // ExecutionOrchestrator orquesta la ejecución de un plan completo,
 // coordinando los contextos de definición, estado y ejecución.
 type ExecutionOrchestrator struct {
-	projectPath        string
-	rootFastdeployPath string
-	projectSvc         *ProjectService
-	workspaceSvc       *WorkspaceService
-	gitCloner          proPrt.ClonerTemplate
-	versionCalculator  verPrt.VersionCalculator
-	planBuilder        defPrt.PlanBuilder
-	fingerprintSvc     staPrt.FingerprintService
-	stateManager       staPrt.StateManager
-	stepExecutor       exePrt.StepExecutor
-	copyWorkdir        exePrt.CopyWorkdir
-	varsRepository     exePrt.VarsRepository
-	gitRepository      verPrt.GitRepository
+	projectPath       string
+	rootVexPath       string
+	projectSvc        *ProjectService
+	workspaceSvc      *WorkspaceService
+	gitCloner         proPrt.ClonerTemplate
+	versionCalculator verPrt.VersionCalculator
+	planBuilder       defPrt.PlanBuilder
+	fingerprintSvc    staPrt.FingerprintService
+	stateManager      staPrt.StateManager
+	stepExecutor      exePrt.StepExecutor
+	copyWorkdir       exePrt.CopyWorkdir
+	varsRepository    exePrt.VarsRepository
+	gitRepository     verPrt.GitRepository
 }
 
 // NewExecutionOrchestrator crea una nueva instancia del orquestador.
 func NewExecutionOrchestrator(
 	projectPath string,
-	rootFastdeployPath string,
+	rootVexPath string,
 	projectSvc *ProjectService,
 	workspaceSvc *WorkspaceService,
 	gitCloner proPrt.ClonerTemplate,
@@ -51,19 +51,19 @@ func NewExecutionOrchestrator(
 	gitRepository verPrt.GitRepository,
 ) *ExecutionOrchestrator {
 	return &ExecutionOrchestrator{
-		projectPath:        projectPath,
-		rootFastdeployPath: rootFastdeployPath,
-		projectSvc:         projectSvc,
-		workspaceSvc:       workspaceSvc,
-		gitCloner:          gitCloner,
-		versionCalculator:  versionCalculator,
-		planBuilder:        planBuilder,
-		fingerprintSvc:     fingerprintSvc,
-		stateManager:       stateManager,
-		stepExecutor:       stepExecutor,
-		copyWorkdir:        copyWorkdir,
-		varsRepository:     varsRepository,
-		gitRepository:      gitRepository,
+		projectPath:       projectPath,
+		rootVexPath:       rootVexPath,
+		projectSvc:        projectSvc,
+		workspaceSvc:      workspaceSvc,
+		gitCloner:         gitCloner,
+		versionCalculator: versionCalculator,
+		planBuilder:       planBuilder,
+		fingerprintSvc:    fingerprintSvc,
+		stateManager:      stateManager,
+		stepExecutor:      stepExecutor,
+		copyWorkdir:       copyWorkdir,
+		varsRepository:    varsRepository,
+		gitRepository:     gitRepository,
 	}
 }
 
@@ -74,7 +74,7 @@ func (o *ExecutionOrchestrator) ExecutePlan(ctx context.Context, stepName, envNa
 	if err != nil {
 		return err
 	}
-	workspace, err := o.loadWorkspace(project, o.rootFastdeployPath)
+	workspace, err := o.loadWorkspace(project, o.rootVexPath)
 	if err != nil {
 		return err
 	}
@@ -227,10 +227,10 @@ func (o *ExecutionOrchestrator) loadProject(ctx context.Context, projectPath str
 	return project, nil
 }
 
-func (o *ExecutionOrchestrator) loadWorkspace(project *proAgg.Project, rootFastdeployPath string) (*worAgg.Workspace, error) {
+func (o *ExecutionOrchestrator) loadWorkspace(project *proAgg.Project, rootVexPath string) (*worAgg.Workspace, error) {
 	// 2. Crear el Workspace
 	workspace, err := o.workspaceSvc.NewWorkspace(
-		rootFastdeployPath, project.Data().Name(), project.TemplateRepo().DirName())
+		rootVexPath, project.Data().Name(), project.TemplateRepo().DirName())
 	if err != nil {
 		return nil, fmt.Errorf("error al cargar el workspace: %w", err)
 	}
@@ -262,22 +262,22 @@ func (o *ExecutionOrchestrator) buildPlan(
 
 func (o *ExecutionOrchestrator) prepareProjectVariables(project *proAgg.Project) exeVos.VariableSet {
 	vars := exeVos.NewVariableSetFromMap(map[string]string{
-		"project_id": project.ID().String()[:8],
-		"project_name": project.Data().Name(),
+		"project_id":           project.ID().String()[:8],
+		"project_name":         project.Data().Name(),
 		"project_organization": project.Data().Organization(),
-		"project_team": project.Data().Team(),
+		"project_team":         project.Data().Team(),
 	})
 	return vars
 }
 
 func (o *ExecutionOrchestrator) prepareOthersVariables(environment, projectWorkdir, version, commit string) exeVos.VariableSet {
 	vars := exeVos.NewVariableSetFromMap(map[string]string{
-		"project_version": version,
-		"project_revision": commit[:8],
+		"project_version":       version,
+		"project_revision":      commit[:8],
 		"project_revision_full": commit,
-		"environment": environment,
-		"project_workdir": projectWorkdir,
-		"tool_name": "fastdeploy",
+		"environment":           environment,
+		"project_workdir":       projectWorkdir,
+		"tool_name":             "vex",
 	})
 	return vars
 }

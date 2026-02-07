@@ -3,14 +3,14 @@ package application
 import (
 	"context"
 
-	appDto "github.com/jairoprogramador/fastdeploy/internal/application/dto"
-	appPor "github.com/jairoprogramador/fastdeploy/internal/application/ports"
+	appDto "github.com/jairoprogramador/vex/internal/application/dto"
+	appPor "github.com/jairoprogramador/vex/internal/application/ports"
 
-	proPor "github.com/jairoprogramador/fastdeploy/internal/domain/project/ports"
+	proPor "github.com/jairoprogramador/vex/internal/domain/project/ports"
 
-	"github.com/jairoprogramador/fastdeploy/internal/domain/logger/aggregates"
-	"github.com/jairoprogramador/fastdeploy/internal/domain/logger/entities"
-	"github.com/jairoprogramador/fastdeploy/internal/domain/logger/ports"
+	"github.com/jairoprogramador/vex/internal/domain/logger/aggregates"
+	"github.com/jairoprogramador/vex/internal/domain/logger/entities"
+	"github.com/jairoprogramador/vex/internal/domain/logger/ports"
 )
 
 type LoggerService struct {

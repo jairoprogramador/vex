@@ -3,9 +3,9 @@ package services
 import (
 	"fmt"
 
-	"github.com/jairoprogramador/fastdeploy/internal/domain/state/ports"
-	"github.com/jairoprogramador/fastdeploy/internal/domain/state/services/matchers"
-	"github.com/jairoprogramador/fastdeploy/internal/domain/state/vos"
+	"github.com/jairoprogramador/vex/internal/domain/state/ports"
+	"github.com/jairoprogramador/vex/internal/domain/state/services/matchers"
+	"github.com/jairoprogramador/vex/internal/domain/state/vos"
 )
 
 func NewStateMatcherFactory(tableName string, policy vos.CachePolicy) (ports.StateMatcher, error) {

@@ -2,7 +2,7 @@ package ports
 
 import (
 	"context"
-	"github.com/jairoprogramador/fastdeploy/internal/domain/versioning/vos"
+	"github.com/jairoprogramador/vex/internal/domain/versioning/vos"
 )
 
 // VersionCalculator define la interfaz para calcular la siguiente versión.

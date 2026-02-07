@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/jairoprogramador/fastdeploy/internal/domain/definition/vos"
+	"github.com/jairoprogramador/vex/internal/domain/definition/vos"
 )
 
 type StepDefinition struct {
