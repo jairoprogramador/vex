@@ -35,8 +35,12 @@ Instala `vex` en segundos.
 ### macOS (Homebrew)
 
 ```sh
-brew install jairoprogramador/vex/vex
+brew install --cask jairoprogramador/vex/vexc
 ```
+
+Si macOS indica que no puede verificar el desarrollador, puedes permitir la ejecución en  
+**Ajustes del sistema → Privacidad y seguridad → "Abrir de todos modos"**,  
+o en Terminal: `xattr -cr $(which vexc)`.
 
 ### Linux
 
