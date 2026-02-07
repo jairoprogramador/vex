@@ -13,12 +13,6 @@ import (
 	"github.com/jairoprogramador/vex/internal/infrastructure/factory"
 )
 
-var (
-	version = "dev"
-	commit  = "none"
-	date    = "unknown"
-)
-
 var rootCmd = &cobra.Command{
 	Use:   "vex [paso] [ambiente]",
 	Short: "Vex es una herramienta CLI para automatizar despliegues.",
@@ -56,7 +50,9 @@ var rootCmd = &cobra.Command{
 	},
 }
 
-func Execute() {
+func Execute(versionMain string) {
+	version := versionMain
+	rootCmd.Version = fmt.Sprintf("v%s\n", version)
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
@@ -64,7 +60,6 @@ func Execute() {
 }
 
 func init() {
-	rootCmd.Version = fmt.Sprintf("vex version: %s\n", version)
 	rootCmd.SetVersionTemplate(`{{.Version}}`)
 
 	rootCmd.PersistentFlags().String("color", "always", "control color output (auto, always, never)")
