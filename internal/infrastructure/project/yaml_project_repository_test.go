@@ -17,7 +17,7 @@ func TestYAMLProjectRepository_Load(t *testing.T) {
 		// Arrange
 		repo := project.NewYAMLProjectRepository()
 		tempDir := t.TempDir()
-		filePath := filepath.Join(tempDir, "fdconfig.yaml")
+		filePath := filepath.Join(tempDir, "vexconfig.yaml")
 
 		yamlContent := `
 project:
