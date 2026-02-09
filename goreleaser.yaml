@@ -63,7 +63,7 @@ homebrew_casks:
       email: jairo.jggc@gmail.com
     homepage: "https://github.com/jairoprogramador/vex"
     description: "CLI multiplataforma para despliegues automáticos y rápidos de aplicaciones"
-    binary: vexc
+    binaries: [vexc]
 
 changelog:
   use: git

@@ -24,7 +24,7 @@ func NewProjectService(
 
 func (s *ProjectService) Load(
 	ctx context.Context, projectLocalPath string) (*aggregates.Project, error) {
-	projectConfigPath := filepath.Join(projectLocalPath, "fdconfig.yaml")
+	projectConfigPath := filepath.Join(projectLocalPath, "vexconfig.yaml")
 
 	projectDTO, err := s.projectRepo.Load(ctx, projectConfigPath)
 	if err != nil {
@@ -47,7 +47,7 @@ func (s *ProjectService) Load(
 	project := aggregates.NewProject(projectID, projectData, templateRepo, projectLocalPath)
 
 	if project.SyncID() {
-		fmt.Println("El ID del proyecto ha cambiado. Actualizando fdconfig.yaml...")
+		fmt.Println("El ID del proyecto ha cambiado. Actualizando vexconfig.yaml...")
 		projectDTO.ID = project.ID().String()
 		if err := s.projectRepo.Save(ctx, projectConfigPath, projectDTO); err != nil {
 			return nil, fmt.Errorf("no se pudo guardar el ID del proyecto actualizado: %w", err)
