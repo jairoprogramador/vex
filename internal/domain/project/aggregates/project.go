@@ -64,6 +64,10 @@ func (p *Project) Runtime() vos.Runtime {
 	return p.runtime
 }
 
+func (p *Project) SetTemplate(template vos.Template) {
+	p.template = template
+}
+
 func HydrateProject(
 	id vos.ProjectID,
 	data vos.ProjectData,

@@ -20,6 +20,7 @@ func NewContainerBuilder() docPor.ContainerService {
 // CreateImageOptions encapsula la lógica de negocio para determinar cómo se debe construir una imagen.
 func (s *containerBuilder) CreateOptions(project *proAgg.Project, commandVex string, image docVos.ImageName) (docVos.RunOptions, error) {
 	volumes := make(map[string]string)
+
 	for _, volume := range project.Runtime().Volumes() {
 		volumes[volume.Host()] = volume.Container()
 	}
@@ -53,6 +54,8 @@ func (s *containerBuilder) BuildCommand(opts docVos.RunOptions) (string, error) 
 
 	commandBuilder.WriteString(fmt.Sprintf(" %s", opts.Image().FullName()))
 	commandBuilder.WriteString(fmt.Sprintf(" %s", strings.TrimSpace(opts.Command())))
+
+	//fmt.Println(commandBuilder.String())
 
 	return commandBuilder.String(), nil
 }

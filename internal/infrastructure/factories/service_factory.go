@@ -5,8 +5,10 @@ import (
 	"path/filepath"
 
 	app "github.com/jairoprogramador/vex-client/internal/application"
-	dockerDomain "github.com/jairoprogramador/vex-client/internal/domain/docker/services"
-	"github.com/jairoprogramador/vex-client/internal/domain/project/ports"
+	docSer "github.com/jairoprogramador/vex-client/internal/domain/docker/services"
+	proPor "github.com/jairoprogramador/vex-client/internal/domain/project/ports"
+	"github.com/jairoprogramador/vex-client/internal/infrastructure/architecture"
+	"github.com/jairoprogramador/vex-client/internal/infrastructure/common"
 	"github.com/jairoprogramador/vex-client/internal/infrastructure/docker"
 	"github.com/jairoprogramador/vex-client/internal/infrastructure/project"
 )
@@ -14,6 +16,7 @@ import (
 type ServiceFactory interface {
 	BuildExecutor() (*app.ExecutorService, error)
 	BuildInitialize() (*app.InitializeService, error)
+	BuildArchitecture() (*app.ArchitectureService, error)
 }
 
 type serviceFactory struct{}
@@ -32,11 +35,14 @@ func (f *serviceFactory) BuildInitialize() (*app.InitializeService, error) {
 		return nil, err
 	}
 
-	inputService := project.NewSurveyUserInputService()
+	inputService := common.NewSurveyUserInputService()
 	versionService := project.NewHttpVersion()
-
+	levelRepository := architecture.NewCacheLevelRepository()
+	questionRepository := architecture.NewCacheQuestionRepository()
+	templateRepository := architecture.NewCacheTemplateRepository()
 	return app.NewInitializeService(
-		filepath.Base(projectPath), projectRepository, inputService, versionService), nil
+		filepath.Base(projectPath), projectRepository, inputService,
+		versionService, levelRepository, questionRepository, templateRepository), nil
 }
 
 func (f *serviceFactory) BuildExecutor() (*app.ExecutorService, error) {
@@ -50,14 +56,33 @@ func (f *serviceFactory) BuildExecutor() (*app.ExecutorService, error) {
 	}
 
 	cmdExecutor := docker.NewShellExecutor()
-	imageService := dockerDomain.NewImageBuilder()
-	containerService := dockerDomain.NewContainerBuilder()
+	imageService := docSer.NewImageBuilder()
+	containerService := docSer.NewContainerBuilder()
 
 	return app.NewExecutorService(
 		projectRepository, cmdExecutor, imageService, containerService), nil
 }
 
-func (f *serviceFactory) getProjectRepository(projectPath string) (ports.ProjectRepository, error) {
+func (f *serviceFactory) BuildArchitecture() (*app.ArchitectureService, error) {
+	projectPath, err := f.getProjectPath()
+	if err != nil {
+		return nil, err
+	}
+	projectRepository, err := f.getProjectRepository(projectPath)
+	if err != nil {
+		return nil, err
+	}
+
+	questionRepository := architecture.NewCacheQuestionRepository()
+	levelRepository := architecture.NewCacheLevelRepository()
+	templateRepository := architecture.NewCacheTemplateRepository()
+	inputService := common.NewSurveyUserInputService()
+	return app.NewArchitectureService(
+		questionRepository, levelRepository,
+		templateRepository, projectRepository, inputService), nil
+}
+
+func (f *serviceFactory) getProjectRepository(projectPath string) (proPor.ProjectRepository, error) {
 	projectRepository := project.NewYAMLProjectRepository(projectPath)
 	return projectRepository, nil
 }
