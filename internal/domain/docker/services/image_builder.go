@@ -53,5 +53,7 @@ func (s *imageBuilder) BuildCommand(opts docVos.BuildOptions) (string, error) {
 
 	commandBuilder.WriteString(fmt.Sprintf(" %s", "."))
 
+	//fmt.Println(commandBuilder.String())
+
 	return commandBuilder.String(), nil
 }

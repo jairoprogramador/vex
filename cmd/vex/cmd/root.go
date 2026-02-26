@@ -16,8 +16,8 @@ var (
 
 var rootCmd = &cobra.Command{
 	Use:   "vex",
-	Short: "vex is a CLI tool for managing and deploying projects",
-	Long:  `vex is a powerful and flexible CLI tool designed to streamline your development and deployment workflows.`,
+	Short: "vex is an opinionated CLI for designing production-ready cloud architectures",
+	Long:  `Vex is a smart CLI that designs cloud architecture for you. Answer a few key questions about your workload, and Vex generates a production-ready infrastructure blueprint aligned with modern best practices.`,
 	Args: func(cmd *cobra.Command, args []string) error {
 		if len(args) == 0 {
 			if cmd.HasSubCommands() && cmd.CalledAs() == "vex" {
@@ -31,8 +31,6 @@ var rootCmd = &cobra.Command{
 		return nil
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		cmd.SilenceUsage = true
-
 		if len(args) == 0 {
 			return cmd.Help()
 		}
@@ -69,5 +67,7 @@ func init() {
 	rootCmd.SetVersionTemplate(`{{.Version}}`)
 
 	rootCmd.AddCommand(initCmd)
+	rootCmd.AddCommand(architectureCmd)
 	rootCmd.AddCommand(versionCmd)
+	rootCmd.SilenceUsage = true
 }
