@@ -39,7 +39,8 @@ func (f *serviceFactory) BuildInitialize() (*app.InitializeService, error) {
 	versionService := project.NewHttpVersion()
 	levelRepository := architecture.NewCacheLevelRepository()
 	questionRepository := architecture.NewCacheQuestionRepository()
-	templateRepository := architecture.NewCacheTemplateRepository()
+	templateRepository := architecture.NewCacheTemplateRepository(
+		f.templateCachePath(), f.templateRemoteURL())
 	return app.NewInitializeService(
 		filepath.Base(projectPath), projectRepository, inputService,
 		versionService, levelRepository, questionRepository, templateRepository), nil
@@ -75,7 +76,8 @@ func (f *serviceFactory) BuildArchitecture() (*app.ArchitectureService, error) {
 
 	questionRepository := architecture.NewCacheQuestionRepository()
 	levelRepository := architecture.NewCacheLevelRepository()
-	templateRepository := architecture.NewCacheTemplateRepository()
+	templateRepository := architecture.NewCacheTemplateRepository(
+		f.templateCachePath(), f.templateRemoteURL())
 	inputService := common.NewSurveyUserInputService()
 	return app.NewArchitectureService(
 		questionRepository, levelRepository,
@@ -89,4 +91,16 @@ func (f *serviceFactory) getProjectRepository(projectPath string) (proPor.Projec
 
 func (f *serviceFactory) getProjectPath() (string, error) {
 	return os.Getwd()
+}
+
+func (f *serviceFactory) templateCachePath() string {
+	home, _ := os.UserHomeDir()
+	return filepath.Join(home, ".vex", "templates.json")
+}
+
+func (f *serviceFactory) templateRemoteURL() string {
+	if url := os.Getenv("VEX_STORE_TEMPLATE"); url != "" {
+		return url
+	}
+	return "https://raw.githubusercontent.com/jairoprogramador/vex-template-store/main/templates.json"
 }

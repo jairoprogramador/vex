@@ -5,7 +5,7 @@ project:
     description: mi despliegue con vex
     organization: vex
 template:
-    url: https://github.com/jairoprogramador/mydeploy.git
+    url: https://github.com/jairoprogramador/mydeploy
     ref: main
 runtime:
     image: Dockerfile

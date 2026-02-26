@@ -19,7 +19,10 @@ func (s *surveyUserInputService) Ask(question, defaultValue string) (string, err
 		Message: question,
 		Default: defaultValue,
 	}
-	err := survey.AskOne(prompt, &response, survey.WithStdio(os.Stdin, os.Stderr, os.Stderr))
+
+	err := survey.AskOne(prompt, &response,
+		survey.WithStdio(os.Stdin, os.Stderr, os.Stderr),
+		customIcons())
 	if err != nil {
 		return "", err
 	}
