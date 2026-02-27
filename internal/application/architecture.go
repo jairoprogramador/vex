@@ -5,7 +5,10 @@ import (
 
 	"github.com/jairoprogramador/vex-client/internal/domain/architecture/ports"
 	arqSer "github.com/jairoprogramador/vex-client/internal/domain/architecture/services"
+	arqVos "github.com/jairoprogramador/vex-client/internal/domain/architecture/vos"
+
 	comPor "github.com/jairoprogramador/vex-client/internal/domain/common/ports"
+
 	proPor "github.com/jairoprogramador/vex-client/internal/domain/project/ports"
 	proVos "github.com/jairoprogramador/vex-client/internal/domain/project/vos"
 )
@@ -85,16 +88,26 @@ func (s *ArchitectureService) Run() error {
 		return err
 	}
 
-	template, err := s.templateRepository.GetTemplates(level, responses)
-	if err != nil {
-		return err
-	}
+	query := arqVos.NewQueryTemplate(
+		arqVos.WithStack(proVos.DefaultStack),
+		arqVos.WithPlatform(proVos.DefaultPlatform),
+		arqVos.WithLevel(level.Value()),
+		arqVos.WithCost(responses[len(responses)-1]),
+	)
 
-	templateObj, err := proVos.NewTemplate(template, project.Template().Ref())
+	executionUnit, err := s.templateRepository.GetExecutionUnit(query)
 	if err != nil {
 		return err
 	}
-	project.SetTemplate(templateObj)
+	runtime := proVos.NewRuntime(
+		proVos.WithImage(executionUnit.Image()),
+		proVos.WithVolumes(project.Runtime().Volumes()),
+		proVos.WithEnv(project.Runtime().Env()),
+		proVos.WithArgs(project.Runtime().Args()),
+	)
+
+	project.SetTemplate(executionUnit.Template())
+	project.SetRuntime(runtime)
 
 	err = s.projectRepository.Save(project)
 	if err != nil {

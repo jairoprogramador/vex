@@ -1,6 +1,9 @@
 package vos
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+)
 
 const (
 	DefaultContainerImage = "Dockerfile"
@@ -24,3 +27,5 @@ func NewImage(image, tag string) (Image, error) {
 
 func (c Image) Image() string { return c.image }
 func (c Image) Tag() string   { return c.tag }
+
+func (c Image) String() string { return fmt.Sprintf("%s:%s", c.image, c.tag) }

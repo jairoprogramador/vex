@@ -6,6 +6,8 @@ const (
 	DefaultProjectTeam         = "shikigami"
 	DefaultProjectDescription  = "mi despliegue con vex"
 	DefaultProjectOrganization = "vex"
+	DefaultStack               = "springboot"
+	DefaultPlatform            = "azure"
 )
 
 type ProjectData struct {

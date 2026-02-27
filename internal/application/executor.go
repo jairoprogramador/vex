@@ -5,10 +5,10 @@ import (
 	"errors"
 	"fmt"
 
+	comVos "github.com/jairoprogramador/vex-client/internal/domain/common/vos"
 	docPor "github.com/jairoprogramador/vex-client/internal/domain/docker/ports"
 	docVos "github.com/jairoprogramador/vex-client/internal/domain/docker/vos"
 	proPor "github.com/jairoprogramador/vex-client/internal/domain/project/ports"
-	proVos "github.com/jairoprogramador/vex-client/internal/domain/project/vos"
 )
 
 const MessageProjectNotInitialized = "project not initialized. Please run 'vex init' first"
@@ -56,7 +56,7 @@ func (s *ExecutorService) Run(ctx context.Context, command, environment string) 
 
 	imageInfo := project.Runtime().Image()
 
-	if imageInfo.Image() == proVos.DefaultContainerImage {
+	if imageInfo.Image() == comVos.DefaultContainerImage {
 		imageOptions, err := s.imageService.CreateOptions(project)
 		if err != nil {
 			return err

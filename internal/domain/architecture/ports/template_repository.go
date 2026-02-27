@@ -5,5 +5,5 @@ import (
 )
 
 type TemplateRepository interface {
-	GetTemplates(level vos.Level, response []int) (string, error)
+	GetExecutionUnit(query vos.QueryTemplate) (vos.ExecutionUnit, error)
 }
