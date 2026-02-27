@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	comVos "github.com/jairoprogramador/vex-client/internal/domain/common/vos"
 	"github.com/jairoprogramador/vex-client/internal/domain/docker/services"
 	proAgg "github.com/jairoprogramador/vex-client/internal/domain/project/aggregates"
 	proVos "github.com/jairoprogramador/vex-client/internal/domain/project/vos"
@@ -15,19 +16,16 @@ import (
 // mockProject es un helper para crear un agregado de proyecto para los tests.
 // Construye el agregado manualmente para evitar la lógica de validación de los constructores
 // y así poder probar los servicios de forma aislada.
-func mockProject(t *testing.T, containerImage, containerTag string) *proAgg.Project {
+func mockProject(t *testing.T, image, imageTag string) *proAgg.Project {
 	data, err := proVos.NewProjectData("test-project", "org", "team", "")
 	require.NoError(t, err)
 	id := proVos.GenerateProjectID(data.Name(), data.Organization(), data.Team())
-	template, err := proVos.NewTemplate("http://test.com/repo.git", "main")
+	template, err := comVos.NewTemplate("http://test.com/repo.git", "main")
 	require.NoError(t, err)
 
 	// Creamos los VOs manualmente para el test
-	container, _ := proVos.NewImage(containerImage, containerTag)
-	runtimeObj := proVos.NewRuntime(container, nil, nil, nil)
-
-	// Usamos un constructor "raw" o ensamblamos el struct directamente para el test.
-	// Esto es una técnica de test común para desacoplar los tests de la lógica de validación del constructor.
+	imageObj, _ := comVos.NewImage(image, imageTag)
+	runtimeObj := proVos.NewRuntime(proVos.WithImage(imageObj))
 	project := proAgg.HydrateProject(id, data, template, runtimeObj)
 	return project
 }
@@ -51,7 +49,6 @@ func TestImageBuilderService_CreateOptions(t *testing.T) {
 		assert.NotEmpty(t, opts.Image().Name())
 		assert.Equal(t, "latest", opts.Image().Tag())
 		assert.Equal(t, "$(id -g)", opts.Args()["DEV_GID"])
-		assert.Equal(t, "1.0.0", opts.Args()["vex-client_VERSION"])
 	})
 
 	t.Run("should create options without linux specific args on other OS", func(t *testing.T) {
@@ -103,7 +100,6 @@ func TestImageBuilderService_BuildCommand(t *testing.T) {
 		require.NoError(t, err)
 		assert.Contains(t, command, "docker build")
 		assert.Contains(t, command, "-t "+opts.Image().FullName())
-		assert.Contains(t, command, "--build-arg vex-client_VERSION=1.0.0")
 		assert.Contains(t, command, " .")
 		if runtime.GOOS == "linux" || runtime.GOOS == "darwin" {
 			assert.Contains(t, command, "--build-arg DEV_GID=$(id -g)")

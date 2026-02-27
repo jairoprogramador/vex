@@ -1,64 +1,70 @@
 package mapper
 
 import (
+	comVos "github.com/jairoprogramador/vex-client/internal/domain/common/vos"
 	"github.com/jairoprogramador/vex-client/internal/domain/project/aggregates"
-	"github.com/jairoprogramador/vex-client/internal/domain/project/vos"
+	proVos "github.com/jairoprogramador/vex-client/internal/domain/project/vos"
 	"github.com/jairoprogramador/vex-client/internal/infrastructure/project/dto"
 )
 
-func ToDomainProject(configDto dto.ProjectDTO) (vos.ProjectID, vos.ProjectData, error) {
-	id, err := vos.NewProjectID(configDto.ID)
+func ToDomainProject(configDto dto.ProjectDTO) (proVos.ProjectID, proVos.ProjectData, error) {
+	id, err := proVos.NewProjectID(configDto.ID)
 	if err != nil {
-		return vos.ProjectID{}, vos.ProjectData{}, err
+		return proVos.ProjectID{}, proVos.ProjectData{}, err
 	}
-	data, err := vos.NewProjectData(
+	data, err := proVos.NewProjectData(
 		configDto.Name,
 		configDto.Organization,
 		configDto.Team,
 		configDto.Description)
 
 	if err != nil {
-		return vos.ProjectID{}, vos.ProjectData{}, err
+		return proVos.ProjectID{}, proVos.ProjectData{}, err
 	}
 	return id, data, nil
 }
 
-func ToDomainRuntime(configDto dto.RuntimeDTO) (vos.Runtime, error) {
-	container, err := vos.NewImage(
+func ToDomainRuntime(configDto dto.RuntimeDTO) (proVos.Runtime, error) {
+	image, err := comVos.NewImage(
 		configDto.Image,
 		configDto.Tag)
 	if err != nil {
-		return vos.Runtime{}, err
+		return proVos.Runtime{}, err
 	}
 
-	volumes := make([]vos.Volume, 0, len(configDto.Run.Volumes))
+	volumes := make([]proVos.Volume, 0, len(configDto.Run.Volumes))
 	for _, dtoVol := range configDto.Run.Volumes {
-		volume, err := vos.NewVolume(dtoVol.Host, dtoVol.Container)
+		volume, err := proVos.NewVolume(dtoVol.Host, dtoVol.Container)
 		if err != nil {
-			return vos.Runtime{}, err
+			return proVos.Runtime{}, err
 		}
 		volumes = append(volumes, volume)
 	}
 
-	envVars := make([]vos.EnvVar, 0, len(configDto.Run.Env))
+	envVars := make([]proVos.EnvVar, 0, len(configDto.Run.Env))
 	for _, dtoEnv := range configDto.Run.Env {
-		envVar, err := vos.NewEnvVar(dtoEnv.Name, dtoEnv.Value)
+		envVar, err := proVos.NewEnvVar(dtoEnv.Name, dtoEnv.Value)
 		if err != nil {
-			return vos.Runtime{}, err
+			return proVos.Runtime{}, err
 		}
 		envVars = append(envVars, envVar)
 	}
 
-	args := make([]vos.Argument, 0, len(configDto.Build.Args))
+	args := make([]proVos.Argument, 0, len(configDto.Build.Args))
 	for _, dtoArg := range configDto.Build.Args {
-		arg, err := vos.NewArgument(dtoArg.Name, dtoArg.Value)
+		arg, err := proVos.NewArgument(dtoArg.Name, dtoArg.Value)
 		if err != nil {
-			return vos.Runtime{}, err
+			return proVos.Runtime{}, err
 		}
 		args = append(args, arg)
 	}
 
-	runtime := vos.NewRuntime(container, volumes, envVars, args)
+	runtime := proVos.NewRuntime(
+		proVos.WithImage(image),
+		proVos.WithVolumes(volumes),
+		proVos.WithEnv(envVars),
+		proVos.WithArgs(args),
+	)
 	return runtime, nil
 }
 
@@ -69,7 +75,7 @@ func ToDomain(configDto dto.FDConfigDTO) (*aggregates.Project, error) {
 		return nil, err
 	}
 
-	template, err := vos.NewTemplate(configDto.Template.URL, configDto.Template.Ref)
+	template, err := comVos.NewTemplate(configDto.Template.URL, configDto.Template.Ref)
 	if err != nil {
 		return nil, err
 	}
@@ -82,7 +88,7 @@ func ToDomain(configDto dto.FDConfigDTO) (*aggregates.Project, error) {
 	return aggregates.NewProject(id, data, template, runtime)
 }
 
-func ToRuntimeDto(runtime vos.Runtime) dto.RuntimeDTO {
+func ToRuntimeDto(runtime proVos.Runtime) dto.RuntimeDTO {
 	volumes := make([]dto.VolumeDTO, 0, len(runtime.Volumes()))
 	for _, volume := range runtime.Volumes() {
 		volumes = append(volumes, dto.VolumeDTO{

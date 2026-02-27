@@ -10,6 +10,8 @@ import (
 	arqVos "github.com/jairoprogramador/vex-client/internal/domain/architecture/vos"
 
 	comPor "github.com/jairoprogramador/vex-client/internal/domain/common/ports"
+	comVos "github.com/jairoprogramador/vex-client/internal/domain/common/vos"
+
 	proAgg "github.com/jairoprogramador/vex-client/internal/domain/project/aggregates"
 	proPor "github.com/jairoprogramador/vex-client/internal/domain/project/ports"
 	proVos "github.com/jairoprogramador/vex-client/internal/domain/project/vos"
@@ -63,20 +65,22 @@ func (s *InitializeService) Run(ctx context.Context, interactive bool) error {
 		return errors.New(MessageProjectAlreadyExists)
 	}
 
-	templateStrURL, err := s.getTemplate()
+	executionUnit, err := s.GetExecutionUnit()
 	if err != nil {
 		fmt.Println("Warning: Error getting template:", err)
-		templateStrURL = proVos.DefaultTemplateUrl
+		image, _ := comVos.NewImage(comVos.DefaultContainerImage, comVos.DefaultContainerTag)
+		template, _ := comVos.NewTemplate(comVos.DefaultTemplateUrl, comVos.DefaultTemplateRef)
+		executionUnit = arqVos.NewExecutionUnit(image, template)
 	}
 
 	var project *proAgg.Project
 	if interactive {
-		project, err = s.createProjectFromUserInput(templateStrURL)
+		project, err = s.createProjectFromUserInput(executionUnit)
 		if err != nil {
 			return err
 		}
 	} else {
-		project, err = s.createDefaultProject(templateStrURL)
+		project, err = s.createDefaultProject(executionUnit)
 		if err != nil {
 			return err
 		}
@@ -85,7 +89,7 @@ func (s *InitializeService) Run(ctx context.Context, interactive bool) error {
 	return s.projectRepository.Save(project)
 }
 
-func (s *InitializeService) createProjectFromUserInput(templateStrURL string) (*proAgg.Project, error) {
+func (s *InitializeService) createProjectFromUserInput(executionUnit arqVos.ExecutionUnit) (*proAgg.Project, error) {
 	name, err := s.inputService.Ask("Project Name", s.projectName)
 	if err != nil {
 		return nil, err
@@ -98,73 +102,36 @@ func (s *InitializeService) createProjectFromUserInput(templateStrURL string) (*
 	if err != nil {
 		return nil, err
 	}
-	templateURL, err := s.inputService.Ask("Template URL", templateStrURL)
-	if err != nil {
-		return nil, err
-	}
-	templateRef, err := s.inputService.Ask("Template Ref", proVos.DefaultTemplateRef)
-	if err != nil {
-		return nil, err
-	}
-	containerImage, err := s.inputService.Ask("Container Image", proVos.DefaultContainerImage)
-	if err != nil {
-		return nil, err
-	}
-	containerTag, err := s.inputService.Ask("Container Image Tag", proVos.DefaultContainerTag)
-	if err != nil {
-		return nil, err
-	}
 
 	projectData, err := proVos.NewProjectData(name, org, team, "")
 	if err != nil {
 		return nil, err
 	}
 
-	template, err := proVos.NewTemplate(templateURL, templateRef)
-	if err != nil {
-		return nil, err
-	}
-
-	container, err := proVos.NewImage(containerImage, containerTag)
-	if err != nil {
-		return nil, err
-	}
-
-	runtime := proVos.NewRuntime(container, []proVos.Volume{}, []proVos.EnvVar{}, []proVos.Argument{})
+	runtime := proVos.NewRuntime(proVos.WithImage(executionUnit.Image()))
 
 	projectID, err := s.getProjectID(projectData)
 	if err != nil {
 		return nil, err
 	}
 
-	return proAgg.NewProject(projectID, projectData, template, runtime)
+	return proAgg.NewProject(projectID, projectData, executionUnit.Template(), runtime)
 }
 
-func (s *InitializeService) createDefaultProject(templateStrURL string) (*proAgg.Project, error) {
+func (s *InitializeService) createDefaultProject(executionUnit arqVos.ExecutionUnit) (*proAgg.Project, error) {
 	projectData, err := proVos.NewProjectData(
 		s.projectName, proVos.DefaultProjectOrganization, proVos.DefaultProjectTeam, "")
 	if err != nil {
 		return nil, err
 	}
-
-	template, err := proVos.NewTemplate(templateStrURL, proVos.DefaultTemplateRef)
-	if err != nil {
-		return nil, err
-	}
-
-	container, err := proVos.NewImage(proVos.DefaultContainerImage, proVos.DefaultContainerTag)
-	if err != nil {
-		return nil, err
-	}
-
-	runtime := proVos.NewRuntime(container, []proVos.Volume{}, []proVos.EnvVar{}, []proVos.Argument{})
+	runtime := proVos.NewRuntime(proVos.WithImage(executionUnit.Image()))
 
 	projectID, err := s.getProjectID(projectData)
 	if err != nil {
 		return nil, err
 	}
 
-	return proAgg.NewProject(projectID, projectData, template, runtime)
+	return proAgg.NewProject(projectID, projectData, executionUnit.Template(), runtime)
 }
 
 func (s *InitializeService) getProjectID(data proVos.ProjectData) (proVos.ProjectID, error) {
@@ -202,27 +169,35 @@ func (s *InitializeService) getResponsesMin(questions []*arqAgg.Question) ([]int
 	return responses, nil
 }
 
-func (s *InitializeService) getTemplate() (string, error) {
+func (s *InitializeService) GetExecutionUnit() (arqVos.ExecutionUnit, error) {
 	questions, err := s.questionRepository.GetQuestions()
 	if err != nil {
-		return "", err
+		return arqVos.ExecutionUnit{}, err
 	}
 
 	levels, err := s.levelRepository.GetLevels()
 	if err != nil {
-		return "", err
+		return arqVos.ExecutionUnit{}, err
 	}
 	levelMin, err := s.getLevelMin(levels)
 	if err != nil {
-		return "", err
+		return arqVos.ExecutionUnit{}, err
 	}
 	responsesMin, err := s.getResponsesMin(questions)
 	if err != nil {
-		return "", err
+		return arqVos.ExecutionUnit{}, err
 	}
-	template, err := s.templateRepository.GetTemplates(levelMin, responsesMin)
+
+	query := arqVos.NewQueryTemplate(
+		arqVos.WithStack(proVos.DefaultStack),
+		arqVos.WithPlatform(proVos.DefaultPlatform),
+		arqVos.WithLevel(levelMin.Value()),
+		arqVos.WithCost(responsesMin[len(responsesMin)-1]),
+	)
+
+	executionUnit, err := s.templateRepository.GetExecutionUnit(query)
 	if err != nil {
-		return "", err
+		return arqVos.ExecutionUnit{}, err
 	}
-	return template, nil
+	return executionUnit, nil
 }

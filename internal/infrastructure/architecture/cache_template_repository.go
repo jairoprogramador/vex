@@ -8,19 +8,25 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/jairoprogramador/vex-client/internal/domain/architecture/ports"
 	"github.com/jairoprogramador/vex-client/internal/domain/architecture/vos"
+	comVos "github.com/jairoprogramador/vex-client/internal/domain/common/vos"
+	defVos "github.com/jairoprogramador/vex-client/internal/domain/common/vos"
 )
 
 const cacheTTL = 24 * time.Hour
 const httpTimeout = 5 * time.Second
 
 type templateEntry struct {
+	Stack    string `json:"stack"`
+	Platform string `json:"platform"`
 	Level    int    `json:"level"`
 	Cost     int    `json:"cost"`
 	Template string `json:"template"`
+	Runtime  string `json:"runtime"`
 }
 
 type CacheTemplateRepository struct {
@@ -37,20 +43,34 @@ func NewCacheTemplateRepository(cachePath, remoteURL string) ports.TemplateRepos
 	}
 }
 
-func (r *CacheTemplateRepository) GetTemplates(level vos.Level, response []int) (string, error) {
+func (r *CacheTemplateRepository) GetExecutionUnit(query vos.QueryTemplate) (vos.ExecutionUnit, error) {
 	data, err := r.resolve()
 	if err != nil {
-		return "", fmt.Errorf("failed to resolve templates: %w", err)
+		return vos.ExecutionUnit{}, fmt.Errorf("failed to resolve templates: %w", err)
 	}
 
 	entries, err := r.parse(data)
 	if err != nil {
 		_ = r.removeCache()
-		return "", fmt.Errorf("failed to parse templates: %w", err)
+		return vos.ExecutionUnit{}, fmt.Errorf("failed to parse templates: %w", err)
 	}
 
-	cost := response[len(response)-1]
-	return r.find(entries, level.Value(), cost)
+	return r.find(entries, query)
+}
+
+func (r *CacheTemplateRepository) GetRuntime(query vos.QueryTemplate) (vos.ExecutionUnit, error) {
+	data, err := r.resolve()
+	if err != nil {
+		return vos.ExecutionUnit{}, fmt.Errorf("failed to resolve templates: %w", err)
+	}
+
+	entries, err := r.parse(data)
+	if err != nil {
+		_ = r.removeCache()
+		return vos.ExecutionUnit{}, fmt.Errorf("failed to parse templates: %w", err)
+	}
+
+	return r.find(entries, query)
 }
 
 func (r *CacheTemplateRepository) resolve() ([]byte, error) {
@@ -123,11 +143,24 @@ func (r *CacheTemplateRepository) parse(data []byte) ([]templateEntry, error) {
 	return entries, nil
 }
 
-func (r *CacheTemplateRepository) find(entries []templateEntry, level, cost int) (string, error) {
-	for _, e := range entries {
-		if e.Level == level && e.Cost == cost {
-			return e.Template, nil
+func (r *CacheTemplateRepository) find(templates []templateEntry, query vos.QueryTemplate) (vos.ExecutionUnit, error) {
+	for _, template := range templates {
+		if template.Level == query.Level() &&
+			template.Cost == query.Cost() &&
+			template.Stack == query.Stack() &&
+			template.Platform == query.Platform() {
+			templateObj, err := comVos.NewTemplate(template.Template, defVos.DefaultTemplateRef)
+			if err != nil {
+				return vos.ExecutionUnit{}, err
+			}
+			imageName := strings.Split(template.Runtime, ":")[0]
+			imageTag := strings.Split(template.Runtime, ":")[1]
+			imageObj, err := comVos.NewImage(imageName, imageTag)
+			if err != nil {
+				return vos.ExecutionUnit{}, err
+			}
+			return vos.NewExecutionUnit(imageObj, templateObj), nil
 		}
 	}
-	return "", errors.New("template not found for the given level and cost")
+	return vos.ExecutionUnit{}, errors.New("template not found for the given level and cost")
 }
