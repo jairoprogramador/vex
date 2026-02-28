@@ -1,5 +1,9 @@
 <div align="center">
-  <h1>vex</h1>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/logo-dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="assets/logo-light.png">
+    <img alt="vex" src="assets/logo-dark.png" width="200">
+  </picture>
   <p><strong>De código a producción en dos comandos.</strong></p>
 
   <p>
