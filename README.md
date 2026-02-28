@@ -1,8 +1,11 @@
 <div align="center">
-  <h1>Vex Client</h1>
-  <p><strong>Tu asistente personal para desplegar aplicaciones sin complicaciones.</strong></p>
-  <p><i>Orquesta despliegues complejos con comandos sencillos.</i></p>
-  
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/logo-dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="assets/logo-light.png">
+    <img alt="vex" src="assets/logo-dark.png" width="200">
+  </picture>
+  <p><strong>De código a producción en dos comandos.</strong></p>
+
   <p>
     <a href="https://github.com/jairoprogramador/vex-client/releases">
       <img src="https://img.shields.io/github/v/release/jairoprogramador/vex-client?style=for-the-badge" alt="Latest Release">
@@ -15,92 +18,110 @@
 
 ---
 
-**`vex`** es una herramienta de línea de comandos (CLI) que actúa como un cliente inteligente para `vexc`. Su misión es simplificar al máximo el proceso de despliegue, permitiéndote inicializar y ejecutar el despliegue de tus proyectos en un entorno contenerizado con una configuración mínima y comandos intuitivos.
+**`vex`** es una CLI open source para equipos que quieren desplegar en producción sin necesitar un equipo de DevOps ni arquitectos de nube. Sin Terraform. Sin Dockerfiles. Sin configuraciones interminables. Solo dos comandos:
 
-Olvídate de la complejidad de Docker y los detalles de bajo nivel, `vex` es el puente que te conecta con un motor de despliegue potente, haciendo que el proceso sea simple y repetible.
+```sh
+vex init
+vex deploy prod
+```
 
-## ✨ Características Principales
+Eso es todo. `vex` selecciona automáticamente una arquitectura cloud probada, empaqueta tu aplicación y la despliega. Lo que normalmente toma días de configuración manual, con `vex` toma 5 minutos.
 
-*   **🚀 Inicialización Rápida**: Con `vex init`, la herramienta genera un archivo `vexconfig.yaml` adaptado a tus necesidades.
-*   **📄 Configuración Declarativa**: Define tu configuracion de despliegue en un único archivo `vexconfig.yaml`. Fácil de leer, modificar y versionar.
-*   **🐳 Abstracción de Docker**: `vex [step] [environment]` se encarga de construir la imagen de Docker y ejecutar comando en el contenedor que aloja a `vex`. No necesitas ser un experto.
-*   **🔌 Orquestación Transparente**: Actúa como un punto de entrada único para `vex`, pasándole tus instrucciones y gestionando el ciclo de vida del contenedor por ti.
+## ¿Para quién es?
 
-## 🚀 Instalación
+Para equipos pequeños de desarrollo que:
 
-Instala `vex` en segundos.
+- Necesitan llevar un microservicio a producción **rápido**.
+- No tienen un equipo de DevOps dedicado.
+- No quieren perder días configurando infraestructura cloud.
+- Prefieren enfocarse en escribir código.
 
-*(Nota: Las siguientes instrucciones son un ejemplo. Ajústalas según tu método de distribución final).*
+## ¿Cómo funciona?
+
+`vex` es la interfaz con la que interactúas. Por debajo, se apoya en [vex-core](https://github.com/jairoprogramador/vex) (el motor de ejecución) y [template store](https://github.com/jairoprogramador/vex-template-store) (plantillas de despliegue probadas para distintos escenarios). Tú solo necesitas conocer dos comandos.
+
+### Flujo en 3 pasos
+
+**1. Inicializa tu proyecto**
+
+Navega al directorio de tu proyecto y ejecuta:
+
+```sh
+vex init
+```
+
+Responde unas preguntas breves (nombre, equipo, organización) y `vex` genera un archivo `vexconfig.yaml` con la configuración lista para desplegar. Se asigna automáticamente una arquitectura cloud básica.
+
+**2. Ajusta la arquitectura (Opcional)**
+
+Si necesitas una arquitectura más robusta, ejecuta:
+
+```sh
+vex arq
+```
+
+`vex` te hace 3 preguntas sobre escalabilidad, recuperación y presupuesto, y selecciona la arquitectura cloud que mejor se adapta a tu caso.
+
+**3. Despliega**
+
+```sh
+vex deploy sand    # sandbox
+vex deploy stag    # staging
+vex deploy prod    # producción
+```
+
+Listo. Tu microservicio está en producción.
+
+## Instalación
 
 ### macOS (Homebrew)
+
 ```sh
 brew install --cask jairoprogramador/vex-client/vex
 ```
-Si macOS indica que no puede verificar el desarrollador, puedes permitir la ejecución en **Ajustes del sistema → Privacidad y seguridad → "Abrir de todos modos"**, o en Terminal: `xattr -cr $(which vex)`.
+
+> Si macOS indica que no puede verificar el desarrollador, permite la ejecución en **Ajustes del sistema > Privacidad y seguridad > Abrir de todos modos**, o ejecuta: `xattr -cr $(which vex)`.
 
 ### Linux
-Puedes descargar el paquete `.deb` o `.rpm` desde la [página de Releases](https://github.com/jairoprogramador/vex-client/releases) y usar tu gestor de paquetes.
+
+Descarga el paquete desde [Releases](https://github.com/jairoprogramador/vex-client/releases):
 
 ```sh
-# Para sistemas basados en Debian/Ubuntu
+# Debian / Ubuntu
 sudo dpkg -i vex-client_*.deb
 
-# Para sistemas basados en Red Hat/Fedora
+# Red Hat / Fedora
 sudo rpm -i vex-client_*.rpm
 ```
-Alternativamente, puedes descargar el binario directamente:
+
+O directamente el binario:
+
 ```sh
 curl -sL https://github.com/jairoprogramador/vex-client/releases/latest/download/vex-client_linux_amd64.tar.gz | tar xz
-
 sudo mv vex /usr/local/bin/
 ```
 
 ### Windows
-1.  Descarga el archivo `vex-client_*_windows_a*64.zip` desde la [página de Releases](https://github.com/jairoprogramador/vex-client/releases).
-2.  Descomprime el archivo.
-3.  Añade el ejecutable `vex.exe` a tu variable de entorno `PATH`.
 
-## 🏁 Guía de Inicio Rápido
+1. Descarga `vex-client_*_windows_amd64.zip` desde [Releases](https://github.com/jairoprogramador/vex-client/releases).
+2. Descomprime el archivo.
+3. Añade `vex.exe` a tu variable de entorno `PATH`.
 
-Este es el flujo de trabajo típico con `vex`.
-
-### Paso 1: Inicializa tu Proyecto
-
-Navega al directorio raíz de tu proyecto y ejecuta:
-```sh
-vex init
-```
-La herramienta te guiará con unas sencillas preguntas para generar el archivo `vexconfig.yaml`, que conecta tu proyecto con la plantilla de despliegue de `vex`.
-
-### Paso 2: Ejecuta los Pasos de Despliegue
-
-Una vez configurado, usa el comando `vex` para enviar instrucciones directamente a `vex`. Los `steps` como `test`, `supply`, `package`  o `deploy` son gestionados por el motor de `vex`, no por esta CLI.
-
-Por ejemplo, para ejecutar las pruebas en el entorno de `sand`:
-```sh
-vex test sand
-```
-Para desplegar en el mismo entorno:
-```sh
-vex deploy sand
-```
-`vex` se encargará de iniciar el contenedor con el core de `vex` y le pasará estos comandos para que los ejecute.
-
-## 📚 Comandos Básicos
+## Referencia de comandos
 
 | Comando | Descripción |
 | :--- | :--- |
-| `vex init` | Inicializa un proyecto creando el archivo de configuración `vexconfig.yaml`. |
-| `vex [step] [env]` | Ejecuta un comando en `vex`. Los `steps` (`test`, `supply`, `deploy`, etc.) dependen de la plantilla utilizada. |
-| `vex version` | Muestra la versión de la CLI. |
+| `vex init` | Inicializa el proyecto y genera `vexconfig.yaml`. |
+| `vex arq` | Ajusta la arquitectura cloud según tus necesidades (opcional). |
+| `vex deploy [env]` | Despliega en el entorno indicado (`sand`, `stag`, `prod`). |
+| `vex version` | Muestra la versión instalada. |
 
-**Flags comunes:**
-*   `--yes` o `-y`: Salta las confirmaciones interactivas para `vex init`.
+> `vex init` acepta el flag `--yes` / `-y` para usar valores por defecto sin preguntas interactivas.
 
-## 🤝 Contribuciones
+## Contribuciones
 
-¡Las contribuciones son bienvenidas! Si tienes ideas, sugerencias o encuentras un error, por favor abre un [issue](https://github.com/jairoprogramador/vex-client/issues) o envía un [pull request](https://github.com/jairoprogramador/vex-client/pulls).
+Las contribuciones son bienvenidas. Si tienes ideas, encuentras un error o quieres mejorar algo, abre un [issue](https://github.com/jairoprogramador/vex-client/issues) o enviá un [pull request](https://github.com/jairoprogramador/vex-client/pulls).
 
-## 📄 Licencia
+## Licencia
 
 `vex` está distribuido bajo la [Apache License 2.0](https://github.com/jairoprogramador/vex-client/blob/main/LICENSE).
