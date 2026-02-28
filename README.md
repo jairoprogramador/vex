@@ -72,6 +72,11 @@ vex deploy prod    # producción
 
 Listo. Tu microservicio está en producción.
 
+## Requisitos previos
+
+- Instalar [Git](https://git-scm.com/downloads)
+- Instalar [Docker](https://docs.docker.com/get-docker/)
+
 ## Instalación
 
 ### macOS (Homebrew)
@@ -81,6 +86,12 @@ brew install --cask jairoprogramador/vex-client/vex
 ```
 
 > Si macOS indica que no puede verificar el desarrollador, permite la ejecución en **Ajustes del sistema > Privacidad y seguridad > Abrir de todos modos**, o ejecuta: `xattr -cr $(which vex)`.
+
+Verifica la instalación abriendo una nueva terminal:
+
+```sh
+vex version
+```
 
 ### Linux
 
@@ -101,11 +112,32 @@ curl -sL https://github.com/jairoprogramador/vex-client/releases/latest/download
 sudo mv vex /usr/local/bin/
 ```
 
+Verifica la instalación abriendo una nueva terminal:
+
+```sh
+vex version
+```
+
 ### Windows
 
-1. Descarga `vex-client_*_windows_amd64.zip` desde [Releases](https://github.com/jairoprogramador/vex-client/releases).
+1. Descarga el archivo `.zip` correspondiente desde [Releases](https://github.com/jairoprogramador/vex-client/releases):
+   - `vex-client_*_windows_amd64.zip` — Para PCs con procesador Intel o AMD de 64 bits.
+   - `vex-client_*_windows_arm64.zip` — Para dispositivos con arquitectura ARM (ej: Surface Pro X, Copilot+ PCs).
 2. Descomprime el archivo.
-3. Añade `vex.exe` a tu variable de entorno `PATH`.
+3. Copia `vex.exe` a una carpeta nueva llamada `vex` dentro de `Program Files` o `Program Files (x86)`:
+   ```
+   C:\Program Files\vex\vex.exe
+   ```
+4. Añade esa carpeta a tu variable de entorno `PATH`:
+   - Abre **Configuración > Sistema > Acerca de > Configuración avanzada del sistema > Variables de entorno**.
+   - En **Variables del sistema**, selecciona `Path` y haz clic en **Editar**.
+   - Agrega `C:\Program Files\vex`.
+
+Verifica la instalación abriendo una nueva ventana de PowerShell:
+
+```sh
+vex version
+```
 
 ## Referencia de comandos
 
@@ -114,7 +146,6 @@ sudo mv vex /usr/local/bin/
 | `vex init` | Inicializa el proyecto y genera `vexconfig.yaml`. |
 | `vex arq` | Ajusta la arquitectura cloud según tus necesidades (opcional). |
 | `vex deploy [env]` | Despliega en el entorno indicado (`sand`, `stag`, `prod`). |
-| `vex version` | Muestra la versión instalada. |
 
 > `vex init` acepta el flag `--yes` / `-y` para usar valores por defecto sin preguntas interactivas.
 
