@@ -49,7 +49,7 @@ func (s *containerBuilder) BuildCommand(opts docVos.RunOptions) (string, error) 
 	}
 
 	for key, val := range opts.Volumes() {
-		commandBuilder.WriteString(fmt.Sprintf(" --mount type=bind,source=\"%s\",target=\"%s\"", key, val))
+		commandBuilder.WriteString(fmt.Sprintf(" --mount type=bind,source=%s,target=%s", key, val))
 	}
 
 	commandBuilder.WriteString(fmt.Sprintf(" %s", opts.Image().FullName()))
