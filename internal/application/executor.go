@@ -35,10 +35,6 @@ func NewExecutorService(
 }
 
 func (s *ExecutorService) Run(ctx context.Context, command, environment string) error {
-	if _, err := s.commandExecutor.Execute(ctx, "docker --version"); err != nil {
-		return err
-	}
-
 	exists, err := s.projectRepository.Exists()
 	if err != nil {
 		return err
@@ -71,17 +67,14 @@ func (s *ExecutorService) Run(ctx context.Context, command, environment string) 
 			return err
 		}
 		imageToUse = imageOptions.Image()
-		fmt.Println("Image to use Dockerfile: ", imageToUse.FullName())
 	} else {
 		imageToUse, err = docVos.NewImageName(imageInfo.Image(), imageInfo.Tag())
 		if err != nil {
 			return err
 		}
-		fmt.Println("Image to use no Dockerfile: ", imageToUse.FullName())
 	}
 
 	commandVex := fmt.Sprintf("%s %s", command, environment)
-
 	containerOptions, err := s.containerService.CreateOptions(project, commandVex, imageToUse)
 	if err != nil {
 		return err
