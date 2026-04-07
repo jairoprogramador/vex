@@ -1,8 +1,8 @@
 package ports
 
 import (
-	"github.com/jairoprogramador/vex-client/internal/domain/docker/vos"
-	proAgg "github.com/jairoprogramador/vex-client/internal/domain/project/aggregates"
+	"github.com/jairoprogramador/vex/internal/domain/docker/vos"
+	proAgg "github.com/jairoprogramador/vex/internal/domain/project/aggregates"
 )
 
 // ContainerService define el contrato para la lógica de construcción de opciones de contenedor.

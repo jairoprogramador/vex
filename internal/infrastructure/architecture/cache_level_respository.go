@@ -1,8 +1,8 @@
 package architecture
 
 import (
-	"github.com/jairoprogramador/vex-client/internal/domain/architecture/ports"
-	"github.com/jairoprogramador/vex-client/internal/domain/architecture/vos"
+	"github.com/jairoprogramador/vex/internal/domain/architecture/ports"
+	"github.com/jairoprogramador/vex/internal/domain/architecture/vos"
 )
 
 type CacheLevelRepository struct {

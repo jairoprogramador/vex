@@ -11,7 +11,7 @@ import (
 	"runtime"
 	"sync"
 
-	"github.com/jairoprogramador/vex-client/internal/domain/docker/ports"
+	"github.com/jairoprogramador/vex/internal/domain/docker/ports"
 )
 
 type ShellExecutor struct{}

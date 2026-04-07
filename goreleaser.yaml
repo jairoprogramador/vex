@@ -43,7 +43,7 @@ nfpms:
     ids: [vex]
     maintainer: "Jairo <jairo.jggc@gmail.com>"
     description: "CLI multiplataforma para despliegues automáticos y rápidos de aplicaciones"
-    homepage: "https://github.com/jairoprogramador/vex-client"
+    homepage: "https://github.com/jairoprogramador/vex"
     license: Apache License
     formats:
       - deb
@@ -56,12 +56,12 @@ homebrew_casks:
       - archive
     repository:
       owner: jairoprogramador
-      name: homebrew-vex-client
+      name: homebrew-vex
       token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
     commit_author:
       name: Jairo Galvez
       email: jairo.jggc@gmail.com
-    homepage: "https://github.com/jairoprogramador/vex-client"
+    homepage: "https://github.com/jairoprogramador/vex"
     description: "CLI multiplataforma para despliegues automáticos y rápidos de aplicaciones"
     binaries: [vex]
 

@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/jairoprogramador/vex-client/internal/application/ports"
-	"github.com/jairoprogramador/vex-client/internal/fdplugin"
+	"github.com/jairoprogramador/vex/internal/application/ports"
+	"github.com/jairoprogramador/vex/internal/fdplugin"
 )
 
 type authService struct{}

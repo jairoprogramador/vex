@@ -11,10 +11,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jairoprogramador/vex-client/internal/domain/architecture/ports"
-	"github.com/jairoprogramador/vex-client/internal/domain/architecture/vos"
-	comVos "github.com/jairoprogramador/vex-client/internal/domain/common/vos"
-	defVos "github.com/jairoprogramador/vex-client/internal/domain/common/vos"
+	"github.com/jairoprogramador/vex/internal/domain/architecture/ports"
+	"github.com/jairoprogramador/vex/internal/domain/architecture/vos"
+	comVos "github.com/jairoprogramador/vex/internal/domain/common/vos"
+	defVos "github.com/jairoprogramador/vex/internal/domain/common/vos"
 )
 
 const cacheTTL = 24 * time.Hour

@@ -3,14 +3,14 @@ package application
 import (
 	"errors"
 
-	"github.com/jairoprogramador/vex-client/internal/domain/architecture/ports"
-	arqSer "github.com/jairoprogramador/vex-client/internal/domain/architecture/services"
-	arqVos "github.com/jairoprogramador/vex-client/internal/domain/architecture/vos"
+	"github.com/jairoprogramador/vex/internal/domain/architecture/ports"
+	arqSer "github.com/jairoprogramador/vex/internal/domain/architecture/services"
+	arqVos "github.com/jairoprogramador/vex/internal/domain/architecture/vos"
 
-	comPor "github.com/jairoprogramador/vex-client/internal/domain/common/ports"
+	comPor "github.com/jairoprogramador/vex/internal/domain/common/ports"
 
-	proPor "github.com/jairoprogramador/vex-client/internal/domain/project/ports"
-	proVos "github.com/jairoprogramador/vex-client/internal/domain/project/vos"
+	proPor "github.com/jairoprogramador/vex/internal/domain/project/ports"
+	proVos "github.com/jairoprogramador/vex/internal/domain/project/vos"
 )
 
 type ArchitectureService struct {

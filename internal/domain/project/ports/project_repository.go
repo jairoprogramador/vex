@@ -1,6 +1,6 @@
 package ports
 
-import "github.com/jairoprogramador/vex-client/internal/domain/project/aggregates"
+import "github.com/jairoprogramador/vex/internal/domain/project/aggregates"
 
 type ProjectRepository interface {
 	Save(project *aggregates.Project) error

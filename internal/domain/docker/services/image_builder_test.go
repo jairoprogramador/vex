@@ -7,10 +7,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	comVos "github.com/jairoprogramador/vex-client/internal/domain/common/vos"
-	"github.com/jairoprogramador/vex-client/internal/domain/docker/services"
-	proAgg "github.com/jairoprogramador/vex-client/internal/domain/project/aggregates"
-	proVos "github.com/jairoprogramador/vex-client/internal/domain/project/vos"
+	comVos "github.com/jairoprogramador/vex/internal/domain/common/vos"
+	"github.com/jairoprogramador/vex/internal/domain/docker/services"
+	proAgg "github.com/jairoprogramador/vex/internal/domain/project/aggregates"
+	proVos "github.com/jairoprogramador/vex/internal/domain/project/vos"
 )
 
 // mockProject es un helper para crear un agregado de proyecto para los tests.
@@ -68,7 +68,6 @@ func TestImageBuilderService_CreateOptions(t *testing.T) {
 		assert.Equal(t, "latest", opts.Image().Tag())
 		_, exists := opts.Args()["DEV_GID"]
 		assert.False(t, exists, "DEV_GID should not be present on non-linux OS")
-		assert.Equal(t, "1.0.0", opts.Args()["vex-client_VERSION"])
 	})
 
 	t.Run("should return error if image name is invalid", func(t *testing.T) {

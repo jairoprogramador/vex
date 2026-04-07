@@ -6,8 +6,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/jairoprogramador/vex-client/internal/domain/architecture/aggregates"
-	"github.com/jairoprogramador/vex-client/internal/domain/architecture/vos"
+	"github.com/jairoprogramador/vex/internal/domain/architecture/aggregates"
+	"github.com/jairoprogramador/vex/internal/domain/architecture/vos"
 )
 
 func TestNewQuestion(t *testing.T) {

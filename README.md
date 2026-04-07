@@ -7,11 +7,11 @@
   <p><strong>De código a producción en dos comandos.</strong></p>
 
   <p>
-    <a href="https://github.com/jairoprogramador/vex-client/releases">
-      <img src="https://img.shields.io/github/v/release/jairoprogramador/vex-client?style=for-the-badge" alt="Latest Release">
+    <a href="https://github.com/jairoprogramador/vex/releases">
+      <img src="https://img.shields.io/github/v/release/jairoprogramador/vex?style=for-the-badge" alt="Latest Release">
     </a>
-    <a href="https://github.com/jairoprogramador/vex-client/blob/main/LICENSE">
-      <img src="https://img.shields.io/github/license/jairoprogramador/vex-client?style=for-the-badge" alt="License">
+    <a href="https://github.com/jairoprogramador/vex/blob/main/LICENSE">
+      <img src="https://img.shields.io/github/license/jairoprogramador/vex?style=for-the-badge" alt="License">
     </a>
   </p>
 </div>
@@ -82,7 +82,7 @@ Listo. Tu microservicio está en producción.
 ### macOS (Homebrew)
 
 ```sh
-brew install --cask jairoprogramador/vex-client/vex
+brew install --cask jairoprogramador/vex/vex
 ```
 
 > Si macOS indica que no puede verificar el desarrollador, permite la ejecución en **Ajustes del sistema > Privacidad y seguridad > Abrir de todos modos**, o ejecuta: `xattr -cr $(which vex)`.
@@ -95,20 +95,20 @@ vex version
 
 ### Linux
 
-Descarga el paquete desde [Releases](https://github.com/jairoprogramador/vex-client/releases):
+Descarga el paquete desde [Releases](https://github.com/jairoprogramador/vex/releases):
 
 ```sh
 # Debian / Ubuntu
-sudo dpkg -i vex-client_*.deb
+sudo dpkg -i vex_*.deb
 
 # Red Hat / Fedora
-sudo rpm -i vex-client_*.rpm
+sudo rpm -i vex_*.rpm
 ```
 
 O directamente el binario:
 
 ```sh
-curl -sL https://github.com/jairoprogramador/vex-client/releases/latest/download/vex-client_linux_amd64.tar.gz | tar xz
+curl -sL https://github.com/jairoprogramador/vex/releases/latest/download/vex_linux_amd64.tar.gz | tar xz
 sudo mv vex /usr/local/bin/
 ```
 
@@ -120,9 +120,9 @@ vex version
 
 ### Windows
 
-1. Descarga el archivo `.zip` correspondiente desde [Releases](https://github.com/jairoprogramador/vex-client/releases):
-   - `vex-client_*_windows_amd64.zip` — Para PCs con procesador Intel o AMD de 64 bits.
-   - `vex-client_*_windows_arm64.zip` — Para dispositivos con arquitectura ARM (ej: Surface Pro X, Copilot+ PCs).
+1. Descarga el archivo `.zip` correspondiente desde [Releases](https://github.com/jairoprogramador/vex/releases):
+   - `vex_windows_amd64.zip` — Para PCs con procesador Intel o AMD de 64 bits.
+   - `vex_windows_arm64.zip` — Para dispositivos con arquitectura ARM (ej: Surface Pro X, Copilot+ PCs).
 2. Descomprime el archivo.
 3. Copia `vex.exe` a una carpeta nueva llamada `vex` dentro de `Program Files` o `Program Files (x86)`:
    ```
@@ -151,8 +151,8 @@ vex version
 
 ## Contribuciones
 
-Las contribuciones son bienvenidas. Si tienes ideas, encuentras un error o quieres mejorar algo, abre un [issue](https://github.com/jairoprogramador/vex-client/issues) o enviá un [pull request](https://github.com/jairoprogramador/vex-client/pulls).
+Las contribuciones son bienvenidas. Si tienes ideas, encuentras un error o quieres mejorar algo, abre un [issue](https://github.com/jairoprogramador/vex/issues) o enviá un [pull request](https://github.com/jairoprogramador/vex/pulls).
 
 ## Licencia
 
-`vex` está distribuido bajo la [Apache License 2.0](https://github.com/jairoprogramador/vex-client/blob/main/LICENSE).
+`vex` está distribuido bajo la [Business Source License 1.1](https://github.com/jairoprogramador/vex/blob/main/LICENSE).

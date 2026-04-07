@@ -1,7 +1,7 @@
 package ports
 
 import (
-	"github.com/jairoprogramador/vex-client/internal/domain/architecture/vos"
+	"github.com/jairoprogramador/vex/internal/domain/architecture/vos"
 )
 
 type TemplateRepository interface {

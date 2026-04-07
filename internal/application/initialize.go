@@ -5,16 +5,16 @@ import (
 	"errors"
 	"fmt"
 
-	arqAgg "github.com/jairoprogramador/vex-client/internal/domain/architecture/aggregates"
-	arqPor "github.com/jairoprogramador/vex-client/internal/domain/architecture/ports"
-	arqVos "github.com/jairoprogramador/vex-client/internal/domain/architecture/vos"
+	arqAgg "github.com/jairoprogramador/vex/internal/domain/architecture/aggregates"
+	arqPor "github.com/jairoprogramador/vex/internal/domain/architecture/ports"
+	arqVos "github.com/jairoprogramador/vex/internal/domain/architecture/vos"
 
-	comPor "github.com/jairoprogramador/vex-client/internal/domain/common/ports"
-	comVos "github.com/jairoprogramador/vex-client/internal/domain/common/vos"
+	comPor "github.com/jairoprogramador/vex/internal/domain/common/ports"
+	comVos "github.com/jairoprogramador/vex/internal/domain/common/vos"
 
-	proAgg "github.com/jairoprogramador/vex-client/internal/domain/project/aggregates"
-	proPor "github.com/jairoprogramador/vex-client/internal/domain/project/ports"
-	proVos "github.com/jairoprogramador/vex-client/internal/domain/project/vos"
+	proAgg "github.com/jairoprogramador/vex/internal/domain/project/aggregates"
+	proPor "github.com/jairoprogramador/vex/internal/domain/project/ports"
+	proVos "github.com/jairoprogramador/vex/internal/domain/project/vos"
 )
 
 const MessageProjectAlreadyExists = "project already initialized, vexconfig.yaml exists"

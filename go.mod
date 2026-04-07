@@ -1,4 +1,4 @@
-module github.com/jairoprogramador/vex-client
+module github.com/jairoprogramador/vex
 
 go 1.25.1
 

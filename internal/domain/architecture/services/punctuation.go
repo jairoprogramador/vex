@@ -2,8 +2,8 @@ package services
 
 import (
 	"errors"
-	"github.com/jairoprogramador/vex-client/internal/domain/architecture/aggregates"
-	"github.com/jairoprogramador/vex-client/internal/domain/architecture/vos"
+	"github.com/jairoprogramador/vex/internal/domain/architecture/aggregates"
+	"github.com/jairoprogramador/vex/internal/domain/architecture/vos"
 )
 
 func Score(response []int, questions []*aggregates.Question) (float64, error) {

@@ -4,13 +4,13 @@ import (
 	"os"
 	"path/filepath"
 
-	app "github.com/jairoprogramador/vex-client/internal/application"
-	docSer "github.com/jairoprogramador/vex-client/internal/domain/docker/services"
-	proPor "github.com/jairoprogramador/vex-client/internal/domain/project/ports"
-	"github.com/jairoprogramador/vex-client/internal/infrastructure/architecture"
-	"github.com/jairoprogramador/vex-client/internal/infrastructure/common"
-	"github.com/jairoprogramador/vex-client/internal/infrastructure/docker"
-	"github.com/jairoprogramador/vex-client/internal/infrastructure/project"
+	app "github.com/jairoprogramador/vex/internal/application"
+	docSer "github.com/jairoprogramador/vex/internal/domain/docker/services"
+	proPor "github.com/jairoprogramador/vex/internal/domain/project/ports"
+	"github.com/jairoprogramador/vex/internal/infrastructure/architecture"
+	"github.com/jairoprogramador/vex/internal/infrastructure/common"
+	"github.com/jairoprogramador/vex/internal/infrastructure/docker"
+	"github.com/jairoprogramador/vex/internal/infrastructure/project"
 )
 
 type ServiceFactory interface {

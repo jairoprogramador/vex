@@ -1,6 +1,6 @@
 package main
 
-import "github.com/jairoprogramador/vex-client/cmd/vex/cmd"
+import "github.com/jairoprogramador/vex/cmd/vex/cmd"
 
 var (
 	version = "unknown"
