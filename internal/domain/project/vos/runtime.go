@@ -1,6 +1,6 @@
 package vos
 
-import "github.com/jairoprogramador/vex-client/internal/domain/common/vos"
+import "github.com/jairoprogramador/vex/internal/domain/common/vos"
 
 type Runtime struct {
 	image   vos.Image

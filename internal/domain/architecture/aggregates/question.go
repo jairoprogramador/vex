@@ -2,7 +2,7 @@ package aggregates
 
 import (
 	"errors"
-	"github.com/jairoprogramador/vex-client/internal/domain/architecture/vos"
+	"github.com/jairoprogramador/vex/internal/domain/architecture/vos"
 )
 
 type Question struct {

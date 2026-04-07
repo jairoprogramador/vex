@@ -1,7 +1,7 @@
 package vos
 
 import (
-	comVos "github.com/jairoprogramador/vex-client/internal/domain/common/vos"
+	comVos "github.com/jairoprogramador/vex/internal/domain/common/vos"
 )
 
 type ExecutionUnit struct {

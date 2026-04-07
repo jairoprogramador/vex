@@ -3,7 +3,7 @@ package cmd
 import (
 	"errors"
 	"fmt"
-	"github.com/jairoprogramador/vex-client/internal/infrastructure/factories"
+	"github.com/jairoprogramador/vex/internal/infrastructure/factories"
 	"github.com/spf13/cobra"
 	"os"
 )

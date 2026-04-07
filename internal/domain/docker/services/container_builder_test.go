@@ -7,11 +7,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	comVos "github.com/jairoprogramador/vex-client/internal/domain/common/vos"
-	"github.com/jairoprogramador/vex-client/internal/domain/docker/services"
-	docVos "github.com/jairoprogramador/vex-client/internal/domain/docker/vos"
-	proAgg "github.com/jairoprogramador/vex-client/internal/domain/project/aggregates"
-	proVos "github.com/jairoprogramador/vex-client/internal/domain/project/vos"
+	comVos "github.com/jairoprogramador/vex/internal/domain/common/vos"
+	"github.com/jairoprogramador/vex/internal/domain/docker/services"
+	docVos "github.com/jairoprogramador/vex/internal/domain/docker/vos"
+	proAgg "github.com/jairoprogramador/vex/internal/domain/project/aggregates"
+	proVos "github.com/jairoprogramador/vex/internal/domain/project/vos"
 )
 
 // mockProjectWithVolumesAndEnv es un helper para crear un proyecto con volúmenes y variables de entorno.
@@ -143,8 +143,8 @@ func TestContainerBuilderService_BuildCommand(t *testing.T) {
 		require.NoError(t, err)
 		assert.True(t, strings.HasPrefix(command, "docker run"))
 		assert.Contains(t, command, "--rm")
-		assert.Contains(t, command, "-v /host/path1:/container/path1")
-		assert.Contains(t, command, "-v /host/path2:/container/path2")
+		assert.Contains(t, command, "--mount type=bind,source=/host/path1,target=/container/path1")
+		assert.Contains(t, command, "--mount type=bind,source=/host/path2,target=/container/path2")
 		assert.Contains(t, command, "-e VAR1=value1")
 		assert.Contains(t, command, "-e VAR2=value2")
 		assert.Contains(t, command, "my-image:latest")
@@ -166,7 +166,7 @@ func TestContainerBuilderService_BuildCommand(t *testing.T) {
 		require.NoError(t, err)
 		assert.True(t, strings.HasPrefix(command, "docker run"))
 		assert.Contains(t, command, "--rm")
-		assert.NotContains(t, command, "-v")
+		assert.NotContains(t, command, "--mount")
 		assert.NotContains(t, command, "-e")
 		assert.Contains(t, command, "simple-image:v1")
 		assert.Contains(t, command, "test sand")

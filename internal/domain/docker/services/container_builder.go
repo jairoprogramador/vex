@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"strings"
 
-	docPor "github.com/jairoprogramador/vex-client/internal/domain/docker/ports"
-	docVos "github.com/jairoprogramador/vex-client/internal/domain/docker/vos"
-	proAgg "github.com/jairoprogramador/vex-client/internal/domain/project/aggregates"
+	docPor "github.com/jairoprogramador/vex/internal/domain/docker/ports"
+	docVos "github.com/jairoprogramador/vex/internal/domain/docker/vos"
+	proAgg "github.com/jairoprogramador/vex/internal/domain/project/aggregates"
 )
 
 // imageBuilder es la implementación del servicio de dominio.

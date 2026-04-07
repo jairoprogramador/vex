@@ -5,10 +5,10 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/jairoprogramador/vex-client/internal/domain/project/aggregates"
-	"github.com/jairoprogramador/vex-client/internal/domain/project/ports"
-	"github.com/jairoprogramador/vex-client/internal/infrastructure/project/dto"
-	"github.com/jairoprogramador/vex-client/internal/infrastructure/project/mapper"
+	"github.com/jairoprogramador/vex/internal/domain/project/aggregates"
+	"github.com/jairoprogramador/vex/internal/domain/project/ports"
+	"github.com/jairoprogramador/vex/internal/infrastructure/project/dto"
+	"github.com/jairoprogramador/vex/internal/infrastructure/project/mapper"
 	"gopkg.in/yaml.v3"
 )
 

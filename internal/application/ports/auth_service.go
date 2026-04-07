@@ -3,7 +3,7 @@ package ports
 import (
 	"context"
 
-	"github.com/jairoprogramador/vex-client/internal/fdplugin"
+	"github.com/jairoprogramador/vex/internal/fdplugin"
 )
 
 type AuthService interface {

@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/jairoprogramador/vex-client/internal/domain/project/ports"
+	"github.com/jairoprogramador/vex/internal/domain/project/ports"
 )
 
 type GitHubRelease struct {
@@ -21,7 +21,7 @@ func NewHttpVersion() ports.Version {
 }
 
 func (g *HttpVersion) GetLatest() (string, error) {
-	apiUrl := "https://api.github.com/repos/jairoprogramador/vex-client-core/releases/latest"
+	apiUrl := "https://api.github.com/repos/jairoprogramador/vex/releases/latest"
 
 	resp, err := http.Get(apiUrl)
 	if err != nil {

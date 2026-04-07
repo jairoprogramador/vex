@@ -5,10 +5,10 @@ import (
 	"errors"
 	"fmt"
 
-	comVos "github.com/jairoprogramador/vex-client/internal/domain/common/vos"
-	docPor "github.com/jairoprogramador/vex-client/internal/domain/docker/ports"
-	docVos "github.com/jairoprogramador/vex-client/internal/domain/docker/vos"
-	proPor "github.com/jairoprogramador/vex-client/internal/domain/project/ports"
+	comVos "github.com/jairoprogramador/vex/internal/domain/common/vos"
+	docPor "github.com/jairoprogramador/vex/internal/domain/docker/ports"
+	docVos "github.com/jairoprogramador/vex/internal/domain/docker/vos"
+	proPor "github.com/jairoprogramador/vex/internal/domain/project/ports"
 )
 
 const MessageProjectNotInitialized = "project not initialized. Please run 'vex init' first"

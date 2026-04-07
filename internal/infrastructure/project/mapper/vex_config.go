@@ -1,10 +1,10 @@
 package mapper
 
 import (
-	comVos "github.com/jairoprogramador/vex-client/internal/domain/common/vos"
-	"github.com/jairoprogramador/vex-client/internal/domain/project/aggregates"
-	proVos "github.com/jairoprogramador/vex-client/internal/domain/project/vos"
-	"github.com/jairoprogramador/vex-client/internal/infrastructure/project/dto"
+	comVos "github.com/jairoprogramador/vex/internal/domain/common/vos"
+	"github.com/jairoprogramador/vex/internal/domain/project/aggregates"
+	proVos "github.com/jairoprogramador/vex/internal/domain/project/vos"
+	"github.com/jairoprogramador/vex/internal/infrastructure/project/dto"
 )
 
 func ToDomainProject(configDto dto.ProjectDTO) (proVos.ProjectID, proVos.ProjectData, error) {

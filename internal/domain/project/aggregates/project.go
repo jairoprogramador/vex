@@ -3,8 +3,8 @@ package aggregates
 import (
 	"errors"
 
-	comVos "github.com/jairoprogramador/vex-client/internal/domain/common/vos"
-	proVos "github.com/jairoprogramador/vex-client/internal/domain/project/vos"
+	comVos "github.com/jairoprogramador/vex/internal/domain/common/vos"
+	proVos "github.com/jairoprogramador/vex/internal/domain/project/vos"
 )
 
 type Project struct {
