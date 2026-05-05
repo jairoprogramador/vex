@@ -149,7 +149,7 @@ func (r *CacheTemplateRepository) find(templates []templateEntry, query vos.Quer
 			template.Cost == query.Cost() &&
 			template.Stack == query.Stack() &&
 			template.Platform == query.Platform() {
-			templateObj, err := comVos.NewTemplate(template.Template, defVos.DefaultTemplateRef)
+			templateObj, err := comVos.NewPipeline(template.Template, defVos.DefaultPipelineRef)
 			if err != nil {
 				return vos.ExecutionUnit{}, err
 			}

@@ -10,21 +10,21 @@ import (
 type Project struct {
 	id       proVos.ProjectID
 	data     proVos.ProjectData
-	template comVos.Template
+	pipeline comVos.Pipeline
 	runtime  proVos.Runtime
 }
 
 func NewProject(
 	id proVos.ProjectID,
 	data proVos.ProjectData,
-	template comVos.Template,
+	pipeline comVos.Pipeline,
 	runtime proVos.Runtime,
 ) (*Project, error) {
-	if template.URL() == "" {
-		return nil, errors.New("template is required")
+	if pipeline.URL() == "" {
+		return nil, errors.New("pipeline url is required")
 	}
-	if template.Ref() == "" {
-		return nil, errors.New("template ref is required")
+	if pipeline.Ref() == "" {
+		return nil, errors.New("pipeline ref is required")
 	}
 	if runtime.Image().Image() == "" {
 		return nil, errors.New("runtime image is required")
@@ -35,7 +35,7 @@ func NewProject(
 	return &Project{
 		id:       id,
 		data:     data,
-		template: template,
+		pipeline: pipeline,
 		runtime:  runtime,
 	}, nil
 }
@@ -57,16 +57,16 @@ func (p *Project) Data() proVos.ProjectData {
 	return p.data
 }
 
-func (p *Project) Template() comVos.Template {
-	return p.template
+func (p *Project) Pipeline() comVos.Pipeline {
+	return p.pipeline
 }
 
 func (p *Project) Runtime() proVos.Runtime {
 	return p.runtime
 }
 
-func (p *Project) SetTemplate(template comVos.Template) {
-	p.template = template
+func (p *Project) SetPipeline(pipeline comVos.Pipeline) {
+	p.pipeline = pipeline
 }
 
 func (p *Project) SetRuntime(runtime proVos.Runtime) {
@@ -76,13 +76,13 @@ func (p *Project) SetRuntime(runtime proVos.Runtime) {
 func HydrateProject(
 	id proVos.ProjectID,
 	data proVos.ProjectData,
-	template comVos.Template,
+	pipeline comVos.Pipeline,
 	runtime proVos.Runtime,
 ) *Project {
 	return &Project{
 		id:       id,
 		data:     data,
-		template: template,
+		pipeline: pipeline,
 		runtime:  runtime,
 	}
 }

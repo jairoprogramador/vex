@@ -106,7 +106,7 @@ func (s *ArchitectureService) Run() error {
 		proVos.WithArgs(project.Runtime().Args()),
 	)
 
-	project.SetTemplate(executionUnit.Template())
+	project.SetPipeline(executionUnit.Template())
 	project.SetRuntime(runtime)
 
 	err = s.projectRepository.Save(project)

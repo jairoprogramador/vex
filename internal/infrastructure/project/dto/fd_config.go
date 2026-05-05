@@ -2,11 +2,6 @@ package dto
 
 type FDConfigDTO struct {
 	Project  ProjectDTO  `yaml:"project"`
-	Template TemplateDTO `yaml:"template"`
+	Pipeline PipelineDTO `yaml:"pipeline"`
 	Runtime  RuntimeDTO  `yaml:"runtime"`
 }
-
-
-
-
-

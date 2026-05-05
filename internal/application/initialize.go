@@ -26,17 +26,21 @@ type InitializeService struct {
 	levelRepository    arqPor.LevelRepository
 	questionRepository arqPor.QuestionRepository
 	templateRepository arqPor.TemplateRepository
+	gitInfo            proPor.GitInfo
+	projectPath        string
 	projectName        string
 }
 
 func NewInitializeService(
 	projectName string,
+	projectPath string,
 	repository proPor.ProjectRepository,
 	inputSvc comPor.UserInputService,
 	versionSvc proPor.Version,
 	levelRepository arqPor.LevelRepository,
 	questionRepository arqPor.QuestionRepository,
 	templateRepository arqPor.TemplateRepository,
+	gitInfo proPor.GitInfo,
 ) *InitializeService {
 	return &InitializeService{
 		projectRepository:  repository,
@@ -45,7 +49,9 @@ func NewInitializeService(
 		levelRepository:    levelRepository,
 		questionRepository: questionRepository,
 		templateRepository: templateRepository,
+		gitInfo:            gitInfo,
 		projectName:        projectName,
+		projectPath:        projectPath,
 	}
 }
 
@@ -67,20 +73,22 @@ func (s *InitializeService) Run(ctx context.Context, interactive bool) error {
 
 	executionUnit, err := s.GetExecutionUnit()
 	if err != nil {
-		fmt.Println("Warning: Error getting template:", err)
+		fmt.Println("Warning: Error getting pipeline:", err)
 		image, _ := comVos.NewImage(comVos.DefaultContainerImage, comVos.DefaultContainerTag)
-		template, _ := comVos.NewTemplate(comVos.DefaultTemplateUrl, comVos.DefaultTemplateRef)
-		executionUnit = arqVos.NewExecutionUnit(image, template)
+		pipeline, _ := comVos.NewPipeline(comVos.DefaultPipelineUrl, comVos.DefaultPipelineRef)
+		executionUnit = arqVos.NewExecutionUnit(image, pipeline)
 	}
+
+	url, ref := s.detectGitInfo(ctx)
 
 	var project *proAgg.Project
 	if interactive {
-		project, err = s.createProjectFromUserInput(executionUnit)
+		project, err = s.createProjectFromUserInput(executionUnit, url, ref)
 		if err != nil {
 			return err
 		}
 	} else {
-		project, err = s.createDefaultProject(executionUnit)
+		project, err = s.createDefaultProject(executionUnit, url, ref)
 		if err != nil {
 			return err
 		}
@@ -89,7 +97,22 @@ func (s *InitializeService) Run(ctx context.Context, interactive bool) error {
 	return s.projectRepository.Save(project)
 }
 
-func (s *InitializeService) createProjectFromUserInput(executionUnit arqVos.ExecutionUnit) (*proAgg.Project, error) {
+func (s *InitializeService) detectGitInfo(ctx context.Context) (url, ref string) {
+	url, err := s.gitInfo.RemoteURL(ctx, s.projectPath)
+	if err != nil {
+		fmt.Println("Warning: could not detect git remote 'origin':", err)
+		url = ""
+	}
+
+	ref, err = s.gitInfo.CurrentRef(ctx, s.projectPath)
+	if err != nil {
+		fmt.Println("Warning: could not detect current git branch:", err)
+		ref = ""
+	}
+	return url, ref
+}
+
+func (s *InitializeService) createProjectFromUserInput(executionUnit arqVos.ExecutionUnit, defaultURL, defaultRef string) (*proAgg.Project, error) {
 	name, err := s.inputService.Ask("Project Name", s.projectName)
 	if err != nil {
 		return nil, err
@@ -102,8 +125,16 @@ func (s *InitializeService) createProjectFromUserInput(executionUnit arqVos.Exec
 	if err != nil {
 		return nil, err
 	}
+	url, err := s.inputService.Ask("Project Repository URL", defaultURL)
+	if err != nil {
+		return nil, err
+	}
+	ref, err := s.inputService.Ask("Project Repository Ref", defaultRef)
+	if err != nil {
+		return nil, err
+	}
 
-	projectData, err := proVos.NewProjectData(name, org, team, "")
+	projectData, err := proVos.NewProjectData(name, org, team, "", url, ref)
 	if err != nil {
 		return nil, err
 	}
@@ -118,9 +149,9 @@ func (s *InitializeService) createProjectFromUserInput(executionUnit arqVos.Exec
 	return proAgg.NewProject(projectID, projectData, executionUnit.Template(), runtime)
 }
 
-func (s *InitializeService) createDefaultProject(executionUnit arqVos.ExecutionUnit) (*proAgg.Project, error) {
+func (s *InitializeService) createDefaultProject(executionUnit arqVos.ExecutionUnit, url, ref string) (*proAgg.Project, error) {
 	projectData, err := proVos.NewProjectData(
-		s.projectName, proVos.DefaultProjectOrganization, proVos.DefaultProjectTeam, "")
+		s.projectName, proVos.DefaultProjectOrganization, proVos.DefaultProjectTeam, "", url, ref)
 	if err != nil {
 		return nil, err
 	}

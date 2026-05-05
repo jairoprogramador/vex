@@ -17,16 +17,16 @@ import (
 // Construye el agregado manualmente para evitar la lógica de validación de los constructores
 // y así poder probar los servicios de forma aislada.
 func mockProject(t *testing.T, image, imageTag string) *proAgg.Project {
-	data, err := proVos.NewProjectData("test-project", "org", "team", "")
+	data, err := proVos.NewProjectData("test-project", "org", "team", "", "", "")
 	require.NoError(t, err)
 	id := proVos.GenerateProjectID(data.Name(), data.Organization(), data.Team())
-	template, err := comVos.NewTemplate("http://test.com/repo.git", "main")
+	pipeline, err := comVos.NewPipeline("http://test.com/repo.git", "main")
 	require.NoError(t, err)
 
 	// Creamos los VOs manualmente para el test
 	imageObj, _ := comVos.NewImage(image, imageTag)
 	runtimeObj := proVos.NewRuntime(proVos.WithImage(imageObj))
-	project := proAgg.HydrateProject(id, data, template, runtimeObj)
+	project := proAgg.HydrateProject(id, data, pipeline, runtimeObj)
 	return project
 }
 

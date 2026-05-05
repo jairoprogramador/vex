@@ -10,6 +10,7 @@ import (
 	"github.com/jairoprogramador/vex/internal/infrastructure/architecture"
 	"github.com/jairoprogramador/vex/internal/infrastructure/common"
 	"github.com/jairoprogramador/vex/internal/infrastructure/docker"
+	"github.com/jairoprogramador/vex/internal/infrastructure/git"
 	"github.com/jairoprogramador/vex/internal/infrastructure/project"
 )
 
@@ -41,9 +42,10 @@ func (f *serviceFactory) BuildInitialize() (*app.InitializeService, error) {
 	questionRepository := architecture.NewCacheQuestionRepository()
 	templateRepository := architecture.NewCacheTemplateRepository(
 		f.templateCachePath(), f.templateRemoteURL())
+	gitInfo := git.NewShellGitInfo()
 	return app.NewInitializeService(
-		filepath.Base(projectPath), projectRepository, inputService,
-		versionService, levelRepository, questionRepository, templateRepository), nil
+		filepath.Base(projectPath), projectPath, projectRepository, inputService,
+		versionService, levelRepository, questionRepository, templateRepository, gitInfo), nil
 }
 
 func (f *serviceFactory) BuildExecutor() (*app.ExecutorService, error) {
