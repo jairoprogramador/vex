@@ -69,5 +69,6 @@ func init() {
 	rootCmd.AddCommand(initCmd)
 	rootCmd.AddCommand(architectureCmd)
 	rootCmd.AddCommand(versionCmd)
+	rootCmd.AddCommand(authCmd)
 	rootCmd.SilenceUsage = true
 }

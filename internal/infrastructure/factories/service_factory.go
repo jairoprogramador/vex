@@ -1,8 +1,10 @@
 package factories
 
 import (
+	"net/http"
 	"os"
 	"path/filepath"
+	"time"
 
 	app "github.com/jairoprogramador/vex/internal/application"
 	docSer "github.com/jairoprogramador/vex/internal/domain/docker/services"
@@ -11,13 +13,25 @@ import (
 	"github.com/jairoprogramador/vex/internal/infrastructure/common"
 	"github.com/jairoprogramador/vex/internal/infrastructure/docker"
 	"github.com/jairoprogramador/vex/internal/infrastructure/git"
+	"github.com/jairoprogramador/vex/internal/infrastructure/portalauth"
 	"github.com/jairoprogramador/vex/internal/infrastructure/project"
 )
+
+// AuthDependencies bundles the wiring needed by the `vex auth` subcommands.
+// It is built once per command invocation so the CLI can share a single
+// HTTP client across the device-flow client and the whoami request.
+type AuthDependencies struct {
+	PortalURL    string
+	HTTPClient   *http.Client
+	DeviceClient *portalauth.DeviceFlowClient
+	TokenStore   *portalauth.FileTokenStore
+}
 
 type ServiceFactory interface {
 	BuildExecutor() (*app.ExecutorService, error)
 	BuildInitialize() (*app.InitializeService, error)
 	BuildArchitecture() (*app.ArchitectureService, error)
+	BuildAuth() (*AuthDependencies, error)
 }
 
 type serviceFactory struct{}
@@ -84,6 +98,27 @@ func (f *serviceFactory) BuildArchitecture() (*app.ArchitectureService, error) {
 	return app.NewArchitectureService(
 		questionRepository, levelRepository,
 		templateRepository, projectRepository, inputService), nil
+}
+
+// BuildAuth wires the dependencies for the `vex auth` subcommands. The
+// portal URL is resolved by portalauth.PortalURL (env VEX_PORTAL_URL with
+// a sensible default), and the credentials file lives under the
+// platform-default config directory.
+func (f *serviceFactory) BuildAuth() (*AuthDependencies, error) {
+	tokenStore, err := portalauth.NewFileTokenStore()
+	if err != nil {
+		return nil, err
+	}
+
+	portalURL := portalauth.PortalURL()
+	httpClient := &http.Client{Timeout: 30 * time.Second}
+
+	return &AuthDependencies{
+		PortalURL:    portalURL,
+		HTTPClient:   httpClient,
+		DeviceClient: portalauth.NewDeviceFlowClient(portalURL),
+		TokenStore:   tokenStore,
+	}, nil
 }
 
 func (f *serviceFactory) getProjectRepository(projectPath string) (proPor.ProjectRepository, error) {
