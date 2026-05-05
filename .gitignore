@@ -11,7 +11,6 @@
 *.dll
 *.so
 *.dylib
-vex
 vexconfig.yaml
 
 # Test binary, built with `go test -c`
