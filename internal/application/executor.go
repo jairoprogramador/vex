@@ -122,6 +122,11 @@ func (s *ExecutorService) Run(ctx context.Context, command, environment string) 
 	return err
 }
 
+// Compile-time contract check: ExecutorService satisfies Runner so the
+// factory can return either local or remote implementations behind the
+// same interface.
+var _ Runner = (*ExecutorService)(nil)
+
 // encodeRequestInput serializa el RequestInput a JSON y lo codifica en base64.
 // El base64 es la forma portable: docker run --env recibe valores arbitrarios,
 // pero la línea entera pasa por el shell del SO (Unix o PowerShell) y los

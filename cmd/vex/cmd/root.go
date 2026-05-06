@@ -3,14 +3,18 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"os"
+	"strings"
+
 	"github.com/jairoprogramador/vex/internal/infrastructure/factories"
 	"github.com/spf13/cobra"
-	"os"
 )
 
 var (
 	withTtyFlag bool
 	colorFlag   string
+	remoteFlag  bool
+	noFollow    bool
 	version     string
 )
 
@@ -43,13 +47,23 @@ var rootCmd = &cobra.Command{
 
 		factory := factories.NewServiceFactory()
 
-		executorService, err := factory.BuildExecutor()
+		runner, err := factory.BuildRunner(resolveRemote(remoteFlag), !noFollow)
 		if err != nil {
 			return err
 		}
 
-		return executorService.Run(cmd.Context(), command, environment)
+		return runner.Run(cmd.Context(), command, environment)
 	},
+}
+
+// resolveRemote folds the `--remote` flag together with the VEX_MODE env
+// var. The flag wins when set; otherwise VEX_MODE=remote opts the user in
+// without retyping the flag on every invocation.
+func resolveRemote(flag bool) bool {
+	if flag {
+		return true
+	}
+	return strings.EqualFold(strings.TrimSpace(os.Getenv("VEX_MODE")), "remote")
 }
 
 func Execute(versionMain string) {
@@ -64,11 +78,16 @@ func Execute(versionMain string) {
 func init() {
 	rootCmd.PersistentFlags().BoolVar(&withTtyFlag, "with-tty", false, "Enable pseudo-TTY allocation.")
 	rootCmd.PersistentFlags().StringVar(&colorFlag, "color", "always", "control color output (auto, always, never)")
+	// Local flags on the deploy invocation. Persistent would also work but
+	// these only apply to `vex <step> [env]`, not to `vex auth/init/...`.
+	rootCmd.Flags().BoolVar(&remoteFlag, "remote", false, "Run the deploy on the Vex portal infrastructure (Fly Machines) instead of the local Docker daemon. Equivalent to VEX_MODE=remote.")
+	rootCmd.Flags().BoolVar(&noFollow, "no-follow", false, "When used with --remote, skip the live log stream and exit as soon as the execution is queued.")
 	rootCmd.SetVersionTemplate(`{{.Version}}`)
 
 	rootCmd.AddCommand(initCmd)
 	rootCmd.AddCommand(architectureCmd)
 	rootCmd.AddCommand(versionCmd)
 	rootCmd.AddCommand(authCmd)
+	rootCmd.AddCommand(executionCmd)
 	rootCmd.SilenceUsage = true
 }

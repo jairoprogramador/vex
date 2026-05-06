@@ -14,6 +14,7 @@ import (
 	"github.com/jairoprogramador/vex/internal/infrastructure/docker"
 	"github.com/jairoprogramador/vex/internal/infrastructure/git"
 	"github.com/jairoprogramador/vex/internal/infrastructure/portalauth"
+	"github.com/jairoprogramador/vex/internal/infrastructure/portalclient"
 	"github.com/jairoprogramador/vex/internal/infrastructure/project"
 )
 
@@ -28,10 +29,16 @@ type AuthDependencies struct {
 }
 
 type ServiceFactory interface {
-	BuildExecutor() (*app.ExecutorService, error)
+	// BuildRunner returns the deploy orchestrator selected by `remote`.
+	// It is the entry point used by the root command for the
+	// `vex <step> [env]` flow.
+	BuildRunner(remote, follow bool) (app.Runner, error)
+	BuildLocalExecutor() (*app.ExecutorService, error)
+	BuildRemoteExecutor(follow bool) (*app.RemoteExecutorService, error)
 	BuildInitialize() (*app.InitializeService, error)
 	BuildArchitecture() (*app.ArchitectureService, error)
 	BuildAuth() (*AuthDependencies, error)
+	BuildPortalClient() (*portalclient.PortalClient, error)
 }
 
 type serviceFactory struct{}
@@ -62,7 +69,19 @@ func (f *serviceFactory) BuildInitialize() (*app.InitializeService, error) {
 		versionService, levelRepository, questionRepository, templateRepository, gitInfo), nil
 }
 
-func (f *serviceFactory) BuildExecutor() (*app.ExecutorService, error) {
+// BuildRunner picks between the local Docker executor and the remote
+// portal-driven executor based on the `--remote` flag (or the
+// VEX_MODE=remote env var, resolved by the caller).
+func (f *serviceFactory) BuildRunner(remote, follow bool) (app.Runner, error) {
+	if remote {
+		return f.BuildRemoteExecutor(follow)
+	}
+	return f.BuildLocalExecutor()
+}
+
+// BuildLocalExecutor wires the legacy Docker-based executor (kept for the
+// non-remote branch of the CLI).
+func (f *serviceFactory) BuildLocalExecutor() (*app.ExecutorService, error) {
 	projectPath, err := f.getProjectPath()
 	if err != nil {
 		return nil, err
@@ -78,6 +97,46 @@ func (f *serviceFactory) BuildExecutor() (*app.ExecutorService, error) {
 
 	return app.NewExecutorService(
 		projectRepository, cmdExecutor, imageService, containerService), nil
+}
+
+// BuildRemoteExecutor wires the portal-driven executor used by
+// `vex <step> [env] --remote`. The `follow` parameter is the negation of
+// `--no-follow`; M4 honors it as a no-op (FollowExecution lands in M5).
+func (f *serviceFactory) BuildRemoteExecutor(follow bool) (*app.RemoteExecutorService, error) {
+	projectPath, err := f.getProjectPath()
+	if err != nil {
+		return nil, err
+	}
+	projectRepository, err := f.getProjectRepository(projectPath)
+	if err != nil {
+		return nil, err
+	}
+
+	tokenStore, err := portalauth.NewFileTokenStore()
+	if err != nil {
+		return nil, err
+	}
+
+	portalURL := portalauth.PortalURL()
+	httpClient := &http.Client{Timeout: 30 * time.Second}
+	deviceFlow := portalauth.NewDeviceFlowClient(portalURL)
+	client := portalclient.NewPortalClient(portalURL, tokenStore, httpClient)
+
+	return app.NewRemoteExecutorService(
+		projectRepository, client, deviceFlow, tokenStore, follow,
+	), nil
+}
+
+// BuildPortalClient returns a portal HTTP client backed by the persisted
+// credentials file. It is used by sub-commands that need the portal but
+// not the full executor flow (e.g. `vex execution cancel`).
+func (f *serviceFactory) BuildPortalClient() (*portalclient.PortalClient, error) {
+	tokenStore, err := portalauth.NewFileTokenStore()
+	if err != nil {
+		return nil, err
+	}
+	httpClient := &http.Client{Timeout: 30 * time.Second}
+	return portalclient.NewPortalClient(portalauth.PortalURL(), tokenStore, httpClient), nil
 }
 
 func (f *serviceFactory) BuildArchitecture() (*app.ArchitectureService, error) {
