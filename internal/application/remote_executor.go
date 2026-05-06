@@ -16,6 +16,12 @@ import (
 	"github.com/jairoprogramador/vex/internal/infrastructure/portalclient"
 )
 
+// ErrExecutionFailed signals that the remote pipeline finished with a
+// non-success terminal status. The CLI surfaces this through the standard
+// non-zero exit path (root.go translates a non-nil error into os.Exit(1)).
+// It is exported so callers can branch on it via errors.Is.
+var ErrExecutionFailed = errors.New("remote execution failed")
+
 // RemoteExecutorService orchestrates a deploy that runs on the portal-side
 // infrastructure (Fly Machines) instead of the local Docker daemon. It is
 // the entry point of the `vex <step> [env] --remote` flow.
@@ -133,12 +139,13 @@ func (s *RemoteExecutorService) Run(ctx context.Context, step, environment strin
 		}
 	}
 
-	tdResp, err := s.portalClient.TriggerDeploy(ctx, portalclient.TriggerDeployRequest{
+	tdReq := portalclient.TriggerDeployRequest{
 		PipelineID:  cgResp.PipelineID,
 		Environment: environment,
 		Step:        step,
 		Version:     "", // vexd computes it from project git history
-	})
+	}
+	tdResp, err := s.triggerDeployWithCapacityRetry(ctx, tdReq)
 	if err != nil {
 		return s.translateError(err)
 	}
@@ -148,10 +155,117 @@ func (s *RemoteExecutorService) Run(ctx context.Context, step, environment strin
 	if !s.follow {
 		return nil
 	}
-	// FollowExecution / SSE streaming is part of M5. We surface the
-	// portal URL so the user can watch the run from the browser today.
-	fmt.Fprintln(s.stdout, "Live log streaming will arrive in M5. Open the portal URL above to follow progress.")
+	return s.followExecution(ctx, tdResp.ExecutionID)
+}
+
+// capacityRetryDefault is the wait used when the portal returns
+// ErrGlobalCapacityReached without a Retry-After header. Picked to be short
+// enough not to feel hung but long enough to give the autoscaler a chance.
+const capacityRetryDefault = 30 * time.Second
+
+// capacityRetryCap clamps the server-suggested Retry-After so a misbehaving
+// (or hostile) header cannot stall the CLI for hours.
+const capacityRetryCap = 5 * time.Minute
+
+// triggerDeployWithCapacityRetry calls TriggerDeploy and, only when running
+// in --follow mode, retries exactly once if the portal reports global
+// capacity exhaustion (HTTP 503 with `global_capacity_reached`). The wait is
+// driven by the server's Retry-After hint (clamped to capacityRetryCap).
+//
+// Behavior matrix:
+//   - --no-follow: never retries. Capacity errors fail fast so the user can
+//     decide when to retry; auto-retrying a fire-and-forget defeats the
+//     point of the flag.
+//   - --follow: one retry. If the second attempt also returns 503, the
+//     original error propagates to translateError for user-facing display.
+//   - 429 (user concurrency limit) is never retried — the user already has
+//     too many running, retrying would just hit the same wall.
+func (s *RemoteExecutorService) triggerDeployWithCapacityRetry(
+	ctx context.Context,
+	req portalclient.TriggerDeployRequest,
+) (portalclient.TriggerDeployResponse, error) {
+	resp, err := s.portalClient.TriggerDeploy(ctx, req)
+	if err == nil || !s.follow || !errors.Is(err, portalclient.ErrGlobalCapacityReached) {
+		return resp, err
+	}
+
+	wait := capacityRetryDefault
+	var httpErr *portalclient.HTTPError
+	if errors.As(err, &httpErr) && httpErr.RetryAfter > 0 {
+		wait = time.Duration(httpErr.RetryAfter) * time.Second
+	}
+	if wait > capacityRetryCap {
+		wait = capacityRetryCap
+	}
+
+	fmt.Fprintf(s.stdout, "Server at capacity, retrying in %s...\n", wait)
+
+	select {
+	case <-time.After(wait):
+	case <-ctx.Done():
+		return portalclient.TriggerDeployResponse{}, ctx.Err()
+	}
+
+	return s.portalClient.TriggerDeploy(ctx, req)
+}
+
+// followExecution streams logs and stage transitions from the portal until
+// the execution reaches a terminal state. It returns:
+//
+//   - nil when the execution succeeds.
+//   - ErrExecutionFailed when the execution ends in failed/canceled/error.
+//   - nil (with an explanatory stderr message) when the user detaches via
+//     Ctrl+C; the remote run keeps going.
+//   - any other error verbatim from the SSE client.
+//
+// The terminal status is captured via closure rather than returned from the
+// handler because the SSE client invokes onDone before its own return.
+func (s *RemoteExecutorService) followExecution(ctx context.Context, executionID string) error {
+	var (
+		terminal     DoneEvent
+		terminalSeen bool
+	)
+
+	err := s.portalClient.FollowExecution(ctx, executionID, 0,
+		func(line string) {
+			fmt.Fprintln(s.stdout, line)
+		},
+		func(stage string) {
+			fmt.Fprintf(s.stdout, "-> %s\n", stage)
+		},
+		func(done portalclient.DoneEvent) {
+			terminal = DoneEvent(done)
+			terminalSeen = true
+			if done.LogsLost {
+				fmt.Fprintln(s.stderr, "Some logs may be incomplete (log-ingest dropped at least one batch)")
+			}
+		},
+	)
+
+	if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+		fmt.Fprintf(s.stderr,
+			"\nDetached. Execution %s continues remotely. Use 'vex execution cancel %s' to cancel.\n",
+			executionID, executionID)
+		return nil
+	}
+	if err != nil {
+		return fmt.Errorf("follow execution: %w", err)
+	}
+	if terminalSeen && terminal.Status != "succeeded" {
+		return fmt.Errorf("execution %s ended with status %q (exit_code=%d): %w",
+			executionID, terminal.Status, terminal.ExitCode, ErrExecutionFailed)
+	}
 	return nil
+}
+
+// DoneEvent mirrors portalclient.DoneEvent so callers depending on the
+// application package don't need to import the infrastructure package just
+// to inspect the terminal status. Conversion is a struct copy.
+type DoneEvent struct {
+	Status       string
+	ExitCode     int
+	LogsLost     bool
+	CurrentStage string
 }
 
 // ensureToken loads the persisted token, falling back to the device-code

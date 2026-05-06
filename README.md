@@ -27,6 +27,11 @@ vex deploy prod
 
 Eso es todo. `vex` selecciona automáticamente una arquitectura cloud probada, empaqueta tu aplicación y la despliega. Lo que normalmente toma días de configuración manual, con `vex` toma 5 minutos.
 
+`vex` puede ejecutar el despliegue de dos maneras:
+
+- **Modo local** (default): construye una imagen Docker y corre el motor `vexd` en tu máquina.
+- **Modo remoto** (`--remote` o `VEX_MODE=remote`): autentica contra el portal Vex (device flow), arma la solicitud y dispara una _Fly Machine_ efímera que ejecuta `vexd`. Los logs se transmiten en vivo por SSE.
+
 ## ¿Para quién es?
 
 Para equipos pequeños de desarrollo que:
@@ -145,9 +150,52 @@ vex version
 | :--- | :--- |
 | `vex init` | Inicializa el proyecto y genera `vexconfig.yaml`. |
 | `vex arq` | Ajusta la arquitectura cloud según tus necesidades (opcional). |
-| `vex deploy [env]` | Despliega en el entorno indicado (`sand`, `stag`, `prod`). |
+| `vex <step> [env]` | Ejecuta el step indicado (`test`, `supply`, `package`, `deploy`) en el entorno (`sand`, `stag`, `prod`). |
+| `vex auth login` | Autentica el CLI contra el portal mediante device flow y persiste el token. |
+| `vex auth logout` | Borra el token guardado. |
+| `vex auth whoami` | Muestra el usuario autenticado. |
+| `vex execution cancel <id>` | Cancela una ejecución remota en curso. |
+| `vex version` | Muestra la versión instalada. |
+
+### Flags relevantes
+
+| Flag | Descripción |
+| :--- | :--- |
+| `--remote` | Ejecuta el step en la infraestructura del portal (Fly Machines) en vez del Docker local. Equivalente a `VEX_MODE=remote`. |
+| `--no-follow` | Solo válido con `--remote`. Sale apenas la ejecución queda encolada (no streamea logs). |
 
 > `vex init` acepta el flag `--yes` / `-y` para usar valores por defecto sin preguntas interactivas.
+
+## Modo local vs modo remoto
+
+| | Modo local | Modo remoto |
+| :--- | :--- | :--- |
+| Disparador | default | `--remote` o `VEX_MODE=remote` |
+| Auth | no requerida | `vex auth login` (device flow OAuth) |
+| Ejecución | imagen Docker construida y corrida en tu host | Fly Machine efímera (`auto_destroy=true`) creada por el portal |
+| Logs | stdout local | SSE en vivo desde el portal (salvo `--no-follow`) |
+| Estado | en memoria del proceso | persistido en el portal — visible y auditado |
+| Concurrencia | sin límite (limitado por tu máquina) | hasta 3 ejecuciones simultáneas por usuario |
+
+Ante un 503 con `Retry-After`, `--remote --follow` reintenta una vez automáticamente. `--no-follow` falla directo para que decidas cuándo reintentar. Un 429 (límite de concurrencia del usuario) nunca se reintenta — espera a que termine alguna o cancela con `vex execution cancel <id>`.
+
+## Variables de entorno
+
+| Variable | Default | Descripción |
+| :--- | :--- | :--- |
+| `VEX_PORTAL_URL` | `https://vexportal.app` | URL base del portal Vex (útil para apuntar a staging o un fork). |
+| `VEX_MODE` | _(unset)_ | `remote` activa el modo remoto sin pasar `--remote`. Cualquier otro valor se ignora. |
+| `XDG_CONFIG_HOME` | _(unset)_ | Si se establece, `vex` guarda credenciales bajo `$XDG_CONFIG_HOME/.vex/credentials.json`. |
+
+## Credenciales
+
+El token del portal se persiste con permisos `0600` en, por orden de prioridad:
+
+1. `$XDG_CONFIG_HOME/.vex/credentials.json` (si la variable está seteada).
+2. `%APPDATA%\.vex\credentials.json` (Windows).
+3. `$HOME/.vex/.config/credentials.json` (POSIX, fallback).
+
+Borrar este archivo equivale a `vex auth logout`.
 
 ## Contribuciones
 

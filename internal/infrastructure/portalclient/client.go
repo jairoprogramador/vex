@@ -157,6 +157,8 @@ func classifyError(endpoint string, resp *http.Response) error {
 		return joinErr(ErrForbidden, httpErr, endpoint)
 	case http.StatusNotFound:
 		return joinErr(ErrNotFound, httpErr, endpoint)
+	case http.StatusConflict:
+		return joinErr(ErrConflict, httpErr, endpoint)
 	case http.StatusTooManyRequests:
 		return joinErr(ErrUserConcurrencyLimit, httpErr, endpoint)
 	case http.StatusBadGateway:

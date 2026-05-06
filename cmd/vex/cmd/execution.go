@@ -61,6 +61,16 @@ func runExecutionCancel(parentCtx context.Context, executionID string) error {
 			return fmt.Errorf("execution %s not found (already finished, never existed, or not yours)", executionID)
 		case errors.Is(err, portalclient.ErrForbidden):
 			return errors.New("portal denied access to this execution (membership required)")
+		case errors.Is(err, portalclient.ErrConflict):
+			return fmt.Errorf("execution %s is already in a terminal state (cannot cancel)", executionID)
+		case errors.Is(err, portalclient.ErrGlobalCapacityReached):
+			// User-initiated cancel: surface the hint and let the user
+			// decide when to retry. We don't auto-retry like --follow does.
+			var httpErr *portalclient.HTTPError
+			if errors.As(err, &httpErr) && httpErr.RetryAfter > 0 {
+				return fmt.Errorf("portal busy, retry in %ds", httpErr.RetryAfter)
+			}
+			return errors.New("portal busy, retry shortly")
 		}
 		return fmt.Errorf("cancel execution: %w", err)
 	}

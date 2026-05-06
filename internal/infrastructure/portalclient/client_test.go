@@ -328,6 +328,13 @@ func TestPortalClient_CancelExecution(t *testing.T) {
 			body:       `{"error":"not_found"}`,
 			wantErrIs:  ErrNotFound,
 		},
+		{
+			name:       "conflict on terminal execution",
+			execID:     "exec-already-done",
+			statusCode: http.StatusConflict,
+			body:       `{"error":"already_terminal","message":"execution already terminal"}`,
+			wantErrIs:  ErrConflict,
+		},
 	}
 
 	for _, tt := range tests {

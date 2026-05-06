@@ -38,6 +38,11 @@ var (
 	// ErrFlyAPIFailure maps to HTTP 502. The portal could not dispatch the
 	// Machine to Fly. Surfaced as-is to the user; retrying may help.
 	ErrFlyAPIFailure = errors.New("portalclient: fly api failure")
+
+	// ErrConflict maps to HTTP 409. For `cancel-execution` it means the
+	// execution is already in a terminal state (succeeded/failed/canceled)
+	// and cannot transition any further.
+	ErrConflict = errors.New("portalclient: conflict")
 )
 
 // HTTPError captures the raw shape of a non-success response. It is wrapped
@@ -88,6 +93,8 @@ func httpStatusMessage(status int) string {
 		return "forbidden"
 	case 404:
 		return "not found"
+	case 409:
+		return "conflict"
 	case 429:
 		return "too many requests"
 	case 502:
