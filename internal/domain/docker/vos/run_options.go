@@ -20,9 +20,8 @@ func NewRunOptions(
 	if image == (ImageName{}) {
 		return RunOptions{}, errors.New("image is required")
 	}
-	if command == "" {
-		return RunOptions{}, errors.New("command is required")
-	}
+	// command es opcional: en modo one-shot (M3+) el ENTRYPOINT del contenedor
+	// es `vexd run` y los datos van por env var, no por argumentos.
 
 	return RunOptions{
 		image:        image,

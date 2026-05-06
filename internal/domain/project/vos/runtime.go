@@ -39,3 +39,21 @@ func (r Runtime) Image() vos.Image  { return r.image }
 func (r Runtime) Volumes() []Volume { return r.volumes }
 func (r Runtime) Env() []EnvVar     { return r.env }
 func (r Runtime) Args() []Argument  { return r.args }
+
+// WithExtraEnv retorna un nuevo Runtime con las env vars adicionales anexadas
+// al final del slice existente. La VO permanece inmutable: el llamador debe
+// reasignarla (ej. project.SetRuntime(...)).
+func (r Runtime) WithExtraEnv(extra ...EnvVar) Runtime {
+	if len(extra) == 0 {
+		return r
+	}
+	merged := make([]EnvVar, 0, len(r.env)+len(extra))
+	merged = append(merged, r.env...)
+	merged = append(merged, extra...)
+	return Runtime{
+		image:   r.image,
+		volumes: r.volumes,
+		env:     merged,
+		args:    r.args,
+	}
+}
