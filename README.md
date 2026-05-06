@@ -197,6 +197,104 @@ El token del portal se persiste con permisos `0600` en, por orden de prioridad:
 
 Borrar este archivo equivale a `vex auth logout`.
 
+## Smoke E2E manual
+
+Esta guía valida de extremo a extremo el flujo `vex deploy --remote → vexd → SSE`. Está pensada para demos manuales y para validar después de un cambio mayor en el portal o en la imagen runtime. No reemplaza los tests unitarios.
+
+> Requisitos: tener `flyctl`, `psql` y `wscat` instalados. Acceso a las variables `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` y al token Fly del entorno destino. La imagen runtime referenciada en `vexconfig.yaml` debe estar publicada (tag `:v2` o superior).
+
+### 1. Preparar el entorno
+
+```sh
+export PUBLIC_PORTAL_URL=https://vexportal.app
+export FLY_API_TOKEN=...
+# Los secrets viven en Supabase; verificar que coinciden:
+supabase secrets list | grep -E 'FLY_(API_TOKEN|APP|REGION)'
+# Esperado: FLY_API_TOKEN=***, FLY_APP=vex-runners-mvp, FLY_REGION=dfw
+```
+
+### 2. Login y configuración del proyecto
+
+```sh
+cd ~/myapp
+vex auth logout || true
+vex auth login
+# Esperado: abre el browser, imprime la URL/code; tras aprobar, "Authenticated as <email>".
+
+vex auth whoami
+# Esperado: imprime user_id, email y token_id.
+
+vex init        # solo si todavía no existe vexconfig.yaml
+```
+
+### 3. Disparar el despliegue (sin streaming)
+
+```sh
+vex deploy prod --remote --no-follow
+# Esperado: "Execution <id> queued. Follow at https://vexportal.app/admin/p/<projectId>/deploy".
+```
+
+Verificación inmediata:
+
+```sh
+flyctl machines list -a vex-runners-mvp
+# Esperado: una Machine en estado `started` o `created` en la región dfw.
+
+psql "$SUPABASE_URL" -c "select id, status, current_stage from executions order by created_at desc limit 1"
+# Inicialmente: status='queued', current_stage='initializing'.
+# Tras ~10-30s: current_stage transiciona por 'cloning_project' →
+# 'cloning_pipeline' → 'loading_environment' → ... → 'running_step:deploy'.
+# Final: status='succeeded' (o 'failed' con exit_code != 0).
+```
+
+### 4. Disparar con streaming (validación SSE)
+
+```sh
+vex deploy prod --remote
+# Esperado: logs en vivo en la terminal a medida que vexd los emite.
+# Cada cambio de stage aparece como "-> <stage>".
+# Al terminar: exit code 0 (succeeded) o 1 (failed/canceled).
+```
+
+En paralelo, abrir `https://vexportal.app/admin/p/<projectId>/deploy` en el navegador: la consola web debe mostrar los mismos logs y el `current_stage` cambiando en tiempo real (Supabase Realtime).
+
+### 5. Cómo confirmar que las transiciones de stage llegan
+
+```sh
+# Polling rápido durante la ejecución:
+watch -n 2 'psql "$SUPABASE_URL" -c "select id, status, current_stage, updated_at from executions order by created_at desc limit 1"'
+```
+
+Si `current_stage` se queda fijo y `status='running'` por más de 5 minutos sin avanzar, la Machine está colgada (típicamente: `git clone` bloqueado por credenciales o un step con un comando que no termina).
+
+### 6. Recuperación cuando una Machine queda colgada
+
+```sh
+# Opción A — cancelar desde el CLI (más rápido):
+vex execution cancel <execution-id>
+# Esperado: status='canceled', la Machine se destruye en <30s.
+
+# Opción B — esperar a `cron-companion`:
+# El cron corre cada 10 minutos y reconcilia (a) ejecuciones canceladas con
+# `runner_external_id` y (b) Machines huérfanas en Fly que no aparecen en la
+# tabla `executions`. Útil si la cancelación falla por timeout del CLI.
+
+# Inspección directa de la Machine (debug avanzado):
+flyctl machine status <machine-id> -a vex-runners-mvp
+flyctl logs -a vex-runners-mvp -i <machine-id>
+```
+
+### 7. Cleanup post-validación
+
+```sh
+flyctl machines list -a vex-runners-mvp
+# Tras una corrida exitosa con `auto_destroy=true` la lista debe quedar vacía.
+# Si quedan Machines en estado `stopped` por más de 15 min, removerlas:
+flyctl machine destroy <id> -a vex-runners-mvp --force
+```
+
+> El smoke completo valida: device flow → trigger-deploy → Fly Machine ephemeral → SSE de logs → transiciones `current_stage` → terminación con `auto_destroy` → reconciliación por `cron-companion`.
+
 ## Contribuciones
 
 Las contribuciones son bienvenidas. Si tienes ideas, encuentras un error o quieres mejorar algo, abre un [issue](https://github.com/jairoprogramador/vex/issues) o enviá un [pull request](https://github.com/jairoprogramador/vex/pulls).

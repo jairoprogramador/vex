@@ -65,7 +65,10 @@ func init() {
 // runAuthLogin orchestrates the user-facing portion of the device flow:
 // kick off the request, surface the verification URL/code, open the browser
 // (best-effort), poll until approval, persist the token, and finish with a
-// whoami greeting.
+// whoami greeting. The shared device-flow plumbing lives in
+// portalauth.CLIFlowConfig — this function only contributes the auth-only
+// UX (progress dots, custom exit codes for sentinel errors, whoami after
+// success).
 func runAuthLogin(parentCtx context.Context) error {
 	ctx, stop := signal.NotifyContext(parentCtx, os.Interrupt, syscall.SIGTERM)
 	defer stop()
@@ -75,33 +78,25 @@ func runAuthLogin(parentCtx context.Context) error {
 		return fmt.Errorf("auth login: %w", err)
 	}
 
-	device, err := deps.DeviceClient.Start(ctx)
-	if err != nil {
-		return fmt.Errorf("start device flow: %w", err)
+	flow := portalauth.CLIFlowConfig{
+		Client: deps.DeviceClient,
+		Store:  deps.TokenStore,
+		Stdout: os.Stdout,
+		Stderr: os.Stderr,
+		// Progress UX specific to the interactive auth subcommand: a dot
+		// every 5s prefixed by an inline "Waiting for approval" line and a
+		// trailing newline once polling stops.
+		OnWaiting: func(ctx context.Context) func() {
+			fmt.Fprint(os.Stdout, "Waiting for approval")
+			stopProgress := startProgressDots(ctx)
+			return func() {
+				stopProgress()
+				fmt.Fprintln(os.Stdout)
+			}
+		},
 	}
 
-	fmt.Fprintln(os.Stdout, "Open the following URL in your browser:")
-	fmt.Fprintf(os.Stdout, "  %s\n", device.VerificationURIComplete)
-	fmt.Fprintf(os.Stdout, "Or visit %s and enter the code: %s\n",
-		device.VerificationURI, device.UserCode)
-
-	if err := portalauth.OpenBrowser(device.VerificationURIComplete); err != nil {
-		// Non-fatal: the URL is already on stdout for the user to copy.
-		fmt.Fprintf(os.Stderr, "(could not open browser automatically: %v)\n", err)
-	}
-
-	interval := time.Duration(device.Interval) * time.Second
-	if interval <= 0 {
-		interval = 5 * time.Second
-	}
-
-	fmt.Fprint(os.Stdout, "Waiting for approval")
-	stopProgress := startProgressDots(ctx)
-
-	tokenResp, err := deps.DeviceClient.Poll(ctx, device.DeviceCode, interval)
-	stopProgress()
-	fmt.Fprintln(os.Stdout)
-
+	token, err := flow.Run(ctx)
 	switch {
 	case errors.Is(err, context.Canceled):
 		fmt.Fprintln(os.Stderr, "Login canceled.")
@@ -113,18 +108,7 @@ func runAuthLogin(parentCtx context.Context) error {
 		fmt.Fprintln(os.Stderr, "Device code expired before approval. Run 'vex auth login' to retry.")
 		os.Exit(1)
 	case err != nil:
-		return fmt.Errorf("poll device token: %w", err)
-	}
-
-	now := time.Now().UTC()
-	token := portalauth.Token{
-		AccessToken: tokenResp.AccessToken,
-		TokenType:   tokenResp.TokenType,
-		ObtainedAt:  now,
-		ExpiresAt:   now.Add(time.Duration(tokenResp.ExpiresIn) * time.Second),
-	}
-	if err := deps.TokenStore.Save(token); err != nil {
-		return fmt.Errorf("persist token: %w", err)
+		return fmt.Errorf("auth login: %w", err)
 	}
 
 	identity, err := fetchWhoami(ctx, deps.HTTPClient, deps.PortalURL, token.AccessToken)

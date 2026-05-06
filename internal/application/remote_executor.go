@@ -282,32 +282,20 @@ func (s *RemoteExecutorService) ensureToken(ctx context.Context) error {
 }
 
 // runDeviceFlow drives the OAuth Device Authorization Grant against the
-// portal and persists the resulting token. It mirrors the body of the
-// `vex auth login` subcommand but lives here so the remote executor is
-// self-sufficient (no transitive dependency on cmd/).
+// portal and persists the resulting token. The shared plumbing
+// (device-code request, browser open, polling, persistence) lives in
+// portalauth.CLIFlowConfig — this method only adds the remote-executor's
+// "Authenticated." footer and translates sentinel errors into descriptive
+// strings so callers don't need to depend on portalauth's sentinel set.
 func (s *RemoteExecutorService) runDeviceFlow(ctx context.Context) error {
-	device, err := s.deviceFlow.Start(ctx)
-	if err != nil {
-		return fmt.Errorf("start device flow: %w", err)
+	flow := portalauth.CLIFlowConfig{
+		Client: s.deviceFlow,
+		Store:  s.tokenStore,
+		Stdout: s.stdout,
+		Stderr: s.stderr,
+		Clock:  s.now,
 	}
-
-	fmt.Fprintln(s.stdout, "Open the following URL in your browser:")
-	fmt.Fprintf(s.stdout, "  %s\n", device.VerificationURIComplete)
-	fmt.Fprintf(s.stdout, "Or visit %s and enter the code: %s\n",
-		device.VerificationURI, device.UserCode)
-
-	if err := portalauth.OpenBrowser(device.VerificationURIComplete); err != nil {
-		fmt.Fprintf(s.stderr, "(could not open browser automatically: %v)\n", err)
-	}
-
-	interval := time.Duration(device.Interval) * time.Second
-	if interval <= 0 {
-		interval = 5 * time.Second
-	}
-
-	fmt.Fprintln(s.stdout, "Waiting for approval...")
-	tokenResp, err := s.deviceFlow.Poll(ctx, device.DeviceCode, interval)
-	if err != nil {
+	if _, err := flow.Run(ctx); err != nil {
 		switch {
 		case errors.Is(err, portalauth.ErrAccessDenied):
 			return errors.New("access denied: portal rejected this device. Run again to retry")
@@ -316,19 +304,8 @@ func (s *RemoteExecutorService) runDeviceFlow(ctx context.Context) error {
 		case errors.Is(err, context.Canceled):
 			return err
 		default:
-			return fmt.Errorf("poll device token: %w", err)
+			return fmt.Errorf("device flow: %w", err)
 		}
-	}
-
-	now := s.now()
-	token := portalauth.Token{
-		AccessToken: tokenResp.AccessToken,
-		TokenType:   tokenResp.TokenType,
-		ObtainedAt:  now,
-		ExpiresAt:   now.Add(time.Duration(tokenResp.ExpiresIn) * time.Second),
-	}
-	if err := s.tokenStore.Save(token); err != nil {
-		return fmt.Errorf("persist token: %w", err)
 	}
 	fmt.Fprintln(s.stdout, "Authenticated.")
 	return nil
