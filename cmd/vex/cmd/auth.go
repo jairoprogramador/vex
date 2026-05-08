@@ -136,7 +136,7 @@ func runAuthLogout(_ context.Context) error {
 	}
 	fmt.Fprintln(os.Stdout, "Local credentials cleared.")
 	fmt.Fprintln(os.Stdout, "Note: the token may still be valid on the server until expiration. "+
-		"Use 'vex auth revoke' (TODO M6+) to revoke server-side.")
+		"Use 'vex auth revoke' to revoke server-side.")
 	return nil
 }
 

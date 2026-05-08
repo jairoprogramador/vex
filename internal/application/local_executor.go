@@ -24,20 +24,20 @@ const (
 	requestInputEnvVar = "VEX_REQUEST_INPUT"
 )
 
-type ExecutorService struct {
+type LocalExecutorService struct {
 	projectRepository proPor.ProjectRepository
 	commandExecutor   docPor.CommandExecutor
 	imageService      docPor.ImageService
 	containerService  docPor.ContainerService
 }
 
-func NewExecutorService(
+func NewLocalExecutorService(
 	projectRepository proPor.ProjectRepository,
 	commandExecutor docPor.CommandExecutor,
 	imageService docPor.ImageService,
 	containerService docPor.ContainerService,
-) *ExecutorService {
-	return &ExecutorService{
+) *LocalExecutorService {
+	return &LocalExecutorService{
 		projectRepository: projectRepository,
 		commandExecutor:   commandExecutor,
 		imageService:      imageService,
@@ -49,7 +49,7 @@ func NewExecutorService(
 // runtime del proyecto. Construye el RequestInput JSON, lo serializa y codifica
 // en base64, y lo inyecta como env var VEX_REQUEST_INPUT al `docker run`. El
 // ENTRYPOINT de la imagen runtime debe ser `vexd run` (M3+, imagen :v2).
-func (s *ExecutorService) Run(ctx context.Context, command, environment string) error {
+func (s *LocalExecutorService) Run(ctx context.Context, command, environment string) error {
 	exists, err := s.projectRepository.Exists()
 	if err != nil {
 		return err
@@ -125,7 +125,7 @@ func (s *ExecutorService) Run(ctx context.Context, command, environment string) 
 // Compile-time contract check: ExecutorService satisfies Runner so the
 // factory can return either local or remote implementations behind the
 // same interface.
-var _ Runner = (*ExecutorService)(nil)
+var _ Runner = (*LocalExecutorService)(nil)
 
 // encodeRequestInput serializa el RequestInput a JSON y lo codifica en base64.
 // El base64 es la forma portable: docker run --env recibe valores arbitrarios,

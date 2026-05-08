@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"runtime"
 	"time"
 )
 
@@ -90,24 +89,14 @@ func PortalURL() string {
 	return DefaultPortalURL
 }
 
-// CredentialsPath returns the absolute path to the credentials file.
-//
-// Resolution order:
-//  1. $XDG_CONFIG_HOME/.vex/credentials.json (Linux/macOS, when set).
-//  2. %APPDATA%\.vex\credentials.json on Windows.
-//  3. $HOME/.vex/.config/credentials.json on POSIX as last resort.
+func BackendURL() string {
+	return "https://kamwyoqphgzmifrpgjjl.supabase.co"
+}
+
 func CredentialsPath() (string, error) {
-	if xdg := os.Getenv("XDG_CONFIG_HOME"); xdg != "" {
-		return filepath.Join(xdg, ".vex", CredentialsFileName), nil
-	}
-	if runtime.GOOS == "windows" {
-		if appData := os.Getenv("APPDATA"); appData != "" {
-			return filepath.Join(appData, ".vex", CredentialsFileName), nil
-		}
-	}
-	home, err := os.UserHomeDir()
+	configDir, err := os.UserConfigDir()
 	if err != nil {
-		return "", fmt.Errorf("resolve home directory: %w", err)
+		return "", fmt.Errorf("resolve config directory: %w", err)
 	}
-	return filepath.Join(home, ".vex", ".config", CredentialsFileName), nil
+	return filepath.Join(configDir, "vex", CredentialsFileName), nil
 }

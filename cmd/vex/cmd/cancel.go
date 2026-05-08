@@ -14,33 +14,21 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// executionCmd is the parent of the execution-management subcommands. It
-// only groups them — no logic here.
-var executionCmd = &cobra.Command{
-	Use:   "execution",
-	Short: "Manage portal-side deploy executions.",
-	Long:  "Inspect and act on executions running on the Vex portal infrastructure.",
-}
-
 // executionCancelCmd asks the portal to cancel an in-flight execution.
 // The portal handles Fly Machine teardown asynchronously (§6.9).
-var executionCancelCmd = &cobra.Command{
+var cancelCmd = &cobra.Command{
 	Use:   "cancel <execution-id>",
 	Short: "Cancel a running execution.",
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return runExecutionCancel(cmd.Context(), args[0])
+		return runCancel(cmd.Context(), args[0])
 	},
 }
 
-func init() {
-	executionCmd.AddCommand(executionCancelCmd)
-}
-
-// runExecutionCancel wires the portal client and forwards the cancel
+// runCancel wires the portal client and forwards the cancel
 // request. Errors are translated to user-friendly messages for the common
 // cases (no token, expired token, not found).
-func runExecutionCancel(parentCtx context.Context, executionID string) error {
+func runCancel(parentCtx context.Context, executionID string) error {
 	ctx, stop := signal.NotifyContext(parentCtx, os.Interrupt, syscall.SIGTERM)
 	defer stop()
 

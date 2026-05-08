@@ -33,7 +33,7 @@ type ServiceFactory interface {
 	// It is the entry point used by the root command for the
 	// `vex <step> [env]` flow.
 	BuildRunner(remote, follow bool) (app.Runner, error)
-	BuildLocalExecutor() (*app.ExecutorService, error)
+	BuildLocalExecutor() (*app.LocalExecutorService, error)
 	BuildRemoteExecutor(follow bool) (*app.RemoteExecutorService, error)
 	BuildInitialize() (*app.InitializeService, error)
 	BuildArchitecture() (*app.ArchitectureService, error)
@@ -72,16 +72,16 @@ func (f *serviceFactory) BuildInitialize() (*app.InitializeService, error) {
 // BuildRunner picks between the local Docker executor and the remote
 // portal-driven executor based on the `--remote` flag (or the
 // VEX_MODE=remote env var, resolved by the caller).
-func (f *serviceFactory) BuildRunner(remote, follow bool) (app.Runner, error) {
-	if remote {
-		return f.BuildRemoteExecutor(follow)
+func (f *serviceFactory) BuildRunner(local, follow bool) (app.Runner, error) {
+	if local {
+		return f.BuildLocalExecutor()
 	}
-	return f.BuildLocalExecutor()
+	return f.BuildRemoteExecutor(follow)
 }
 
 // BuildLocalExecutor wires the legacy Docker-based executor (kept for the
 // non-remote branch of the CLI).
-func (f *serviceFactory) BuildLocalExecutor() (*app.ExecutorService, error) {
+func (f *serviceFactory) BuildLocalExecutor() (*app.LocalExecutorService, error) {
 	projectPath, err := f.getProjectPath()
 	if err != nil {
 		return nil, err
@@ -95,7 +95,7 @@ func (f *serviceFactory) BuildLocalExecutor() (*app.ExecutorService, error) {
 	imageService := docSer.NewImageBuilder()
 	containerService := docSer.NewContainerBuilder()
 
-	return app.NewExecutorService(
+	return app.NewLocalExecutorService(
 		projectRepository, cmdExecutor, imageService, containerService), nil
 }
 
@@ -169,7 +169,7 @@ func (f *serviceFactory) BuildAuth() (*AuthDependencies, error) {
 		return nil, err
 	}
 
-	portalURL := portalauth.PortalURL()
+	portalURL := portalauth.BackendURL()
 	httpClient := &http.Client{Timeout: 30 * time.Second}
 
 	return &AuthDependencies{

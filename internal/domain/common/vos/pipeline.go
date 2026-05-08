@@ -19,11 +19,11 @@ type Pipeline struct {
 
 func NewPipeline(repoURL, ref string) (Pipeline, error) {
 	if repoURL == "" {
-		return Pipeline{}, errors.New("repoURL is required")
+		return Pipeline{}, errors.New("pipeline url is required")
 	}
 
 	if ref == "" {
-		return Pipeline{}, errors.New("ref is required")
+		ref = "main"
 	}
 
 	repoURLConverted := repoURL

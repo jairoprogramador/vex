@@ -21,13 +21,19 @@ type ProjectData struct {
 
 func NewProjectData(name, organization, team, description, url, ref string) (ProjectData, error) {
 	if name == "" {
-		return ProjectData{}, errors.New("name is required")
+		return ProjectData{}, errors.New("project name is required")
 	}
 	if organization == "" {
-		return ProjectData{}, errors.New("organization is required")
+		return ProjectData{}, errors.New("project organization is required")
 	}
 	if team == "" {
-		return ProjectData{}, errors.New("team is required")
+		return ProjectData{}, errors.New("project team is required")
+	}
+	if url == "" {
+		return ProjectData{}, errors.New("project url is required")
+	}
+	if ref == "" {
+		ref = "main"
 	}
 	if description == "" {
 		description = DefaultProjectDescription
