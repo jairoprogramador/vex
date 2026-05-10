@@ -6,12 +6,12 @@ import (
 
 type ExecutionUnit struct {
 	image    comVos.Image
-	template comVos.Template
+	template comVos.Pipeline
 }
 
-func NewExecutionUnit(image comVos.Image, template comVos.Template) ExecutionUnit {
+func NewExecutionUnit(image comVos.Image, template comVos.Pipeline) ExecutionUnit {
 	return ExecutionUnit{image: image, template: template}
 }
 
 func (e ExecutionUnit) Image() comVos.Image       { return e.image }
-func (e ExecutionUnit) Template() comVos.Template { return e.template }
+func (e ExecutionUnit) Template() comVos.Pipeline { return e.template }

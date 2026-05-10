@@ -2,6 +2,7 @@ package services
 
 import (
 	"fmt"
+	"runtime"
 	"strings"
 
 	docPor "github.com/jairoprogramador/vex/internal/domain/docker/ports"
@@ -45,7 +46,8 @@ func (s *containerBuilder) BuildCommand(opts docVos.RunOptions) (string, error) 
 	}
 
 	for key, val := range opts.EnvVars() {
-		commandBuilder.WriteString(fmt.Sprintf(" -e %s=%s", key, val))
+		normalizedVal := s.normalizeEnvValueForOS(val)
+		commandBuilder.WriteString(fmt.Sprintf(" -e %s=%s", key, normalizedVal))
 	}
 
 	for key, val := range opts.Volumes() {
@@ -53,8 +55,25 @@ func (s *containerBuilder) BuildCommand(opts docVos.RunOptions) (string, error) 
 	}
 
 	commandBuilder.WriteString(fmt.Sprintf(" %s", opts.Image().FullName()))
-	commandBuilder.WriteString(fmt.Sprintf(" %s", strings.TrimSpace(opts.Command())))
+	if cmdTail := strings.TrimSpace(opts.Command()); cmdTail != "" {
+		commandBuilder.WriteString(" ")
+		commandBuilder.WriteString(cmdTail)
+	}
 
 	fmt.Println(commandBuilder.String())
 	return commandBuilder.String(), nil
+}
+
+func (s *containerBuilder) normalizeEnvValueForOS(val string) string {
+	if runtime.GOOS != "windows" {
+		return val
+	}
+	if !strings.HasPrefix(val, "$") {
+		return val
+	}
+	valWin := strings.TrimPrefix(val, "$")
+	if valWin == "" {
+		return val
+	}
+	return "%" + valWin + "%"
 }

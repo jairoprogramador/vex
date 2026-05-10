@@ -16,7 +16,9 @@ func ToDomainProject(configDto dto.ProjectDTO) (proVos.ProjectID, proVos.Project
 		configDto.Name,
 		configDto.Organization,
 		configDto.Team,
-		configDto.Description)
+		configDto.Description,
+		configDto.URL,
+		configDto.Ref)
 
 	if err != nil {
 		return proVos.ProjectID{}, proVos.ProjectData{}, err
@@ -75,7 +77,7 @@ func ToDomain(configDto dto.FDConfigDTO) (*aggregates.Project, error) {
 		return nil, err
 	}
 
-	template, err := comVos.NewTemplate(configDto.Template.URL, configDto.Template.Ref)
+	pipeline, err := comVos.NewPipeline(configDto.Pipeline.URL, configDto.Pipeline.Ref)
 	if err != nil {
 		return nil, err
 	}
@@ -85,7 +87,7 @@ func ToDomain(configDto dto.FDConfigDTO) (*aggregates.Project, error) {
 		return nil, err
 	}
 
-	return aggregates.NewProject(id, data, template, runtime)
+	return aggregates.NewProject(id, data, pipeline, runtime)
 }
 
 func ToRuntimeDto(runtime proVos.Runtime) dto.RuntimeDTO {
@@ -134,18 +136,20 @@ func ToDto(config *aggregates.Project) dto.FDConfigDTO {
 		Team:         config.Data().Team(),
 		Description:  config.Data().Description(),
 		Organization: config.Data().Organization(),
+		URL:          config.Data().URL(),
+		Ref:          config.Data().Ref(),
 	}
 
-	templateDto := dto.TemplateDTO{
-		URL: config.Template().URL(),
-		Ref: config.Template().Ref(),
+	pipelineDto := dto.PipelineDTO{
+		URL: config.Pipeline().URL(),
+		Ref: config.Pipeline().Ref(),
 	}
 
 	runtimeDto := ToRuntimeDto(config.Runtime())
 
 	return dto.FDConfigDTO{
 		Project:  projectDto,
-		Template: templateDto,
+		Pipeline: pipelineDto,
 		Runtime:  runtimeDto,
 	}
 }

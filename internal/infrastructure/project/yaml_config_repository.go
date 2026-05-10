@@ -28,7 +28,19 @@ func (r *yamlProjectRepository) Save(project *aggregates.Project) error {
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(r.fdconfigPath(), data, 0644)
+	// Atomic rewrite: write to a sibling temp file, then rename. Avoids
+	// leaving the config half-written when the portal-driven update path
+	// is interrupted (Ctrl+C, OOM, etc.).
+	target := r.fdconfigPath()
+	tmp := target + ".tmp"
+	if err := os.WriteFile(tmp, data, 0o644); err != nil {
+		return err
+	}
+	if err := os.Rename(tmp, target); err != nil {
+		_ = os.Remove(tmp)
+		return err
+	}
+	return nil
 }
 
 func (r *yamlProjectRepository) Exists() (bool, error) {

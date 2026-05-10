@@ -3,15 +3,19 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"os"
+	"strings"
+
 	"github.com/jairoprogramador/vex/internal/infrastructure/factories"
 	"github.com/spf13/cobra"
-	"os"
 )
 
 var (
-	withTtyFlag bool
-	colorFlag   string
-	version     string
+	//withTtyFlag bool
+	//colorFlag   string
+	localFlag bool
+	noFollow  bool
+	version   string
 )
 
 var rootCmd = &cobra.Command{
@@ -25,7 +29,7 @@ var rootCmd = &cobra.Command{
 			}
 			return errors.New("a step argument is required")
 		}
-		if len(args) > 2 {
+		if len(args) > 3 {
 			return errors.New("a maximum of two arguments are allowed: a step and an optional environment")
 		}
 		return nil
@@ -43,13 +47,23 @@ var rootCmd = &cobra.Command{
 
 		factory := factories.NewServiceFactory()
 
-		executorService, err := factory.BuildExecutor()
+		runner, err := factory.BuildRunner(resolveRemote(localFlag), !noFollow)
 		if err != nil {
 			return err
 		}
 
-		return executorService.Run(cmd.Context(), command, environment)
+		return runner.Run(cmd.Context(), command, environment)
 	},
+}
+
+// resolveLocal folds the `--local` flag together with the VEX_LOCAL_MODE env
+// var. The flag wins when set; otherwise VEX_LOCAL_MODE=local opts the user in
+// without retyping the flag on every invocation.
+func resolveRemote(flag bool) bool {
+	if flag {
+		return true
+	}
+	return strings.EqualFold(strings.TrimSpace(os.Getenv("VEX_LOCAL_MODE")), "local")
 }
 
 func Execute(versionMain string) {
@@ -62,12 +76,18 @@ func Execute(versionMain string) {
 }
 
 func init() {
-	rootCmd.PersistentFlags().BoolVar(&withTtyFlag, "with-tty", false, "Enable pseudo-TTY allocation.")
-	rootCmd.PersistentFlags().StringVar(&colorFlag, "color", "always", "control color output (auto, always, never)")
+	//rootCmd.PersistentFlags().BoolVar(&withTtyFlag, "with-tty", false, "Enable pseudo-TTY allocation.")
+	//rootCmd.PersistentFlags().StringVar(&colorFlag, "color", "always", "control color output (auto, always, never)")
+	// Local flags on the deploy invocation. Persistent would also work but
+	// these only apply to `vex <step> [env]`, not to `vex auth/init/...`.
+	rootCmd.Flags().BoolVar(&localFlag, "local", false, "Run the deploy on the infrastructure local instead of the remote. Equivalent to VEX_LOCAL_MODE=local.")
+	rootCmd.Flags().BoolVar(&noFollow, "no-follow", false, "When used with --remote, skip the live log stream and exit as soon as the execution is queued.")
 	rootCmd.SetVersionTemplate(`{{.Version}}`)
 
 	rootCmd.AddCommand(initCmd)
 	rootCmd.AddCommand(architectureCmd)
 	rootCmd.AddCommand(versionCmd)
+	rootCmd.AddCommand(authCmd)
+	rootCmd.AddCommand(cancelCmd)
 	rootCmd.SilenceUsage = true
 }

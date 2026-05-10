@@ -6,4 +6,6 @@ type ProjectDTO struct {
 	Team         string `yaml:"team"`
 	Description  string `yaml:"description,omitempty"`
 	Organization string `yaml:"organization"`
+	URL          string `yaml:"url"`
+	Ref          string `yaml:"ref,omitempty"`
 }
