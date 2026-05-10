@@ -34,7 +34,7 @@ type PipelineInputJSON struct {
 
 type ExecutionInputJSON struct {
 	Step         string `json:"step"`
-	Environment  string `json:"environment"`
+	Environment  string `json:"environment,omitempty"`
 	RuntimeImage string `json:"runtime_image,omitempty"`
 	RuntimeTag   string `json:"runtime_tag,omitempty"`
 }
@@ -52,9 +52,6 @@ func ToRequestInput(project *aggregates.Project, step, environment string) (Requ
 	}
 	if step == "" {
 		return RequestInputJSON{}, errors.New("request input mapper: step is required")
-	}
-	if environment == "" {
-		return RequestInputJSON{}, errors.New("request input mapper: environment is required")
 	}
 
 	data := project.Data()

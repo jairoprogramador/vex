@@ -190,12 +190,16 @@ func readHTTPError(resp *http.Response) *HTTPError {
 		Error            string `json:"error"`
 		Message          string `json:"message"`
 		ErrorDescription string `json:"error_description"`
+		Detail           string `json:"detail"`
 	}
 	if err := json.Unmarshal(body, &payload); err == nil {
 		httpErr.Code = payload.Error
 		httpErr.Message = payload.Message
 		if httpErr.Message == "" {
 			httpErr.Message = payload.ErrorDescription
+		}
+		if httpErr.Message == "" {
+			httpErr.Message = payload.Detail
 		}
 	}
 	if httpErr.Code == "" && httpErr.Message == "" {

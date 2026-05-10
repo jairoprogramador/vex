@@ -143,7 +143,7 @@ func (s *RemoteExecutorService) Run(ctx context.Context, step, environment strin
 		PipelineID:  cgResp.PipelineID,
 		Environment: environment,
 		Step:        step,
-		Version:     "", // vexd computes it from project git history
+		Version:     project.Data().Ref(),
 	}
 	tdResp, err := s.triggerDeployWithCapacityRetry(ctx, tdReq)
 	if err != nil {

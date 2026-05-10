@@ -12,6 +12,7 @@
 *.so
 *.dylib
 vexconfig.yaml
+Dockerfile
 
 # Test binary, built with `go test -c`
 *.test

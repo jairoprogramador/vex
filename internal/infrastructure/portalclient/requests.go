@@ -85,8 +85,10 @@ type SyncPipelineResponse struct {
 }
 
 // TriggerDeployRequest is the body of POST /functions/v1/trigger-deploy
-// (§6.5). The CLI passes an empty Version because vexd computes the next
-// semver from the project's git history during the run.
+// (§6.5). Version is the project repo ref (branch or tag) being deployed;
+// it is stored in executions.version for the portal audit trail.
+// The CLI passes project.Data().Ref() from vexconfig.yaml; the portal
+// passes the user-selected git ref.
 type TriggerDeployRequest struct {
 	PipelineID  string `json:"pipeline_id"`
 	Environment string `json:"environment"`
