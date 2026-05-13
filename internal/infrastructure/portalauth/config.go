@@ -14,7 +14,7 @@ import (
 
 // DefaultPortalURL is used when the VEX_PORTAL_URL environment variable is
 // not set. It points to the canonical hosted Vex portal.
-const DefaultPortalURL = "https://vexportal.app"
+const DefaultPortalURL = "https://www.vexja.com"
 
 // ClientID is the OAuth client identifier registered for the CLI in the
 // portal's edge functions (§6.1, §6.2).
@@ -90,7 +90,10 @@ func PortalURL() string {
 }
 
 func BackendURL() string {
-	return "https://kamwyoqphgzmifrpgjjl.supabase.co"
+	if v := os.Getenv("VEX_BACKEND_URL"); v != "" {
+		return v
+	}
+	return "https://lpmqjlbsprjdfrdnbaud.supabase.co"
 }
 
 func CredentialsPath() (string, error) {
