@@ -76,7 +76,7 @@ func TestDeviceFlowClient_Start(t *testing.T) {
 			}))
 			defer srv.Close()
 
-			client := NewDeviceFlowClient(srv.URL)
+			client := NewDeviceFlowClient(srv.URL, "")
 			resp, err := client.Start(context.Background())
 			if tt.wantErr {
 				if err == nil {
@@ -118,7 +118,7 @@ func TestDeviceFlowClient_Poll(t *testing.T) {
 		}))
 		defer srv.Close()
 
-		client := NewDeviceFlowClient(srv.URL)
+		client := NewDeviceFlowClient(srv.URL, "")
 		// shrink the slow_down bump so the test does not actually wait 5s.
 		client.slowDownStep = 1 * time.Millisecond
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -146,7 +146,7 @@ func TestDeviceFlowClient_Poll(t *testing.T) {
 		}))
 		defer srv.Close()
 
-		client := NewDeviceFlowClient(srv.URL)
+		client := NewDeviceFlowClient(srv.URL, "")
 		_, err := client.Poll(context.Background(), "dev-1", 1*time.Millisecond)
 		if !errors.Is(err, ErrDeviceCodeExpired) {
 			t.Fatalf("expected ErrDeviceCodeExpired, got %v", err)
@@ -162,7 +162,7 @@ func TestDeviceFlowClient_Poll(t *testing.T) {
 		}))
 		defer srv.Close()
 
-		client := NewDeviceFlowClient(srv.URL)
+		client := NewDeviceFlowClient(srv.URL, "")
 		_, err := client.Poll(context.Background(), "dev-1", 1*time.Millisecond)
 		if !errors.Is(err, ErrAccessDenied) {
 			t.Fatalf("expected ErrAccessDenied, got %v", err)
@@ -178,7 +178,7 @@ func TestDeviceFlowClient_Poll(t *testing.T) {
 		}))
 		defer srv.Close()
 
-		client := NewDeviceFlowClient(srv.URL)
+		client := NewDeviceFlowClient(srv.URL, "")
 		ctx, cancel := context.WithCancel(context.Background())
 		// Cancel almost immediately so the first <-time.After triggers ctx.Done.
 		go func() {
@@ -209,7 +209,7 @@ func TestDeviceFlowClient_Poll(t *testing.T) {
 		}))
 		defer srv.Close()
 
-		client := NewDeviceFlowClient(srv.URL)
+		client := NewDeviceFlowClient(srv.URL, "")
 		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 		defer cancel()
 

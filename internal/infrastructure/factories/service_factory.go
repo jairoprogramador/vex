@@ -119,7 +119,7 @@ func (f *serviceFactory) BuildRemoteExecutor(follow bool) (*app.RemoteExecutorSe
 
 	portalURL := portalauth.BackendURL()
 	httpClient := &http.Client{Timeout: 30 * time.Second}
-	deviceFlow := portalauth.NewDeviceFlowClient(portalURL)
+	deviceFlow := portalauth.NewDeviceFlowClient(portalURL, portalauth.BackendAnonKey())
 	client := portalclient.NewPortalClient(portalURL, tokenStore, httpClient)
 
 	return app.NewRemoteExecutorService(
@@ -159,10 +159,7 @@ func (f *serviceFactory) BuildArchitecture() (*app.ArchitectureService, error) {
 		templateRepository, projectRepository, inputService), nil
 }
 
-// BuildAuth wires the dependencies for the `vex auth` subcommands. The
-// portal URL is resolved by portalauth.PortalURL (env VEX_PORTAL_URL with
-// a sensible default), and the credentials file lives under the
-// platform-default config directory.
+// BuildAuth wires the dependencies for the `vex auth` subcommands.
 func (f *serviceFactory) BuildAuth() (*AuthDependencies, error) {
 	tokenStore, err := portalauth.NewFileTokenStore()
 	if err != nil {
@@ -175,7 +172,7 @@ func (f *serviceFactory) BuildAuth() (*AuthDependencies, error) {
 	return &AuthDependencies{
 		PortalURL:    portalURL,
 		HTTPClient:   httpClient,
-		DeviceClient: portalauth.NewDeviceFlowClient(portalURL),
+		DeviceClient: portalauth.NewDeviceFlowClient(portalURL, portalauth.BackendAnonKey()),
 		TokenStore:   tokenStore,
 	}, nil
 }

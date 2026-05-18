@@ -24,6 +24,7 @@ type DeviceFlowClient struct {
 	portalURL    string
 	httpClient   httpDoer
 	slowDownStep time.Duration // bump applied to interval on `slow_down`; defaults to 5s
+	anonKey      string        // Supabase anon JWT; sent as Authorization header
 }
 
 // defaultSlowDownStep is the increment applied to the polling interval when
@@ -33,13 +34,14 @@ const defaultSlowDownStep = 5 * time.Second
 // NewDeviceFlowClient returns a client targeted at portalURL. A 30s timeout
 // is applied to every individual request; the polling loop respects ctx and
 // the server-driven `expired_token` for total deadline.
-func NewDeviceFlowClient(portalURL string) *DeviceFlowClient {
+func NewDeviceFlowClient(portalURL, anonKey string) *DeviceFlowClient {
 	return &DeviceFlowClient{
 		portalURL: strings.TrimRight(portalURL, "/"),
 		httpClient: &http.Client{
 			Timeout: 30 * time.Second,
 		},
 		slowDownStep: defaultSlowDownStep,
+		anonKey:      anonKey,
 	}
 }
 
@@ -59,11 +61,15 @@ func (c *DeviceFlowClient) Start(ctx context.Context) (DeviceCodeResponse, error
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
+	if c.anonKey != "" {
+		req.Header.Set("Authorization", "Bearer "+c.anonKey)
+	}
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return DeviceCodeResponse{}, fmt.Errorf("call device-code: %w", err)
 	}
+
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
@@ -163,6 +169,9 @@ func (c *DeviceFlowClient) exchangeToken(ctx context.Context, deviceCode string)
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
+	if c.anonKey != "" {
+		req.Header.Set("Authorization", "Bearer "+c.anonKey)
+	}
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {

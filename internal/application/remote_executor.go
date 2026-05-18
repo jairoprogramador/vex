@@ -119,6 +119,9 @@ func (s *RemoteExecutorService) Run(ctx context.Context, step, environment strin
 
 	cgResp, err := s.portalClient.CreateOrGetProject(ctx, buildCreateOrGetRequest(project))
 	if err != nil {
+		if errors.Is(err, portalclient.ErrUnauthorized) {
+			s.tokenStore.Delete()
+		}
 		return s.translateError(err)
 	}
 
