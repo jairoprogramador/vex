@@ -54,7 +54,7 @@ func (c *PortalClient) CreateOrGetProject(ctx context.Context, req CreateOrGetPr
 	return resp, nil
 }
 
-// SyncPipeline calls the sync-pipeline edge function with the given
+// SyncPipeline calls the cli-sync-pipeline edge function with the given
 // pipeline ID. The CLI invokes this only when CreateOrGetProject set
 // `needs_sync = true`.
 func (c *PortalClient) SyncPipeline(ctx context.Context, pipelineID string) error {
@@ -62,14 +62,14 @@ func (c *PortalClient) SyncPipeline(ctx context.Context, pipelineID string) erro
 		return errors.New("portalclient: sync pipeline: pipeline_id is required")
 	}
 	var resp SyncPipelineResponse
-	return c.do(ctx, "sync-pipeline", SyncPipelineRequest{PipelineID: pipelineID}, &resp)
+	return c.do(ctx, "cli-sync-pipeline", SyncPipelineRequest{PipelineID: pipelineID}, &resp)
 }
 
-// TriggerDeploy calls the trigger-deploy edge function and returns the
+// TriggerDeploy calls the cli-trigger-deploy edge function and returns the
 // execution metadata the user needs to follow the run.
 func (c *PortalClient) TriggerDeploy(ctx context.Context, req TriggerDeployRequest) (TriggerDeployResponse, error) {
 	var resp TriggerDeployResponse
-	if err := c.do(ctx, "trigger-deploy", req, &resp); err != nil {
+	if err := c.do(ctx, "cli-trigger-deploy", req, &resp); err != nil {
 		return TriggerDeployResponse{}, err
 	}
 	return resp, nil

@@ -26,7 +26,7 @@ builds:
       - -X main.date={{.Date}}
       - -X github.com/jairoprogramador/vex/internal/infrastructure/portalauth.defaultPortalURL={{ .Env.PORTAL_URL }}
       - -X github.com/jairoprogramador/vex/internal/infrastructure/portalauth.defaultBackendURL={{ .Env.BACKEND_URL }}
-      - -X github.com/jairoprogramador/vex/internal/infrastructure/portalauth.defaultBackendAnonKey={{ .Env.BACKEND_ANON_KEY }}
+      - -X github.com/jairoprogramador/vex/internal/infrastructure/portalauth.defaultClientID={{ .Env.CLI_CLIENT_ID }}
 
 archives:
   - id: archive

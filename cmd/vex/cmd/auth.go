@@ -87,7 +87,7 @@ func runAuthLogin(parentCtx context.Context) error {
 		// every 5s prefixed by an inline "Waiting for approval" line and a
 		// trailing newline once polling stops.
 		OnWaiting: func(ctx context.Context) func() {
-			fmt.Fprint(os.Stdout, "Waiting for approval")
+			fmt.Fprint(os.Stdout, " Waiting for approval")
 			stopProgress := startProgressDots(ctx)
 			return func() {
 				stopProgress()

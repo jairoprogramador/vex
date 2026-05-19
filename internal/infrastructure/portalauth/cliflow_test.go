@@ -103,7 +103,7 @@ func TestCLIFlowConfig_Run(t *testing.T) {
 			writeDeviceCodeOK(),
 			writeTokenSuccess(),
 		)
-		client := NewDeviceFlowClient(portal.server.URL, "")
+		client := NewDeviceFlowClient(portal.server.URL)
 		store := NewFileTokenStoreAt(filepath.Join(t.TempDir(), "credentials.json"))
 		browser := &stubBrowser{}
 		var stdout, stderr bytes.Buffer
@@ -174,7 +174,7 @@ func TestCLIFlowConfig_Run(t *testing.T) {
 		browser := &stubBrowser{err: errors.New("xdg-open missing")}
 
 		cfg := CLIFlowConfig{
-			Client:               NewDeviceFlowClient(portal.server.URL, ""),
+			Client:               NewDeviceFlowClient(portal.server.URL),
 			Store:                store,
 			Stderr:               &stderr,
 			OpenBrowser:          browser.open,
@@ -202,7 +202,7 @@ func TestCLIFlowConfig_Run(t *testing.T) {
 		store := NewFileTokenStoreAt(filepath.Join(t.TempDir(), "credentials.json"))
 
 		cfg := CLIFlowConfig{
-			Client:               NewDeviceFlowClient(portal.server.URL, ""),
+			Client:               NewDeviceFlowClient(portal.server.URL),
 			Store:                store,
 			OpenBrowser:          func(string) error { return nil },
 			pollIntervalOverride: 1 * time.Millisecond,
@@ -225,7 +225,7 @@ func TestCLIFlowConfig_Run(t *testing.T) {
 
 		var starts, stops atomic.Int32
 		cfg := CLIFlowConfig{
-			Client:               NewDeviceFlowClient(portal.server.URL, ""),
+			Client:               NewDeviceFlowClient(portal.server.URL),
 			Store:                store,
 			OpenBrowser:          func(string) error { return nil },
 			pollIntervalOverride: 1 * time.Millisecond,

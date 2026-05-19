@@ -33,4 +33,4 @@ jobs:
           HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
           PORTAL_URL: ${{ secrets.PORTAL_URL }}
           BACKEND_URL: ${{ secrets.BACKEND_URL }}
-          BACKEND_ANON_KEY: ${{ secrets.BACKEND_ANON_KEY }}
+          CLI_CLIENT_ID: ${{ secrets.CLI_CLIENT_ID }}

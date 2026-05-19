@@ -123,10 +123,7 @@ func (c *CLIFlowConfig) applyDefaults() {
 // in order to approve the device. Format mirrors what `vex auth login`
 // has shipped since M2 so existing screenshots/docs stay accurate.
 func (c CLIFlowConfig) announceVerification(device DeviceCodeResponse) {
-	fmt.Fprintln(c.Stdout, "Open the following URL in your browser:")
-	fmt.Fprintf(c.Stdout, "  %s\n", device.VerificationURIComplete)
-	fmt.Fprintf(c.Stdout, "Or visit %s and enter the code: %s\n",
-		device.VerificationURI, device.UserCode)
+	fmt.Fprintf(c.Stdout, "Open the following URL in your browser: %s", device.VerificationURIComplete)
 }
 
 // tryOpenBrowser opens the URL best-effort. Failures are surfaced on
@@ -145,6 +142,6 @@ func (c CLIFlowConfig) startWaitingIndicator(ctx context.Context) func() {
 	if c.OnWaiting != nil {
 		return c.OnWaiting(ctx)
 	}
-	fmt.Fprintln(c.Stdout, "Waiting for approval...")
+	fmt.Fprintln(c.Stdout, " Waiting for approval...")
 	return func() {}
 }

@@ -12,10 +12,6 @@ import (
 	"time"
 )
 
-// ClientID is the OAuth client identifier registered for the CLI in the
-// portal's edge functions (§6.1, §6.2).
-const ClientID = "vex-cli"
-
 // DeviceCodeGrantType is the RFC 8628 grant type sent on the token endpoint.
 const DeviceCodeGrantType = "urn:ietf:params:oauth:grant-type:device_code"
 
@@ -78,7 +74,7 @@ type TokenResponse struct {
 
 func PortalURL() string  { return defaultPortalURL }
 func BackendURL() string  { return defaultBackendURL }
-func BackendAnonKey() string { return defaultBackendAnonKey }
+func ClientID() string   { return defaultClientID }
 
 func CredentialsPath() (string, error) {
 	configDir, err := os.UserConfigDir()

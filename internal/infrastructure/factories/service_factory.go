@@ -119,7 +119,7 @@ func (f *serviceFactory) BuildRemoteExecutor(follow bool) (*app.RemoteExecutorSe
 
 	portalURL := portalauth.BackendURL()
 	httpClient := &http.Client{Timeout: 30 * time.Second}
-	deviceFlow := portalauth.NewDeviceFlowClient(portalURL, portalauth.BackendAnonKey())
+	deviceFlow := portalauth.NewDeviceFlowClient(portalURL)
 	client := portalclient.NewPortalClient(portalURL, tokenStore, httpClient)
 
 	return app.NewRemoteExecutorService(
@@ -172,7 +172,7 @@ func (f *serviceFactory) BuildAuth() (*AuthDependencies, error) {
 	return &AuthDependencies{
 		PortalURL:    portalURL,
 		HTTPClient:   httpClient,
-		DeviceClient: portalauth.NewDeviceFlowClient(portalURL, portalauth.BackendAnonKey()),
+		DeviceClient: portalauth.NewDeviceFlowClient(portalURL),
 		TokenStore:   tokenStore,
 	}, nil
 }
