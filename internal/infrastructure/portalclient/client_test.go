@@ -145,7 +145,7 @@ func TestPortalClient_CreateOrGetProject(t *testing.T) {
 			t.Parallel()
 
 			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				if r.URL.Path != "/functions/v1/create-or-get-project" {
+				if r.URL.Path != "/functions/v1/cli-create-or-get-project" {
 					t.Errorf("unexpected path: %s", r.URL.Path)
 				}
 				if r.Method != http.MethodPost {

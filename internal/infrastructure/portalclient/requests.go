@@ -1,6 +1,6 @@
 package portalclient
 
-// CreateOrGetProjectRequest is the body of POST /functions/v1/create-or-get-project
+// CreateOrGetProjectRequest is the body of POST /functions/v1/cli-create-or-get-project
 // (§6.4 of plan_deploy.md). The CLI owns the canonical project identity: id,
 // name, organization, team and repo coordinates flow from vexconfig.yaml.
 //

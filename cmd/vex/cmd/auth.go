@@ -194,7 +194,7 @@ func (e unauthorizedError) Error() string {
 // fetchWhoami calls GET /functions/v1/whoami with a Bearer token and
 // decodes the response. A 401 is mapped to unauthorizedError.
 func fetchWhoami(ctx context.Context, client *http.Client, portalURL, accessToken string) (whoamiResponse, error) {
-	url := strings.TrimRight(portalURL, "/") + "/functions/v1/whoami"
+	url := strings.TrimRight(portalURL, "/") + "/functions/v1/cli-whoami"
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return whoamiResponse{}, fmt.Errorf("build whoami request: %w", err)

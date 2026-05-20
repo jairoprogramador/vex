@@ -53,7 +53,7 @@ func (c *DeviceFlowClient) Start(ctx context.Context) (DeviceCodeResponse, error
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost,
-		c.portalURL+"/functions/v1/device-code", bytes.NewReader(body))
+		c.portalURL+"/functions/v1/cli-device-code", bytes.NewReader(body))
 	if err != nil {
 		return DeviceCodeResponse{}, fmt.Errorf("build device-code request: %w", err)
 	}
@@ -158,7 +158,7 @@ func (c *DeviceFlowClient) exchangeToken(ctx context.Context, deviceCode string)
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost,
-		c.portalURL+"/functions/v1/device-token", bytes.NewReader(body))
+		c.portalURL+"/functions/v1/cli-device-token", bytes.NewReader(body))
 	if err != nil {
 		return TokenResponse{}, tokenStatusUnknown, fmt.Errorf("build device-token request: %w", err)
 	}

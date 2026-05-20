@@ -88,7 +88,7 @@ func TestFollowExecution_ReconnectAdvancesCursor(t *testing.T) {
 
 	var calls atomic.Int64
 	mux := http.NewServeMux()
-	mux.HandleFunc("/functions/v1/execution-logs", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/functions/v1/cli-execution-logs", func(w http.ResponseWriter, r *http.Request) {
 		n := calls.Add(1)
 		fromSeq := r.URL.Query().Get("from_seq")
 		w.Header().Set("Content-Type", "text/event-stream")

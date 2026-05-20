@@ -1,7 +1,7 @@
 package portalclient
 
 // DoneEvent is the body of the `event: done` server-sent event emitted by
-// the `execution-logs` long-poll endpoint when the execution reaches a
+// the `cli-execution-logs` long-poll endpoint when the execution reaches a
 // terminal state (§6.8 plan_deploy.md). The CLI uses it to print the final
 // status and decide the process exit code.
 type DoneEvent struct {

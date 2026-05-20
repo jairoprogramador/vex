@@ -44,11 +44,11 @@ func NewPortalClient(baseURL string, tokenStore *portalauth.FileTokenStore, http
 	}
 }
 
-// CreateOrGetProject calls the create-or-get-project edge function. See
+// CreateOrGetProject calls the cli-create-or-get-project edge function. See
 // portalclient.CreateOrGetProjectRequest for the contract.
 func (c *PortalClient) CreateOrGetProject(ctx context.Context, req CreateOrGetProjectRequest) (CreateOrGetProjectResponse, error) {
 	var resp CreateOrGetProjectResponse
-	if err := c.do(ctx, "create-or-get-project", req, &resp); err != nil {
+	if err := c.do(ctx, "cli-create-or-get-project", req, &resp); err != nil {
 		return CreateOrGetProjectResponse{}, err
 	}
 	return resp, nil
@@ -82,7 +82,7 @@ func (c *PortalClient) CancelExecution(ctx context.Context, executionID string) 
 		return errors.New("portalclient: cancel execution: execution_id is required")
 	}
 	var resp CancelExecutionResponse
-	return c.do(ctx, "cancel-execution", CancelExecutionRequest{ExecutionID: executionID}, &resp)
+	return c.do(ctx, "cli-cancel-execution", CancelExecutionRequest{ExecutionID: executionID}, &resp)
 }
 
 // do is the shared transport: marshal body → bearer-authenticated POST →

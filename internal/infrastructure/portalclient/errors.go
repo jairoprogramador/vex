@@ -1,5 +1,5 @@
 // Package portalclient implements the HTTP client the CLI uses against the
-// Vex portal edge functions (`create-or-get-project`, `trigger-deploy`,
+// Vex portal edge functions (`cli-create-or-get-project`, `trigger-deploy`,
 // `cancel-execution`, `sync-pipeline`). It is intentionally a thin wrapper
 // over the JSON REST surface the portal exposes; the higher-level
 // orchestration lives in `internal/application/remote_executor.go`.

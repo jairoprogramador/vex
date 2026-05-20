@@ -153,7 +153,7 @@ func (s *RemoteExecutorService) Run(ctx context.Context, step, environment strin
 		return s.translateError(err)
 	}
 
-	fmt.Fprintf(s.stdout, "Execution %s queued. Follow at %s\n", tdResp.ExecutionID, tdResp.PortalURL)
+	fmt.Fprintf(s.stdout, "Execution %s queued.\nFollow at %s\n", tdResp.ExecutionID, tdResp.PortalURL)
 
 	if !s.follow {
 		return nil
