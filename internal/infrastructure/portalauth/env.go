@@ -9,7 +9,7 @@ package portalauth
 //
 // Then edit this file with your dev values — git will not track the changes.
 var (
-	defaultPortalURL   = ""
-	defaultBackendURL  = ""
-	defaultClientID    = ""
+	defaultPortalURL  = ""
+	defaultBackendURL = ""
+	defaultClientID   = ""
 )
