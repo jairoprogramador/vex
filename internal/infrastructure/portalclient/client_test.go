@@ -145,7 +145,7 @@ func TestPortalClient_CreateOrGetProject(t *testing.T) {
 			t.Parallel()
 
 			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				if r.URL.Path != "/functions/v1/create-or-get-project" {
+				if r.URL.Path != "/functions/v1/cli-create-or-get-project" {
 					t.Errorf("unexpected path: %s", r.URL.Path)
 				}
 				if r.Method != http.MethodPost {
@@ -275,7 +275,7 @@ func TestPortalClient_TriggerDeploy(t *testing.T) {
 			t.Parallel()
 
 			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				if r.URL.Path != "/functions/v1/trigger-deploy" {
+				if r.URL.Path != "/functions/v1/cli-trigger-deploy" {
 					t.Errorf("unexpected path: %s", r.URL.Path)
 				}
 				w.Header().Set("Content-Type", "application/json")
@@ -388,7 +388,7 @@ func TestPortalClient_SyncPipeline(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		t.Parallel()
 		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if r.URL.Path != "/functions/v1/sync-pipeline" {
+			if r.URL.Path != "/functions/v1/cli-sync-pipeline" {
 				t.Errorf("unexpected path: %s", r.URL.Path)
 			}
 			body, _ := io.ReadAll(r.Body)

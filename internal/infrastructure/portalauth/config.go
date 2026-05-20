@@ -12,14 +12,6 @@ import (
 	"time"
 )
 
-// DefaultPortalURL is used when the VEX_PORTAL_URL environment variable is
-// not set. It points to the canonical hosted Vex portal.
-const DefaultPortalURL = "https://vexportal.app"
-
-// ClientID is the OAuth client identifier registered for the CLI in the
-// portal's edge functions (§6.1, §6.2).
-const ClientID = "vex-cli"
-
 // DeviceCodeGrantType is the RFC 8628 grant type sent on the token endpoint.
 const DeviceCodeGrantType = "urn:ietf:params:oauth:grant-type:device_code"
 
@@ -80,18 +72,9 @@ type TokenResponse struct {
 	ExpiresIn   int    `json:"expires_in"`
 }
 
-// PortalURL resolves the portal base URL using the VEX_PORTAL_URL
-// environment variable, falling back to DefaultPortalURL.
-func PortalURL() string {
-	if url := os.Getenv("VEX_PORTAL_URL"); url != "" {
-		return url
-	}
-	return DefaultPortalURL
-}
-
-func BackendURL() string {
-	return "https://kamwyoqphgzmifrpgjjl.supabase.co"
-}
+func PortalURL() string  { return defaultPortalURL }
+func BackendURL() string  { return defaultBackendURL }
+func ClientID() string   { return defaultClientID }
 
 func CredentialsPath() (string, error) {
 	configDir, err := os.UserConfigDir()

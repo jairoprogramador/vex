@@ -282,7 +282,7 @@ func newTriggerDeployServer(t *testing.T, fns ...http.HandlerFunc) *triggerDeplo
 	t.Helper()
 	s := &triggerDeployServer{respondFns: fns}
 	s.server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/functions/v1/trigger-deploy" {
+		if r.URL.Path != "/functions/v1/cli-trigger-deploy" {
 			http.NotFound(w, r)
 			return
 		}

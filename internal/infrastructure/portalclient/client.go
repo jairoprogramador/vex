@@ -44,17 +44,17 @@ func NewPortalClient(baseURL string, tokenStore *portalauth.FileTokenStore, http
 	}
 }
 
-// CreateOrGetProject calls the create-or-get-project edge function. See
+// CreateOrGetProject calls the cli-create-or-get-project edge function. See
 // portalclient.CreateOrGetProjectRequest for the contract.
 func (c *PortalClient) CreateOrGetProject(ctx context.Context, req CreateOrGetProjectRequest) (CreateOrGetProjectResponse, error) {
 	var resp CreateOrGetProjectResponse
-	if err := c.do(ctx, "create-or-get-project", req, &resp); err != nil {
+	if err := c.do(ctx, "cli-create-or-get-project", req, &resp); err != nil {
 		return CreateOrGetProjectResponse{}, err
 	}
 	return resp, nil
 }
 
-// SyncPipeline calls the sync-pipeline edge function with the given
+// SyncPipeline calls the cli-sync-pipeline edge function with the given
 // pipeline ID. The CLI invokes this only when CreateOrGetProject set
 // `needs_sync = true`.
 func (c *PortalClient) SyncPipeline(ctx context.Context, pipelineID string) error {
@@ -62,14 +62,14 @@ func (c *PortalClient) SyncPipeline(ctx context.Context, pipelineID string) erro
 		return errors.New("portalclient: sync pipeline: pipeline_id is required")
 	}
 	var resp SyncPipelineResponse
-	return c.do(ctx, "sync-pipeline", SyncPipelineRequest{PipelineID: pipelineID}, &resp)
+	return c.do(ctx, "cli-sync-pipeline", SyncPipelineRequest{PipelineID: pipelineID}, &resp)
 }
 
-// TriggerDeploy calls the trigger-deploy edge function and returns the
+// TriggerDeploy calls the cli-trigger-deploy edge function and returns the
 // execution metadata the user needs to follow the run.
 func (c *PortalClient) TriggerDeploy(ctx context.Context, req TriggerDeployRequest) (TriggerDeployResponse, error) {
 	var resp TriggerDeployResponse
-	if err := c.do(ctx, "trigger-deploy", req, &resp); err != nil {
+	if err := c.do(ctx, "cli-trigger-deploy", req, &resp); err != nil {
 		return TriggerDeployResponse{}, err
 	}
 	return resp, nil
@@ -82,7 +82,7 @@ func (c *PortalClient) CancelExecution(ctx context.Context, executionID string) 
 		return errors.New("portalclient: cancel execution: execution_id is required")
 	}
 	var resp CancelExecutionResponse
-	return c.do(ctx, "cancel-execution", CancelExecutionRequest{ExecutionID: executionID}, &resp)
+	return c.do(ctx, "cli-cancel-execution", CancelExecutionRequest{ExecutionID: executionID}, &resp)
 }
 
 // do is the shared transport: marshal body → bearer-authenticated POST →

@@ -140,7 +140,7 @@ func (c *PortalClient) streamSSE(
 		return cursor, err
 	}
 
-	url := fmt.Sprintf("%s/functions/v1/execution-logs?execution_id=%s&from_seq=%d",
+	url := fmt.Sprintf("%s/functions/v1/cli-execution-logs?execution_id=%s&from_seq=%d",
 		c.baseURL, executionID, cursor)
 
 	streamCtx, cancel := context.WithTimeout(ctx, followStreamTimeout)

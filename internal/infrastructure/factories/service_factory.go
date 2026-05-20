@@ -159,10 +159,7 @@ func (f *serviceFactory) BuildArchitecture() (*app.ArchitectureService, error) {
 		templateRepository, projectRepository, inputService), nil
 }
 
-// BuildAuth wires the dependencies for the `vex auth` subcommands. The
-// portal URL is resolved by portalauth.PortalURL (env VEX_PORTAL_URL with
-// a sensible default), and the credentials file lives under the
-// platform-default config directory.
+// BuildAuth wires the dependencies for the `vex auth` subcommands.
 func (f *serviceFactory) BuildAuth() (*AuthDependencies, error) {
 	tokenStore, err := portalauth.NewFileTokenStore()
 	if err != nil {

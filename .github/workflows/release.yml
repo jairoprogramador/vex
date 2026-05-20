@@ -31,3 +31,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          PORTAL_URL: ${{ secrets.PORTAL_URL }}
+          BACKEND_URL: ${{ secrets.BACKEND_URL }}
+          CLI_CLIENT_ID: ${{ secrets.CLI_CLIENT_ID }}

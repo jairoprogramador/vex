@@ -47,13 +47,13 @@ func NewDeviceFlowClient(portalURL string) *DeviceFlowClient {
 // returns the device/user codes and the verification URLs the caller must
 // surface to the end user.
 func (c *DeviceFlowClient) Start(ctx context.Context) (DeviceCodeResponse, error) {
-	body, err := json.Marshal(map[string]string{"client_id": ClientID})
+	body, err := json.Marshal(map[string]string{"client_id": ClientID()})
 	if err != nil {
 		return DeviceCodeResponse{}, fmt.Errorf("marshal device-code request: %w", err)
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost,
-		c.portalURL+"/functions/v1/device-code", bytes.NewReader(body))
+		c.portalURL+"/functions/v1/cli-device-code", bytes.NewReader(body))
 	if err != nil {
 		return DeviceCodeResponse{}, fmt.Errorf("build device-code request: %w", err)
 	}
@@ -64,6 +64,7 @@ func (c *DeviceFlowClient) Start(ctx context.Context) (DeviceCodeResponse, error
 	if err != nil {
 		return DeviceCodeResponse{}, fmt.Errorf("call device-code: %w", err)
 	}
+
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
@@ -150,14 +151,14 @@ func (c *DeviceFlowClient) exchangeToken(ctx context.Context, deviceCode string)
 	body, err := json.Marshal(map[string]string{
 		"grant_type":  DeviceCodeGrantType,
 		"device_code": deviceCode,
-		"client_id":   ClientID,
+		"client_id":   ClientID(),
 	})
 	if err != nil {
 		return TokenResponse{}, tokenStatusUnknown, fmt.Errorf("marshal device-token request: %w", err)
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost,
-		c.portalURL+"/functions/v1/device-token", bytes.NewReader(body))
+		c.portalURL+"/functions/v1/cli-device-token", bytes.NewReader(body))
 	if err != nil {
 		return TokenResponse{}, tokenStatusUnknown, fmt.Errorf("build device-token request: %w", err)
 	}
