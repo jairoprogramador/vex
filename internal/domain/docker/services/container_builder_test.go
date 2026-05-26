@@ -16,14 +16,14 @@ import (
 
 // mockProjectWithVolumesAndEnv es un helper para crear un proyecto con volúmenes y variables de entorno.
 func mockProjectWithVolumesAndEnv(t *testing.T) *proAgg.Project {
-	data, err := proVos.NewProjectData("test-project", "org", "team", "", "", "")
+	data, err := proVos.NewProjectData("test-project", "org", "team", "", "https://github.com/test/repo.git", "")
 	require.NoError(t, err)
 	id := proVos.GenerateProjectID(data.Name(), data.Organization(), data.Team())
 
 	pipeline, err := comVos.NewPipeline("http://test.com/repo.git", "main")
 	require.NoError(t, err)
 
-	image, err := comVos.NewImage("my-image", "latest")
+	image, err := comVos.NewImage("my-image:latest")
 	require.NoError(t, err)
 
 	// Creamos volúmenes
@@ -60,14 +60,14 @@ func mockProjectWithVolumesAndEnv(t *testing.T) *proAgg.Project {
 
 // mockProjectWithoutVolumesAndEnv es un helper para crear un proyecto sin volúmenes ni variables de entorno.
 func mockProjectWithoutVolumesAndEnv(t *testing.T) *proAgg.Project {
-	data, err := proVos.NewProjectData("test-project", "org", "team", "", "", "")
+	data, err := proVos.NewProjectData("test-project", "org", "team", "", "https://github.com/test/repo.git", "")
 	require.NoError(t, err)
 	id := proVos.GenerateProjectID(data.Name(), data.Organization(), data.Team())
 
 	pipeline, err := comVos.NewPipeline("http://test.com/repo.git", "main")
 	require.NoError(t, err)
 
-	image, err := comVos.NewImage("my-image", "latest")
+	image, err := comVos.NewImage("my-image:latest")
 	require.NoError(t, err)
 
 	runtimeObj := proVos.NewRuntime(proVos.WithImage(image))

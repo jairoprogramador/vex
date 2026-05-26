@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/jairoprogramador/vex/internal/domain/architecture/ports"
@@ -153,9 +152,7 @@ func (r *CacheTemplateRepository) find(templates []templateEntry, query vos.Quer
 			if err != nil {
 				return vos.ExecutionUnit{}, err
 			}
-			imageName := strings.Split(template.Runtime, ":")[0]
-			imageTag := strings.Split(template.Runtime, ":")[1]
-			imageObj, err := comVos.NewImage(imageName, imageTag)
+			imageObj, err := comVos.NewImage(template.Runtime)
 			if err != nil {
 				return vos.ExecutionUnit{}, err
 			}

@@ -27,9 +27,7 @@ func ToDomainProject(configDto dto.ProjectDTO) (proVos.ProjectID, proVos.Project
 }
 
 func ToDomainRuntime(configDto dto.RuntimeDTO) (proVos.Runtime, error) {
-	image, err := comVos.NewImage(
-		configDto.Image,
-		configDto.Tag)
+	image, err := comVos.NewImage(configDto.Image)
 	if err != nil {
 		return proVos.Runtime{}, err
 	}
@@ -116,8 +114,7 @@ func ToRuntimeDto(runtime proVos.Runtime) dto.RuntimeDTO {
 	}
 
 	return dto.RuntimeDTO{
-		Image: runtime.Image().Image(),
-		Tag:   runtime.Image().Tag(),
+		Image: runtime.Image().Spec(),
 		Build: dto.BuildDTO{
 			Args: args,
 		},

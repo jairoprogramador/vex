@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 
-	comVos "github.com/jairoprogramador/vex/internal/domain/common/vos"
 	docPor "github.com/jairoprogramador/vex/internal/domain/docker/ports"
 	docVos "github.com/jairoprogramador/vex/internal/domain/docker/vos"
 	proPor "github.com/jairoprogramador/vex/internal/domain/project/ports"
@@ -66,7 +65,7 @@ func (s *LocalExecutorService) Run(ctx context.Context, command, environment str
 	imageInfo := project.Runtime().Image()
 
 	var imageToUse docVos.ImageName
-	if imageInfo.Image() == comVos.DefaultContainerImage {
+	if !imageInfo.TagExplicit() {
 		imageOptions, err := s.imageService.CreateOptions(project)
 		if err != nil {
 			return err

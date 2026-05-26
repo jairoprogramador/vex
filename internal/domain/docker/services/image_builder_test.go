@@ -13,18 +13,18 @@ import (
 	proVos "github.com/jairoprogramador/vex/internal/domain/project/vos"
 )
 
-// mockProject es un helper para crear un agregado de proyecto para los tests.
-// Construye el agregado manualmente para evitar la lógica de validación de los constructores
-// y así poder probar los servicios de forma aislada.
-func mockProject(t *testing.T, image, imageTag string) *proAgg.Project {
-	data, err := proVos.NewProjectData("test-project", "org", "team", "", "", "")
+// mockProject crea un Project de prueba a partir de un imageSpec (e.g. "my-image:latest"
+// para imágenes de registry, o "Dockerfile" / "docker/MyDockerfile" para builds locales).
+func mockProject(t *testing.T, imageSpec string) *proAgg.Project {
+	t.Helper()
+	data, err := proVos.NewProjectData("test-project", "org", "team", "", "https://github.com/test/repo.git", "")
 	require.NoError(t, err)
 	id := proVos.GenerateProjectID(data.Name(), data.Organization(), data.Team())
 	pipeline, err := comVos.NewPipeline("http://test.com/repo.git", "main")
 	require.NoError(t, err)
 
-	// Creamos los VOs manualmente para el test
-	imageObj, _ := comVos.NewImage(image, imageTag)
+	imageObj, err := comVos.NewImage(imageSpec)
+	require.NoError(t, err)
 	runtimeObj := proVos.NewRuntime(proVos.WithImage(imageObj))
 	project := proAgg.HydrateProject(id, data, pipeline, runtimeObj)
 	return project
@@ -38,8 +38,8 @@ func TestImageBuilderService_CreateOptions(t *testing.T) {
 			t.Skip("Skipping linux specific test on non-linux OS")
 		}
 
-		// Arrange
-		project := mockProject(t, "my-image", "latest")
+		// Arrange: proyecto con Dockerfile por defecto
+		project := mockProject(t, "Dockerfile")
 
 		// Act
 		opts, err := builder.CreateOptions(project)
@@ -56,8 +56,8 @@ func TestImageBuilderService_CreateOptions(t *testing.T) {
 			t.Skip("Skipping non-linux specific test on linux OS")
 		}
 
-		// Arrange
-		project := mockProject(t, "my-image", "latest")
+		// Arrange: proyecto con Dockerfile por defecto
+		project := mockProject(t, "Dockerfile")
 
 		// Act
 		opts, err := builder.CreateOptions(project)
@@ -70,25 +70,37 @@ func TestImageBuilderService_CreateOptions(t *testing.T) {
 		assert.False(t, exists, "DEV_GID should not be present on non-linux OS")
 	})
 
-	t.Run("should return error if image name is invalid", func(t *testing.T) {
+	t.Run("should set dockerfile path for default dockerfile", func(t *testing.T) {
 		// Arrange
-		project := mockProject(t, "my-image", "")
+		project := mockProject(t, "Dockerfile")
 
 		// Act
-		_, err := builder.CreateOptions(project)
+		opts, err := builder.CreateOptions(project)
 
 		// Assert
-		require.Error(t, err)
-		assert.Contains(t, err.Error(), "image tag cannot be empty")
+		require.NoError(t, err)
+		assert.Equal(t, "Dockerfile", opts.DockerfilePath())
+	})
+
+	t.Run("should set dockerfile path for custom dockerfile", func(t *testing.T) {
+		// Arrange: Dockerfile en una sub-ruta
+		project := mockProject(t, "docker/MyDockerfile")
+
+		// Act
+		opts, err := builder.CreateOptions(project)
+
+		// Assert
+		require.NoError(t, err)
+		assert.Equal(t, "docker/MyDockerfile", opts.DockerfilePath())
 	})
 }
 
 func TestImageBuilderService_BuildCommand(t *testing.T) {
 	builder := services.NewImageBuilder()
 
-	t.Run("should generate a correct build command", func(t *testing.T) {
+	t.Run("should generate a correct build command for default dockerfile", func(t *testing.T) {
 		// Arrange
-		project := mockProject(t, "my-image", "latest")
+		project := mockProject(t, "Dockerfile")
 		opts, err := builder.CreateOptions(project)
 		require.NoError(t, err)
 
@@ -99,9 +111,23 @@ func TestImageBuilderService_BuildCommand(t *testing.T) {
 		require.NoError(t, err)
 		assert.Contains(t, command, "docker build")
 		assert.Contains(t, command, "-t "+opts.Image().FullName())
-		assert.Contains(t, command, " .")
+		assert.Contains(t, command, "-f Dockerfile .")
 		if runtime.GOOS == "linux" || runtime.GOOS == "darwin" {
 			assert.Contains(t, command, "--build-arg DEV_GID=$(id -g)")
 		}
+	})
+
+	t.Run("should generate build command with custom dockerfile path", func(t *testing.T) {
+		// Arrange: Dockerfile en sub-directorio
+		project := mockProject(t, "docker/MyDockerfile")
+		opts, err := builder.CreateOptions(project)
+		require.NoError(t, err)
+
+		// Act
+		command, err := builder.BuildCommand(opts)
+
+		// Assert
+		require.NoError(t, err)
+		assert.Contains(t, command, "-f docker/MyDockerfile docker")
 	})
 }

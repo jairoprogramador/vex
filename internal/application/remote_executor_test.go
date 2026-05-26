@@ -60,7 +60,7 @@ func newSeedProject(t *testing.T) *aggregates.Project {
 	if err != nil {
 		t.Fatalf("pipeline: %v", err)
 	}
-	image, err := comVos.NewImage("local/runtime", "v1")
+	image, err := comVos.NewImage("local/runtime:v1")
 	if err != nil {
 		t.Fatalf("image: %v", err)
 	}

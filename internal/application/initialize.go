@@ -74,7 +74,7 @@ func (s *InitializeService) Run(ctx context.Context, interactive bool) error {
 	executionUnit, err := s.GetExecutionUnit()
 	if err != nil {
 		fmt.Println("Warning: Error getting pipeline:", err)
-		image, _ := comVos.NewImage(comVos.DefaultContainerImage, comVos.DefaultContainerTag)
+		image, _ := comVos.NewImage("")
 		pipeline, _ := comVos.NewPipeline(comVos.DefaultPipelineUrl, comVos.DefaultPipelineRef)
 		executionUnit = arqVos.NewExecutionUnit(image, pipeline)
 	}

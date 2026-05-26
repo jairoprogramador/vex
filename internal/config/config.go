@@ -138,28 +138,57 @@ func loadProjectModeField(projectPath string) (Config, error) {
 func updateProjectModeField(projectPath string, mode ExecutionMode) error {
 	path := filepath.Join(projectPath, vexConfigFileName)
 
-	// Leer el archivo existente en un mapa genérico para preservar todos los campos.
-	var raw map[string]any
 	data, err := os.ReadFile(path)
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
 		return fmt.Errorf("leer %s: %w", path, err)
 	}
+
+	// Parsear en un árbol yaml.Node para preservar el orden y formato originales.
+	var doc yaml.Node
 	if len(data) > 0 {
-		if err := yaml.Unmarshal(data, &raw); err != nil {
+		if err := yaml.Unmarshal(data, &doc); err != nil {
 			return fmt.Errorf("parsear %s: %w", path, err)
 		}
 	}
-	if raw == nil {
-		raw = make(map[string]any)
+	if doc.Kind == 0 {
+		// Archivo vacío o inexistente: crear un documento mínimo.
+		doc = yaml.Node{
+			Kind: yaml.DocumentNode,
+			Content: []*yaml.Node{
+				{Kind: yaml.MappingNode, Tag: "!!map"},
+			},
+		}
 	}
 
+	mapping := doc.Content[0]
+
+	// Buscar la clave "mode" y editarla o eliminarla en su posición original.
+	for i := 0; i+1 < len(mapping.Content); i += 2 {
+		if mapping.Content[i].Value == "mode" {
+			if mode == ModeUnset {
+				mapping.Content = append(mapping.Content[:i], mapping.Content[i+2:]...)
+			} else {
+				mapping.Content[i+1].Value = string(mode)
+				mapping.Content[i+1].Tag = "!!str"
+			}
+			out, err := yaml.Marshal(&doc)
+			if err != nil {
+				return fmt.Errorf("serializar config: %w", err)
+			}
+			return writeAtomic(path, out, 0o644)
+		}
+	}
+
+	// Clave no encontrada: añadir al final solo si se está asignando un valor.
 	if mode == ModeUnset {
-		delete(raw, "mode")
-	} else {
-		raw["mode"] = string(mode)
+		return nil
 	}
+	mapping.Content = append(mapping.Content,
+		&yaml.Node{Kind: yaml.ScalarNode, Tag: "!!str", Value: "mode"},
+		&yaml.Node{Kind: yaml.ScalarNode, Tag: "!!str", Value: string(mode)},
+	)
 
-	out, err := yaml.Marshal(raw)
+	out, err := yaml.Marshal(&doc)
 	if err != nil {
 		return fmt.Errorf("serializar config: %w", err)
 	}
