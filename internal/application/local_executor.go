@@ -106,9 +106,10 @@ func (s *LocalExecutorService) Run(ctx context.Context, command, environment str
 	}
 	project.SetRuntime(project.Runtime().WithExtraEnv(envVar))
 
-	// El argv del contenedor queda vacío: el ENTRYPOINT (`vexd run`) lee la
-	// env var. Mantenemos la firma de CreateOptions por compat con tests.
-	containerOptions, err := s.containerService.CreateOptions(project, "", imageToUse)
+	// Pasa --mode local explícitamente al ENTRYPOINT `vexd run`.
+	// El string se append al comando docker run tras la imagen, por lo que el
+	// proceso efectivo dentro del container es: vexd run --mode local
+	containerOptions, err := s.containerService.CreateOptions(project, "--mode local", imageToUse)
 	if err != nil {
 		return err
 	}
