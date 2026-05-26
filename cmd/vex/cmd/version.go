@@ -29,7 +29,7 @@ var versionCmd = &cobra.Command{
 
 		fmt.Println()
 
-		versionStr := fmt.Sprintf("CLI Vex Client: v%s", version)
+		versionStr := fmt.Sprintf("CLI Vex: v%s", version)
 		versionColor.Println(versionStr)
 		fmt.Println()
 	},

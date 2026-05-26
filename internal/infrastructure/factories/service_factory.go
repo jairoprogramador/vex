@@ -7,6 +7,7 @@ import (
 	"time"
 
 	app "github.com/jairoprogramador/vex/internal/application"
+	"github.com/jairoprogramador/vex/internal/config"
 	docSer "github.com/jairoprogramador/vex/internal/domain/docker/services"
 	proPor "github.com/jairoprogramador/vex/internal/domain/project/ports"
 	"github.com/jairoprogramador/vex/internal/infrastructure/architecture"
@@ -29,10 +30,10 @@ type AuthDependencies struct {
 }
 
 type ServiceFactory interface {
-	// BuildRunner returns the deploy orchestrator selected by `remote`.
-	// It is the entry point used by the root command for the
-	// `vex <step> [env]` flow.
-	BuildRunner(remote, follow bool) (app.Runner, error)
+	// BuildRunner retorna el orquestador de deploy seleccionado según mode.
+	// Es el punto de entrada usado por el root command para el flujo
+	// `vex <step> [env]`.
+	BuildRunner(mode config.ExecutionMode, follow bool) (app.Runner, error)
 	BuildLocalExecutor() (*app.LocalExecutorService, error)
 	BuildRemoteExecutor(follow bool) (*app.RemoteExecutorService, error)
 	BuildInitialize() (*app.InitializeService, error)
@@ -69,11 +70,10 @@ func (f *serviceFactory) BuildInitialize() (*app.InitializeService, error) {
 		versionService, levelRepository, questionRepository, templateRepository, gitInfo), nil
 }
 
-// BuildRunner picks between the local Docker executor and the remote
-// portal-driven executor based on the `--remote` flag (or the
-// VEX_MODE=remote env var, resolved by the caller).
-func (f *serviceFactory) BuildRunner(local, follow bool) (app.Runner, error) {
-	if local {
+// BuildRunner elige entre el executor Docker local y el executor remoto
+// vía portal, basándose en el modo resuelto por el caller (root command).
+func (f *serviceFactory) BuildRunner(mode config.ExecutionMode, follow bool) (app.Runner, error) {
+	if mode == config.ModeLocal {
 		return f.BuildLocalExecutor()
 	}
 	return f.BuildRemoteExecutor(follow)

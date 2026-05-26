@@ -136,7 +136,7 @@ func (s *RemoteExecutorService) Run(ctx context.Context, step, environment strin
 	}
 
 	if cgResp.NeedsSync {
-		fmt.Fprintln(s.stdout, "Syncing pipeline definition with portal...")
+		fmt.Fprintln(s.stdout, "Syncing pipeline definition with Vex Portal...")
 		if err := s.portalClient.SyncPipeline(ctx, cgResp.PipelineID); err != nil {
 			return fmt.Errorf("sync pipeline: %w", s.translateError(err))
 		}
