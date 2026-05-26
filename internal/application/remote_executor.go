@@ -345,7 +345,7 @@ func (s *RemoteExecutorService) applyAuthoritative(project *aggregates.Project, 
 	}
 
 	if runtimeChanged {
-		newImage, err := comVos.NewImage(auth.Pipeline.RuntimeImage, auth.Pipeline.RuntimeTag)
+		newImage, err := comVos.NewImage(auth.Pipeline.RuntimeImage + ":" + auth.Pipeline.RuntimeTag)
 		if err != nil {
 			return false, fmt.Errorf("rebuild runtime image VO: %w", err)
 		}

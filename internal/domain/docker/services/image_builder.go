@@ -18,7 +18,8 @@ func NewImageBuilder() docPor.ImageService {
 	return &imageBuilder{}
 }
 
-// CreateImageOptions encapsula la lógica de negocio para determinar cómo se debe construir una imagen.
+// CreateOptions encapsula la lógica de negocio para determinar cómo se debe
+// construir una imagen local a partir del Dockerfile del proyecto.
 func (s *imageBuilder) CreateOptions(project *proAgg.Project) (docVos.BuildOptions, error) {
 	localImageName := fmt.Sprintf("%s%s", project.Data().Name(), project.ID().String()[0:6])
 	imgName, err := docVos.NewImageName(localImageName, project.Runtime().Image().Tag())
@@ -37,10 +38,16 @@ func (s *imageBuilder) CreateOptions(project *proAgg.Project) (docVos.BuildOptio
 		imgArgs[arg.Name()] = arg.Value()
 	}
 
-	return docVos.NewBuildOptions(imgName, imgArgs)
+	// Image().Image() contiene la ruta del Dockerfile cuando tagExplicit=false.
+	dockerfilePath := project.Runtime().Image().Image()
+	return docVos.NewBuildOptions(imgName, imgArgs, dockerfilePath)
 }
 
 // BuildCommand devuelve el comando de build para la imagen.
+// Soporta rutas de Dockerfile arbitrarias:
+//   - "Dockerfile"              → docker build ... -f Dockerfile .
+//   - "MyDockerfile"            → docker build ... -f MyDockerfile .
+//   - "user/project/Dockerfile" → docker build ... -f user/project/Dockerfile user/project
 func (s *imageBuilder) BuildCommand(opts docVos.BuildOptions) (string, error) {
 	var commandBuilder strings.Builder
 	commandBuilder.WriteString("docker build")
@@ -51,9 +58,12 @@ func (s *imageBuilder) BuildCommand(opts docVos.BuildOptions) (string, error) {
 
 	commandBuilder.WriteString(fmt.Sprintf(" -t %s", opts.Image().FullName()))
 
-	commandBuilder.WriteString(fmt.Sprintf(" %s", "."))
+	dockerfilePath := opts.DockerfilePath()
+	if dockerfilePath == "" {
+		dockerfilePath = "Dockerfile"
+	}
 
-	//fmt.Println(commandBuilder.String())
+	commandBuilder.WriteString(fmt.Sprintf(" -f %s %s", dockerfilePath, "."))
 
 	return commandBuilder.String(), nil
 }

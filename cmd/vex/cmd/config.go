@@ -18,7 +18,7 @@ var configCmd = &cobra.Command{
 	Long: `Lee y escribe la configuración de vex en tres niveles de prioridad:
 
   project  →  vexconfig.yaml en el directorio actual (mayor prioridad)
-  user     →  ~/.vex/config
+  user     →  [user]/.vex/config
   global   →  ruta de sistema (/etc/vex/config en Linux,
                /usr/local/etc/vex/config en macOS,
                %%PROGRAMDATA%%\Vex\config en Windows)
@@ -61,7 +61,7 @@ var configListCmd = &cobra.Command{
 func init() {
 	// --scope es un persistent flag heredado por todos los subcomandos.
 	configCmd.PersistentFlags().StringVar(&scopeFlag, "scope", "",
-		`Nivel de configuración: "project" (vexconfig.yaml), "user" (~/.vex/config),
+		`Nivel de configuración: "project" (vexconfig.yaml), "user" ([user]/.vex/config),
 "global" (ruta de sistema). Default para 'set'/'unset': "project".
 Default para 'get'/'list': muestra el valor efectivo (fusionado).`)
 
