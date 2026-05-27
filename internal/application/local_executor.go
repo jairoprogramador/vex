@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
 
 	docPor "github.com/jairoprogramador/vex/internal/domain/docker/ports"
 	docVos "github.com/jairoprogramador/vex/internal/domain/docker/vos"
@@ -44,10 +46,6 @@ func NewLocalExecutorService(
 	}
 }
 
-// Run ejecuta el step solicitado en el environment dado contra el contenedor
-// runtime del proyecto. Construye el RequestInput JSON, lo serializa y codifica
-// en base64, y lo inyecta como env var VEX_REQUEST_INPUT al `docker run`. El
-// ENTRYPOINT de la imagen runtime debe ser `vexd run` (M3+, imagen :v2).
 func (s *LocalExecutorService) Run(ctx context.Context, command, environment string) error {
 	exists, err := s.projectRepository.Exists()
 	if err != nil {
@@ -61,6 +59,26 @@ func (s *LocalExecutorService) Run(ctx context.Context, command, environment str
 	if err != nil {
 		return err
 	}
+
+	projectCwd, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("local executor: obtener directorio de trabajo: %w", err)
+	}
+	localVol, err := proVos.NewVolume(projectCwd, "/appProject")
+	if err != nil {
+		return fmt.Errorf("local executor: construir volumen /appProject: %w", err)
+	}
+
+	hostVexHome, err := vexHomeDir()
+	if err != nil {
+		return fmt.Errorf("local executor: resolver directorio vex del host: %w", err)
+	}
+	vexHomeVol, err := proVos.NewVolume(hostVexHome, "/vexHome")
+	if err != nil {
+		return fmt.Errorf("local executor: construir volumen /vexHome: %w", err)
+	}
+
+	project.SetRuntime(project.Runtime().WithExtraVolume(localVol, vexHomeVol))
 
 	imageInfo := project.Runtime().Image()
 
@@ -122,15 +140,20 @@ func (s *LocalExecutorService) Run(ctx context.Context, command, environment str
 	return err
 }
 
-// Compile-time contract check: ExecutorService satisfies Runner so the
-// factory can return either local or remote implementations behind the
-// same interface.
 var _ Runner = (*LocalExecutorService)(nil)
 
-// encodeRequestInput serializa el RequestInput a JSON y lo codifica en base64.
-// El base64 es la forma portable: docker run --env recibe valores arbitrarios,
-// pero la línea entera pasa por el shell del SO (Unix o PowerShell) y los
-// saltos / comillas del JSON se escapan distinto. Base64 evita ese problema.
+func vexHomeDir() (string, error) {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "", fmt.Errorf("resolve user home: %w", err)
+	}
+	dir := filepath.Join(home, ".vex")
+	if err := os.MkdirAll(dir, 0o750); err != nil {
+		return "", fmt.Errorf("create vex home %q: %w", dir, err)
+	}
+	return dir, nil
+}
+
 func encodeRequestInput(input mapper.RequestInputJSON) (string, error) {
 	raw, err := json.Marshal(input)
 	if err != nil {
