@@ -398,7 +398,7 @@ func (s *RemoteExecutorService) translateError(err error) error {
 		}
 		return errors.New("server is at capacity. Retry shortly")
 	case errors.Is(err, portalclient.ErrUnauthorized):
-		return errors.New("portal rejected the saved credentials. Run 'vex auth login' to refresh")
+		return errors.New("portal rejected the saved credentials. Run 'vex login' to refresh")
 	case errors.Is(err, portalclient.ErrForbidden):
 		return errors.New("portal denied access to this project (membership required)")
 	case errors.Is(err, portalclient.ErrFlyAPIFailure):

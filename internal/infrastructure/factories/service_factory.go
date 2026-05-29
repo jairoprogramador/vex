@@ -19,7 +19,7 @@ import (
 	"github.com/jairoprogramador/vex/internal/infrastructure/project"
 )
 
-// AuthDependencies bundles the wiring needed by the `vex auth` subcommands.
+// AuthDependencies bundles the wiring needed by the `vex` subcommands.
 // It is built once per command invocation so the CLI can share a single
 // HTTP client across the device-flow client and the whoami request.
 type AuthDependencies struct {
@@ -159,7 +159,7 @@ func (f *serviceFactory) BuildArchitecture() (*app.ArchitectureService, error) {
 		templateRepository, projectRepository, inputService), nil
 }
 
-// BuildAuth wires the dependencies for the `vex auth` subcommands.
+// BuildAuth wires the dependencies for the `vex` subcommands.
 func (f *serviceFactory) BuildAuth() (*AuthDependencies, error) {
 	tokenStore, err := portalauth.NewFileTokenStore()
 	if err != nil {

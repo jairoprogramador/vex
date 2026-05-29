@@ -16,7 +16,7 @@ var (
 	version  string
 )
 
-var rootCmd = &cobra.Command{
+var vexCmd = &cobra.Command{
 	Use:   "vex",
 	Short: "vex is an opinionated CLI for designing production-ready cloud architectures",
 	Long:  `Vex is a smart CLI that designs cloud architecture for you. Answer a few key questions about your workload, and Vex generates a production-ready infrastructure blueprint aligned with modern best practices.`,
@@ -81,27 +81,27 @@ func resolveMode(flagVal string) (config.ExecutionMode, error) {
 
 func Execute(versionMain string) {
 	version = versionMain
-	rootCmd.Version = fmt.Sprintf("v%s\n", version)
-	err := rootCmd.Execute()
+	vexCmd.Version = fmt.Sprintf("v%s\n", version)
+	err := vexCmd.Execute()
 	if err != nil {
 		os.Exit(1)
 	}
 }
 
 func init() {
-	rootCmd.Flags().StringVar(&modeFlag, "mode", "",
+	vexCmd.Flags().StringVar(&modeFlag, "mode", "",
 		`Modo de ejecución: "remote" (default) o "local".
 Si no se especifica, se lee de vexconfig.yaml (proyecto),
 ~/.vex/config (usuario) o la ruta de sistema (global),
 en ese orden de prioridad. Ver 'vex config --help'.`)
-	rootCmd.Flags().BoolVar(&noFollow, "no-follow", false, "When used in remote mode, skip the live log stream and exit as soon as the execution is queued.")
-	rootCmd.SetVersionTemplate(`{{.Version}}`)
+	vexCmd.Flags().BoolVar(&noFollow, "no-follow", false, "When used in remote mode, skip the live log stream and exit as soon as the execution is queued.")
+	vexCmd.SetVersionTemplate(`{{.Version}}`)
 
-	rootCmd.AddCommand(initCmd)
-	rootCmd.AddCommand(architectureCmd)
-	rootCmd.AddCommand(versionCmd)
-	rootCmd.AddCommand(authCmd)
-	rootCmd.AddCommand(cancelCmd)
-	rootCmd.AddCommand(configCmd)
-	rootCmd.SilenceUsage = true
+	vexCmd.AddCommand(initCmd)
+	vexCmd.AddCommand(archCmd)
+	vexCmd.AddCommand(versionCmd)
+	vexCmd.AddCommand(cancelCmd)
+	vexCmd.AddCommand(configCmd)
+	vexCmd.AddCommand(modeCmd)
+	vexCmd.SilenceUsage = true
 }

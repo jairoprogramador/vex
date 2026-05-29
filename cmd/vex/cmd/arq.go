@@ -5,7 +5,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var architectureCmd = &cobra.Command{
+var archCmd = &cobra.Command{
 	Use:   "arq",
 	Short: "Designs a production-ready cloud architecture.",
 	RunE: func(cmd *cobra.Command, args []string) error {

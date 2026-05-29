@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"strings"
 	"text/tabwriter"
 
 	"github.com/jairoprogramador/vex/internal/config"
@@ -13,7 +14,7 @@ var scopeFlag string
 
 // configCmd es el comando raíz de `vex config`.
 var configCmd = &cobra.Command{
-	Use:   "config",
+	Use:   "config [key | key=value]",
 	Short: "Gestionar la configuración de la CLI de vex",
 	Long: `Lee y escribe la configuración de vex en tres niveles de prioridad:
 
@@ -24,23 +25,16 @@ var configCmd = &cobra.Command{
                %%PROGRAMDATA%%\Vex\config en Windows)
 
 El nivel de proyecto tiene mayor prioridad; el global, menor.
-Si ningún nivel define un valor, se usa el default (modo: remote).`,
-}
+Si ningún nivel define un valor, se usa el default (modo: remote).
 
-var configGetCmd = &cobra.Command{
-	Use:       "get <key>",
-	Short:     "Muestra el valor de una clave de configuración",
-	Args:      cobra.ExactArgs(1),
-	ValidArgs: []string{"mode"},
-	RunE:      runConfigGet,
-}
-
-var configSetCmd = &cobra.Command{
-	Use:       "set <key> <value>",
-	Short:     "Establece el valor de una clave de configuración",
-	Args:      cobra.ExactArgs(2),
-	ValidArgs: []string{"mode"},
-	RunE:      runConfigSet,
+Ejemplos:
+  vex config mode              # muestra el valor efectivo de mode
+  vex config mode=remote       # establece mode en el scope project
+  vex config mode=local --scope user   # establece mode en scope user
+  vex config unset mode        # borra mode del scope project
+  vex config list              # lista todos los scopes`,
+	Args: cobra.MaximumNArgs(1),
+	RunE: runConfig,
 }
 
 var configUnsetCmd = &cobra.Command{
@@ -62,19 +56,31 @@ func init() {
 	// --scope es un persistent flag heredado por todos los subcomandos.
 	configCmd.PersistentFlags().StringVar(&scopeFlag, "scope", "",
 		`Nivel de configuración: "project" (vexconfig.yaml), "user" ([user]/.vex/config),
-"global" (ruta de sistema). Default para 'set'/'unset': "project".
-Default para 'get'/'list': muestra el valor efectivo (fusionado).`)
+"global" (ruta de sistema). Default para 'unset': "project".
+Default para 'key' / 'list': muestra el valor efectivo (fusionado).`)
 
-	configCmd.AddCommand(configGetCmd)
-	configCmd.AddCommand(configSetCmd)
 	configCmd.AddCommand(configUnsetCmd)
 	configCmd.AddCommand(configListCmd)
 }
 
 // --- handlers ---------------------------------------------------------------
 
-func runConfigGet(cmd *cobra.Command, args []string) error {
-	key := args[0]
+func runConfig(cmd *cobra.Command, args []string) error {
+	if len(args) == 0 {
+		return cmd.Help()
+	}
+	arg := args[0]
+	key, val, found := strings.Cut(arg, "=")
+	if !found {
+		return configGet(cmd, key)
+	}
+	if val == "" {
+		return fmt.Errorf("valor vacío: para borrar una clave usa 'vex config unset %s'", key)
+	}
+	return configSet(cmd, key, val)
+}
+
+func configGet(cmd *cobra.Command, key string) error {
 	if err := validateKey(key); err != nil {
 		return err
 	}
@@ -85,7 +91,6 @@ func runConfigGet(cmd *cobra.Command, args []string) error {
 	}
 
 	if scopeFlag == "" {
-		// Sin scope: mostrar valor efectivo e indicar desde qué scope viene.
 		effective, err := config.LoadEffective(projectPath)
 		if err != nil {
 			return err
@@ -114,8 +119,7 @@ func runConfigGet(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func runConfigSet(cmd *cobra.Command, args []string) error {
-	key, rawVal := args[0], args[1]
+func configSet(cmd *cobra.Command, key, rawVal string) error {
 	if err := validateKey(key); err != nil {
 		return err
 	}
@@ -192,7 +196,6 @@ func runConfigList(cmd *cobra.Command, args []string) error {
 	defer w.Flush()
 
 	if scopeFlag != "" {
-		// Mostrar solo el scope indicado.
 		scope, err := parseScope(scopeFlag)
 		if err != nil {
 			return err
@@ -205,7 +208,6 @@ func runConfigList(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
-	// Sin scope: mostrar efectivo + tabla completa.
 	effective, err := config.LoadEffective(projectPath)
 	if err != nil {
 		return err
@@ -276,7 +278,6 @@ func valueFor(key string, cfg config.Config) string {
 
 // findOrigin retorna el nombre del scope que aporta el valor efectivo de key.
 func findOrigin(key, projectPath string) (string, error) {
-	// El orden de prioridad es project > user > global.
 	for _, scope := range []config.Scope{config.ScopeProject, config.ScopeUser, config.ScopeGlobal} {
 		cfg, err := config.LoadScope(scope, projectPath)
 		if err != nil {

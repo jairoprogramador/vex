@@ -217,7 +217,7 @@ func TestTranslateError(t *testing.T) {
 		{
 			name:      "unauthorized",
 			in:        fmt.Errorf("wrap: %w", portalclient.ErrUnauthorized),
-			wantSubst: "vex auth login",
+			wantSubst: "vex login",
 		},
 		{
 			name:      "forbidden",
