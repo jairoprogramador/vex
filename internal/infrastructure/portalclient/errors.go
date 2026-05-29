@@ -13,7 +13,7 @@ import "errors"
 var (
 	// ErrUnauthorized signals a 401 from any portal endpoint. The token is
 	// missing, malformed, expired or revoked. The CLI treats this as a
-	// trigger to re-run `vex auth login`.
+	// trigger to re-run `vex login`.
 	ErrUnauthorized = errors.New("portalclient: unauthorized")
 
 	// ErrForbidden signals a 403, typically because the user is not a

@@ -40,10 +40,10 @@ func runCancel(parentCtx context.Context, executionID string) error {
 	if err := client.CancelExecution(ctx, executionID); err != nil {
 		switch {
 		case errors.Is(err, portalauth.ErrTokenNotFound):
-			fmt.Fprintln(os.Stderr, "Not authenticated. Run 'vex auth login' first.")
+			fmt.Fprintln(os.Stderr, "Not authenticated. Run 'vex login' first.")
 			os.Exit(1)
 		case errors.Is(err, portalclient.ErrUnauthorized):
-			fmt.Fprintln(os.Stderr, "Portal rejected the saved credentials. Run 'vex auth login' to refresh.")
+			fmt.Fprintln(os.Stderr, "Portal rejected the saved credentials. Run 'vex login' to refresh.")
 			os.Exit(1)
 		case errors.Is(err, portalclient.ErrNotFound):
 			return fmt.Errorf("execution %s not found (already finished, never existed, or not yours)", executionID)

@@ -10,7 +10,7 @@ import (
 
 // CLIFlowConfig packages the OAuth Device Authorization Grant flow as a
 // reusable, side-effect-aware unit. It encapsulates the bits that both
-// `vex auth login` and the remote-executor's auto-login share: kicking off
+// `vex login` and the remote-executor's auto-login share: kicking off
 // the device-code request, surfacing the verification URL/code to the user,
 // best-effort opening the browser, polling for approval, and persisting the
 // resulting token via TokenStore.
@@ -120,7 +120,7 @@ func (c *CLIFlowConfig) applyDefaults() {
 }
 
 // announceVerification prints the URL/code lines that the end user needs
-// in order to approve the device. Format mirrors what `vex auth login`
+// in order to approve the device. Format mirrors what `vex login`
 // has shipped since M2 so existing screenshots/docs stay accurate.
 func (c CLIFlowConfig) announceVerification(device DeviceCodeResponse) {
 	fmt.Fprintf(c.Stdout, "Open the following URL in your browser: \n%s", device.VerificationURIComplete)

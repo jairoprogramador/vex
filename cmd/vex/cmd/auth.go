@@ -18,14 +18,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// authCmd is the parent of `login`, `logout` and `whoami`. It only acts as
-// a grouping command — the real work happens in the subcommands.
-var authCmd = &cobra.Command{
-	Use:   "auth",
-	Short: "Authenticate vex against the Vex portal.",
-	Long:  "Manage portal credentials for the vex CLI using the OAuth Device Authorization Grant flow.",
-}
-
 // authLoginCmd starts the Device Code flow against the portal and persists
 // the resulting access token to the local credentials file.
 var authLoginCmd = &cobra.Command{
@@ -57,9 +49,9 @@ var authWhoamiCmd = &cobra.Command{
 }
 
 func init() {
-	authCmd.AddCommand(authLoginCmd)
-	authCmd.AddCommand(authLogoutCmd)
-	authCmd.AddCommand(authWhoamiCmd)
+	vexCmd.AddCommand(authLoginCmd)
+	vexCmd.AddCommand(authLogoutCmd)
+	vexCmd.AddCommand(authWhoamiCmd)
 }
 
 // runAuthLogin orchestrates the user-facing portion of the device flow:
@@ -102,10 +94,10 @@ func runAuthLogin(parentCtx context.Context) error {
 		fmt.Fprintln(os.Stderr, "Login canceled.")
 		os.Exit(130)
 	case errors.Is(err, portalauth.ErrAccessDenied):
-		fmt.Fprintln(os.Stderr, "Access denied: the portal rejected this device. Run 'vex auth login' to retry.")
+		fmt.Fprintln(os.Stderr, "Access denied: the portal rejected this device. Run 'vex login' to retry.")
 		os.Exit(1)
 	case errors.Is(err, portalauth.ErrDeviceCodeExpired):
-		fmt.Fprintln(os.Stderr, "Device code expired before approval. Run 'vex auth login' to retry.")
+		fmt.Fprintln(os.Stderr, "Device code expired before approval. Run 'vex login' to retry.")
 		os.Exit(1)
 	case err != nil:
 		return fmt.Errorf("auth login: %w", err)
@@ -136,7 +128,7 @@ func runAuthLogout(_ context.Context) error {
 	}
 	fmt.Fprintln(os.Stdout, "Local credentials cleared.")
 	fmt.Fprintln(os.Stdout, "Note: the token may still be valid on the server until expiration. "+
-		"Use 'vex auth revoke' to revoke server-side.")
+		"Use 'vex revoke' to revoke server-side.")
 	return nil
 }
 
@@ -154,7 +146,7 @@ func runAuthWhoami(parentCtx context.Context) error {
 	token, err := deps.TokenStore.Load()
 	if err != nil {
 		if errors.Is(err, portalauth.ErrTokenNotFound) {
-			fmt.Fprintln(os.Stderr, "Not authenticated. Run 'vex auth login'.")
+			fmt.Fprintln(os.Stderr, "Not authenticated. Run 'vex login'.")
 			os.Exit(1)
 		}
 		return fmt.Errorf("load credentials: %w", err)
@@ -164,7 +156,7 @@ func runAuthWhoami(parentCtx context.Context) error {
 	if err != nil {
 		var unauth unauthorizedError
 		if errors.As(err, &unauth) {
-			fmt.Fprintln(os.Stderr, "Token expired or revoked. Run 'vex auth login'.")
+			fmt.Fprintln(os.Stderr, "Token expired or revoked. Run 'vex login'.")
 			os.Exit(1)
 		}
 		return fmt.Errorf("call whoami: %w", err)

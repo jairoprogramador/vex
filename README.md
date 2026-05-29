@@ -151,9 +151,9 @@ vex version
 | `vex init` | Inicializa el proyecto y genera `vexconfig.yaml`. |
 | `vex arq` | Ajusta la arquitectura cloud según tus necesidades (opcional). |
 | `vex <step> [env]` | Ejecuta el step indicado (`test`, `supply`, `package`, `deploy`) en el entorno (`sand`, `stag`, `prod`). |
-| `vex auth login` | Autentica el CLI contra el portal mediante device flow y persiste el token. |
-| `vex auth logout` | Borra el token guardado. |
-| `vex auth whoami` | Muestra el usuario autenticado. |
+| `vex login` | Autentica el CLI contra el portal mediante device flow y persiste el token. |
+| `vex logout` | Borra el token guardado. |
+| `vex whoami` | Muestra el usuario autenticado. |
 | `vex execution cancel <id>` | Cancela una ejecución remota en curso. |
 | `vex version` | Muestra la versión instalada. |
 
@@ -171,7 +171,7 @@ vex version
 | | Modo local | Modo remoto |
 | :--- | :--- | :--- |
 | Disparador | default | `--remote` o `VEX_MODE=remote` |
-| Auth | no requerida | `vex auth login` (device flow OAuth) |
+| Auth | no requerida | `vex login` (device flow OAuth) |
 | Ejecución | imagen Docker construida y corrida en tu host | Fly Machine efímera (`auto_destroy=true`) creada por el portal |
 | Logs | stdout local | SSE en vivo desde el portal (salvo `--no-follow`) |
 | Estado | en memoria del proceso | persistido en el portal — visible y auditado |
@@ -195,7 +195,7 @@ El token del portal se persiste con permisos `0600` en, por orden de prioridad:
 2. `%APPDATA%\.vex\credentials.json` (Windows).
 3. `$HOME/.vex/.config/credentials.json` (POSIX, fallback).
 
-Borrar este archivo equivale a `vex auth logout`.
+Borrar este archivo equivale a `vex logout`.
 
 ## Smoke E2E manual
 
@@ -217,11 +217,11 @@ supabase secrets list | grep -E 'FLY_(API_TOKEN|APP|REGION)'
 
 ```sh
 cd ~/myapp
-vex auth logout || true
-vex auth login
+vex logout || true
+vex login
 # Esperado: abre el browser, imprime la URL/code; tras aprobar, "Authenticated as <email>".
 
-vex auth whoami
+vex whoami
 # Esperado: imprime user_id, email y token_id.
 
 vex init        # solo si todavía no existe vexconfig.yaml
