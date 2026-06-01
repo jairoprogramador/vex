@@ -188,7 +188,7 @@ func (f *serviceFactory) getProjectPath() (string, error) {
 
 func (f *serviceFactory) templateCachePath() string {
 	home, _ := os.UserHomeDir()
-	return filepath.Join(home, ".vex", "templates.json")
+	return filepath.Join(home, ".vex", "pipelines.json")
 }
 
 func (f *serviceFactory) templateRemoteURL() string {

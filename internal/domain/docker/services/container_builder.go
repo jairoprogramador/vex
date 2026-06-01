@@ -60,7 +60,7 @@ func (s *containerBuilder) BuildCommand(opts docVos.RunOptions) (string, error) 
 		commandBuilder.WriteString(cmdTail)
 	}
 
-	fmt.Println(commandBuilder.String())
+	//fmt.Println(commandBuilder.String())
 	return commandBuilder.String(), nil
 }
 
