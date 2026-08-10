@@ -41,7 +41,16 @@ type ExecutionInputJSON struct {
 
 // CurrentSchemaVersion es el número que el CLI emite en cada RequestInput.
 // El engine valida igualdad estricta con su propia versión soportada.
-const CurrentSchemaVersion = 1
+//
+// La 2 es el contrato de la spec 16: sin `--mode` y sin los seis
+// `--step-*-endpoint`, con el destino del estado pasado como configuración
+// explícita. Subirla aquí es lo que impide que un `vex` viejo hable con un
+// `vexd` nuevo o al revés —por contrato, no por memoria de nadie—: la
+// desigualdad estricta sale con exit code 2 y un mensaje que nombra la versión.
+//
+// La forma del DTO no cambió entre la 1 y la 2; lo que cambió es lo que el motor
+// espera ADEMÁS del DTO. Por eso la versión sube sin que se mueva un solo campo.
+const CurrentSchemaVersion = 2
 
 // ToRequestInput convierte un Project de dominio + el step y el env solicitados
 // en el JSON DTO que `vexd run` espera. Es el adaptador que reemplaza al viejo
