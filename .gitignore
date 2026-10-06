@@ -30,6 +30,7 @@ go.work
 
 ### Intellij ###
 .idea
+.claude
 
 ### Linux ###
 *~
