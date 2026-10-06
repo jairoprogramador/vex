@@ -1,9 +1,12 @@
 package cmd
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/jairoprogramador/vex/internal/config"
 	"github.com/jairoprogramador/vex/internal/infrastructure/factories"
@@ -27,7 +30,7 @@ var vexCmd = &cobra.Command{
 			}
 			return errors.New("a step argument is required")
 		}
-		if len(args) > 3 {
+		if len(args) > 2 {
 			return errors.New("a maximum of two arguments are allowed: a step and an optional environment")
 		}
 		return nil
@@ -55,7 +58,20 @@ var vexCmd = &cobra.Command{
 			return err
 		}
 
-		return runner.Run(cmd.Context(), command, environment)
+		ctx := cmd.Context()
+		if mode == config.ModeLocal {
+			// Ctrl+C cancela el contexto: el ejecutor local le pide al motor que
+			// cancele en vez de morir con el contenedor a medias.
+			var stop context.CancelFunc
+			ctx, stop = signal.NotifyContext(ctx, os.Interrupt, syscall.SIGTERM)
+			defer stop()
+		}
+
+		err = runner.Run(ctx, command, environment)
+		if err != nil && mode == config.ModeLocal {
+			reportLocalError(cmd, err)
+		}
+		return err
 	},
 }
 
@@ -82,15 +98,14 @@ func resolveMode(flagVal string) (config.ExecutionMode, error) {
 func Execute(versionMain string) {
 	version = versionMain
 	vexCmd.Version = fmt.Sprintf("v%s\n", version)
-	err := vexCmd.Execute()
-	if err != nil {
-		os.Exit(1)
+	if err := vexCmd.Execute(); err != nil {
+		os.Exit(exitCode(err))
 	}
 }
 
 func init() {
 	vexCmd.Flags().StringVar(&modeFlag, "mode", "",
-		`Modo de ejecución: "remote" (default) o "local".
+		`Modo de ejecución: "local" (default) o "remote".
 Si no se especifica, se lee de vexconfig.yaml (proyecto),
 ~/.vex/config (usuario) o la ruta de sistema (global),
 en ese orden de prioridad. Ver 'vex config --help'.`)

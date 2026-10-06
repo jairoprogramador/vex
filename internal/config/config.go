@@ -39,21 +39,19 @@ func LoadEffective(projectPath string) (Config, error) {
 		return Config{}, fmt.Errorf("project config: %w", err)
 	}
 
-	merged := Config{}
-	if global.Mode != ModeUnset {
-		merged.Mode = global.Mode
-	}
-	if user.Mode != ModeUnset {
-		merged.Mode = user.Mode
-	}
-	if proj.Mode != ModeUnset {
-		merged.Mode = proj.Mode
-	}
+	return mergeConfigs(global, user, proj), nil
+}
 
-	if merged.Mode == ModeUnset {
-		merged.Mode = ModeRemote
+// mergeConfigs aplica la precedencia project › user › global y, si ninguno define
+// un valor, el default. Nunca devuelve ModeUnset.
+func mergeConfigs(global, user, project Config) Config {
+	merged := Config{Mode: DefaultMode}
+	for _, level := range []Config{global, user, project} { // de menor a mayor prioridad
+		if level.Mode != ModeUnset {
+			merged.Mode = level.Mode
+		}
 	}
-	return merged, nil
+	return merged
 }
 
 func LoadScope(scope Scope, projectPath string) (Config, error) {

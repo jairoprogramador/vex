@@ -25,7 +25,7 @@ var configCmd = &cobra.Command{
                %%PROGRAMDATA%%\Vex\config en Windows)
 
 El nivel de proyecto tiene mayor prioridad; el global, menor.
-Si ningún nivel define un valor, se usa el default (modo: remote).
+Si ningún nivel define un valor, se usa el default (modo: local).
 
 Ejemplos:
   vex config mode              # muestra el valor efectivo de mode

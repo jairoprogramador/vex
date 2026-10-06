@@ -1,6 +1,8 @@
 package factories
 
 import (
+	"context"
+	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -8,11 +10,12 @@ import (
 
 	app "github.com/jairoprogramador/vex/internal/application"
 	"github.com/jairoprogramador/vex/internal/config"
-	docSer "github.com/jairoprogramador/vex/internal/domain/docker/services"
 	proPor "github.com/jairoprogramador/vex/internal/domain/project/ports"
 	"github.com/jairoprogramador/vex/internal/infrastructure/architecture"
 	"github.com/jairoprogramador/vex/internal/infrastructure/common"
+	"github.com/jairoprogramador/vex/internal/infrastructure/console"
 	"github.com/jairoprogramador/vex/internal/infrastructure/docker"
+	"github.com/jairoprogramador/vex/internal/infrastructure/engine"
 	"github.com/jairoprogramador/vex/internal/infrastructure/git"
 	"github.com/jairoprogramador/vex/internal/infrastructure/portalauth"
 	"github.com/jairoprogramador/vex/internal/infrastructure/portalclient"
@@ -73,14 +76,15 @@ func (f *serviceFactory) BuildInitialize() (*app.InitializeService, error) {
 // BuildRunner elige entre el executor Docker local y el executor remoto
 // vía portal, basándose en el modo resuelto por el caller (root command).
 func (f *serviceFactory) BuildRunner(mode config.ExecutionMode, follow bool) (app.Runner, error) {
-	if mode == config.ModeLocal {
-		return f.BuildLocalExecutor()
+	if mode == config.ModeRemote {
+		return f.BuildRemoteExecutor(follow)
 	}
-	return f.BuildRemoteExecutor(follow)
+	return f.BuildLocalExecutor()
 }
 
-// BuildLocalExecutor wires the legacy Docker-based executor (kept for the
-// non-remote branch of the CLI).
+// BuildLocalExecutor wires the executor that runs vex-engine in a local
+// container: it clones project and pipeline into the user cache, mounts them and
+// talks JSON-RPC with the engine.
 func (f *serviceFactory) BuildLocalExecutor() (*app.LocalExecutorService, error) {
 	projectPath, err := f.getProjectPath()
 	if err != nil {
@@ -91,17 +95,39 @@ func (f *serviceFactory) BuildLocalExecutor() (*app.LocalExecutorService, error)
 		return nil, err
 	}
 
-	cmdExecutor := docker.NewShellExecutor()
-	imageService := docSer.NewImageBuilder()
-	containerService := docSer.NewContainerBuilder()
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return nil, fmt.Errorf("resolve user home: %w", err)
+	}
+	cache, err := os.UserCacheDir()
+	if err != nil {
+		return nil, fmt.Errorf("resolve user cache dir: %w", err)
+	}
+	// Lo que está en ~/.vex es la verdad (historial del motor); lo que está en la
+	// caché del usuario se puede borrar y se rehace.
+	vexCache := filepath.Join(cache, "vex")
+
+	config := app.LocalExecutorConfig{
+		WorkDir:     projectPath,
+		StoreDir:    filepath.Join(home, ".vex", "almacen"),
+		SpaceDir:    filepath.Join(vexCache, "espacio"),
+		MaterialDir: filepath.Join(vexCache, "material"),
+		Requester:   git.RequesterName(context.Background(), projectPath),
+	}
 
 	return app.NewLocalExecutorService(
-		projectRepository, cmdExecutor, imageService, containerService), nil
+		projectRepository,
+		git.NewSourceCloner(filepath.Join(vexCache, "sources")),
+		docker.NewImageBuilder(os.Stderr),
+		engine.NewDockerEngine(),
+		console.NewPresenter(os.Stdout, os.Stderr),
+		config), nil
 }
 
 // BuildRemoteExecutor wires the portal-driven executor used by
-// `vex <step> [env] --remote`. The `follow` parameter is the negation of
-// `--no-follow`; M4 honors it as a no-op (FollowExecution lands in M5).
+// `vex <step> [env] --mode remote`. The `follow` parameter is the negation of
+// `--no-follow`: when false, the executor returns as soon as the execution is
+// queued instead of streaming its logs.
 func (f *serviceFactory) BuildRemoteExecutor(follow bool) (*app.RemoteExecutorService, error) {
 	projectPath, err := f.getProjectPath()
 	if err != nil {
