@@ -28,16 +28,17 @@ var vexCmd = &cobra.Command{
 el historial de cada intento y te ayuda a entender qué pasó.
 
 Empieza así:
-  vex init                  crea vexconfig.yaml en tu proyecto
-  vex envs                  ve los ambientes y vex steps los pasos del pipeline
-  vex check deploy sand     comprueba que todo está listo, sin ejecutar nada
-  vex deploy sand           ejecuta hasta el paso "deploy" en "sand"  (atajo de: vex run deploy sand)
-  vex why                   si falló: qué cambió desde la última vez que funcionó
+  vex init                          crea vexconfig.yaml en tu proyecto
+  vex envs                          lista los ambientes configurados
+  vex steps                         lista los pasos del pipeline
+  vex check <step> <environment>    comprueba que todo está listo, sin ejecutar nada
+  vex <step> <environment>          ejecuta hasta el paso "step" en "environment"  (atajo de: vex run <step> <environment>)
+  vex why                           si falló: qué cambió desde la última vez que funcionó
 
 Palabras que verás en todos los comandos:
-  paso         una etapa del pipeline (test, package, deploy…); vex steps los lista
-  ambiente     dónde se ejecuta (sand, stag, prod…); vex envs los lista
-  intento      cada vez que ejecutas un paso; queda en el historial, salga bien o mal
+  step         una etapa del pipeline (test, package, deploy…); vex steps los lista
+  environment  dónde se ejecuta (sand, stag, prod…); vex envs los lista
+  intento      cada vez que ejecutas un step; queda en el historial, salga bien o mal
   despliegue   un intento que llegó hasta el final con éxito; es lo que se puede lanzar o recuperar
   lanzamiento  marcar un despliegue como el visible en su ambiente (solo, o a mano con vex release)
 
@@ -48,10 +49,10 @@ Los comandos de "Consultar" y "Desplegar y lanzar" aceptan el id completo de un 
 			if cmd.HasSubCommands() && cmd.CalledAs() == "vex" {
 				return nil
 			}
-			return errors.New("indica el paso y el ambiente: vex <paso> <ambiente> (vex --help lista los comandos)")
+			return errors.New("indica el paso y el ambiente: vex <step> <environment> (vex --help lista los comandos)")
 		}
 		if len(args) > 2 {
-			return errors.New("sobran argumentos: vex <paso> <ambiente>")
+			return errors.New("sobran argumentos: vex <step> <environment>")
 		}
 		return nil
 	},
@@ -63,15 +64,15 @@ Los comandos de "Consultar" y "Desplegar y lanzar" aceptan el id completo de un 
 	},
 }
 
-// runCmd es la forma explícita de ejecutar un paso: `vex run <paso> <ambiente>`. Hace lo mismo que
-// `vex <paso> <ambiente>`, pero sin ambigüedad cuando un paso del pipeline se llama igual que un comando
+// runCmd es la forma explícita de ejecutar un paso: `vex run <step> <environment>`. Hace lo mismo que
+// `vex <step> <environment>`, pero sin ambigüedad cuando un paso del pipeline se llama igual que un comando
 // (un paso `release` o `log` quedaría tapado por el comando del mismo nombre).
 var runCmd = &cobra.Command{
-	Use:   "run <paso> <ambiente>",
+	Use:   "run <step> <environment>",
 	Short: "Ejecuta el pipeline hasta ese paso en ese ambiente",
 	Long: `Ejecuta el pipeline hasta ese paso en ese ambiente. Se hacen también los pasos anteriores que hagan falta.
 
-Es lo mismo que "vex <paso> <ambiente>"; usa "vex run" cuando el nombre de un paso coincida con un comando
+Es lo mismo que "vex <step> <environment>"; usa "vex run" cuando el nombre de un paso coincida con un comando
 de vex (por ejemplo, un paso llamado "release").`,
 	Example: "  vex run test sand\n  vex run release prod",
 	Args:    cobra.RangeArgs(1, 2),

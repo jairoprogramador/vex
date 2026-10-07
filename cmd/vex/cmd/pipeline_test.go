@@ -125,7 +125,7 @@ func TestCheck_ExigeElPasoYElAmbiente(t *testing.T) {
 		err := checkCmd.Args(checkCmd, args)
 
 		require.Error(t, err)
-		assert.Contains(t, err.Error(), "vex check <paso> <ambiente>")
+		assert.Contains(t, err.Error(), "vex check <step> <environment>")
 	}
 	assert.NoError(t, checkCmd.Args(checkCmd, []string{"deploy", "sand"}))
 }
@@ -139,8 +139,8 @@ func TestComandosDelPipeline_EnModoRemotoExplicanQueHacer(t *testing.T) {
 }
 
 func TestNoCheck_EstaEnLasDosFormasDeEjecutar(t *testing.T) {
-	assert.NotNil(t, vexCmd.Flags().Lookup("no-check"), "vex <paso> <ambiente> --no-check")
-	assert.NotNil(t, runCmd.Flags().Lookup("no-check"), "vex run <paso> <ambiente> --no-check")
+	assert.NotNil(t, vexCmd.Flags().Lookup("no-check"), "vex <step> <environment> --no-check")
+	assert.NotNil(t, runCmd.Flags().Lookup("no-check"), "vex run <step> <environment> --no-check")
 	assert.False(t, noCheck, "el pre-vuelo está activo por defecto")
 }
 

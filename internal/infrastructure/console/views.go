@@ -308,7 +308,7 @@ func (v *Views) Environments(environments []application.Environment) {
 		v.hint("en los protegidos el lanzamiento lo decides tú: vex release <ambiente> <despliegue>")
 		return
 	}
-	v.hint("vex <paso> <ambiente> ejecuta en uno de ellos")
+	v.hint("vex <step> <environment> ejecuta en uno de ellos")
 }
 
 // Steps pinta `vex steps`. reserved son los nombres de comandos de vex: un paso que se llame igual queda tapado
@@ -336,7 +336,7 @@ func (v *Views) Steps(steps []application.PipelineStep, reserved map[string]bool
 				warnMark, s.Name, s.Name)
 		}
 	}
-	v.hint("vex <paso> <ambiente> ejecuta hasta ese paso (y los anteriores)")
+	v.hint("vex <step> <environment> ejecuta hasta ese paso (y los anteriores)")
 }
 
 // CheckPassed pinta el resultado de `vex check` cuando todo está en orden.

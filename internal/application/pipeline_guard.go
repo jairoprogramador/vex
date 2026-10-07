@@ -38,7 +38,7 @@ type pipelineEngine interface {
 }
 
 // PipelineGuard comprueba, sin ejecutar nada, que un paso se puede ejecutar en un ambiente, y traduce lo que
-// encuentre a errores que una persona entiende. Lo usan `vex check` y el pre-vuelo de `vex <paso> <ambiente>`.
+// encuentre a errores que una persona entiende. Lo usan `vex check` y el pre-vuelo de `vex <step> <environment>`.
 //
 // Cuando el motor dice que un ambiente o un paso no existe, el guardián le pregunta al propio motor cuáles hay:
 // así el mensaje trae los nombres válidos y una sugerencia, sin depender de ninguna copia que pueda estar vieja.

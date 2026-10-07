@@ -34,7 +34,7 @@ func DescribeError(err error) string {
 	case errors.As(err, &finished):
 		return describeFinishedAttempt(finished)
 	case errors.Is(err, application.ErrNoRecentAttempt):
-		return "Todavía no has ejecutado nada en este proyecto.\n→ Ejecuta un paso con: vex <paso> <ambiente>, o pasa el id: vex show <id>"
+		return "Todavía no has ejecutado nada en este proyecto.\n→ Ejecuta un paso con: vex <step> <environment>, o pasa el id: vex show <id>"
 	case errors.Is(err, application.ErrIDTooShort):
 		return "El id es demasiado corto: escribe al menos 6 caracteres del final.\n→ vex ls <ambiente> muestra los ids"
 	case errors.Is(err, application.ErrUnknownID):
@@ -54,7 +54,7 @@ func DescribeError(err error) string {
 	case errors.Is(err, application.ErrAttemptCanceled):
 		return "Ejecución cancelada."
 	case errors.Is(err, application.ErrEnvironmentRequired):
-		return "Falta el ambiente. Uso: vex <paso> <ambiente>"
+		return "Falta el ambiente. Uso: vex <step> <environment>"
 	case errors.As(err, &engineErr):
 		return describeEngineError(engineErr)
 	}

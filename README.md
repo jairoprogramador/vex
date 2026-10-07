@@ -106,7 +106,7 @@ vex arq
 **3. Ejecuta un paso en un ambiente.**
 
 ```sh
-vex <paso> <ambiente>
+vex <step> <environment>
 
 vex test sand      # hasta el paso test, en sandbox
 vex deploy prod    # todos los pasos hasta deploy, en producción
@@ -181,7 +181,7 @@ mode: local                 # opcional: "local" (por defecto) o "remote"
 
 ## Modo local
 
-Es el **modo por defecto**: ejecuta el motor en un contenedor de tu máquina, sin necesidad de configurar nada. Al ejecutar `vex <paso> <ambiente>`:
+Es el **modo por defecto**: ejecuta el motor en un contenedor de tu máquina, sin necesidad de configurar nada. Al ejecutar `vex <step> <environment>`:
 
 1. **Clona** `project.url` y `pipeline.url` en la caché del usuario y los fija al commit exacto de su `ref`.
 2. **Prepara la imagen**: la construye si `runtime.image` es un Dockerfile, o usa la del registro.
@@ -239,8 +239,8 @@ La ruta global es `/etc/vex/config` (Linux), `/usr/local/etc/vex/config` (macOS)
 
 | Comando | Descripción |
 | :--- | :--- |
-| `vex <paso> <ambiente>` · `vex run <paso> <ambiente>` | Ejecuta el pipeline hasta ese paso en ese ambiente. `vex run` es la forma explícita: úsala si un paso se llama igual que un comando de vex. |
-| `vex check <paso> <ambiente>` | Comprueba que todo está bien (ambiente, paso y variables) **sin ejecutar nada**. |
+| `vex <step> <environment>` · `vex run <step> <environment>` | Ejecuta el pipeline hasta ese paso en ese ambiente. `vex run` es la forma explícita: úsala si un paso se llama igual que un comando de vex. |
+| `vex check <step> <environment>` | Comprueba que todo está bien (ambiente, paso y variables) **sin ejecutar nada**. |
 
 **Consultar** (solo lectura, modo local)
 
@@ -300,7 +300,7 @@ En el modo remoto la ejecución no corre en tu máquina: `vex` se autentica cont
 
 | Mensaje | Qué hacer |
 | :--- | :--- |
-| `Falta el ambiente. Uso: vex <paso> <ambiente>` | Indica el ambiente: `vex test sand`. |
+| `Falta el ambiente. Uso: vex <step> <environment>` | Indica el ambiente: `vex test sand`. |
 | `El ambiente "x" ya tiene un intento en curso` | Otro intento usa ese ambiente. Espera a que termine. Si su proceso murió (por ejemplo, mataron el contenedor), un motor reciente lo recupera solo pasados unos 15 segundos; con un motor anterior, o si no quieres esperar, usa `vex abandon`. |
 | `El ambiente «x» no existe en este pipeline` · `El paso «x» no existe…` | Error de tecleo: el mensaje sugiere el más parecido y lista los que hay (`vex envs`, `vex steps`). No se crea ningún intento. |
 | `No encuentro ese id entre los que conozco` | `release` y `rollback` piden el id de un **despliegue** (`vex deployments <ambiente>`), no de un intento (`vex ls <ambiente>`). |

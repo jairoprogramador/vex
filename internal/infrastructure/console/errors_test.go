@@ -15,7 +15,7 @@ func TestDescribeError_ErroresPropiosDeLaAplicacion(t *testing.T) {
 		"el fallo del intento ya se mostró con su resumen y su salida")
 	assert.Empty(t, DescribeError(fmt.Errorf("envuelto: %w", application.ErrAttemptFailed)))
 	assert.Equal(t, "Ejecución cancelada.", DescribeError(application.ErrAttemptCanceled))
-	assert.Contains(t, DescribeError(application.ErrEnvironmentRequired), "vex <paso> <ambiente>")
+	assert.Contains(t, DescribeError(application.ErrEnvironmentRequired), "vex <step> <environment>")
 }
 
 func TestDescribeError_ErrorDesconocidoSeMuestraTalCual(t *testing.T) {
@@ -115,7 +115,7 @@ func TestDescribeError_ErroresDeLasConsultas(t *testing.T) {
 		err  error
 		want []string
 	}{
-		{"sin intentos recordados", application.ErrNoRecentAttempt, []string{"Todavía no has ejecutado nada", "vex <paso> <ambiente>"}},
+		{"sin intentos recordados", application.ErrNoRecentAttempt, []string{"Todavía no has ejecutado nada", "vex <step> <environment>"}},
 		{"id demasiado corto", application.ErrIDTooShort, []string{"demasiado corto", "al menos 6", "vex ls"}},
 		{"id desconocido", application.ErrUnknownID, []string{"No encuentro ese id", "vex ls", "id completo"}},
 		{

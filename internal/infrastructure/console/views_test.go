@@ -327,7 +327,7 @@ func TestViews_Environments_SinProtegidosSugiereEjecutar(t *testing.T) {
 
 	views.Environments([]application.Environment{{Value: "sand", Name: "sandbox"}})
 
-	assert.Contains(t, out.String(), "→ vex <paso> <ambiente> ejecuta en uno de ellos\n")
+	assert.Contains(t, out.String(), "→ vex <step> <environment> ejecuta en uno de ellos\n")
 	assert.NotContains(t, out.String(), "protegido")
 }
 
@@ -350,7 +350,7 @@ func TestViews_Steps(t *testing.T) {
   1  test
   2  acr     compartido entre ambientes
   3  deploy
-→ vex <paso> <ambiente> ejecuta hasta ese paso (y los anteriores)
+→ vex <step> <environment> ejecuta hasta ese paso (y los anteriores)
 `, out.String())
 }
 

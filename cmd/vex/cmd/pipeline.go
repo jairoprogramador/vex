@@ -65,7 +65,7 @@ los comandos, por ejemplo "vex test sand".`,
 var stepsCmd = &cobra.Command{
 	Use:   "steps",
 	Short: "Lista los pasos del pipeline, en orden",
-	Long: `Lista los pasos del pipeline, en el orden en que se ejecutan. "vex <paso> <ambiente>" ejecuta hasta ese paso,
+	Long: `Lista los pasos del pipeline, en el orden en que se ejecutan. "vex <step> <environment>" ejecuta hasta ese paso,
 y también los anteriores que hagan falta.`,
 	Example: "  vex steps",
 	Args:    cobra.NoArgs,
@@ -82,7 +82,7 @@ y también los anteriores que hagan falta.`,
 }
 
 var checkCmd = &cobra.Command{
-	Use:   "check <paso> <ambiente>",
+	Use:   "check <step> <environment>",
 	Short: "Comprueba que todo está bien, sin ejecutar nada",
 	Long: `Comprueba que el pipeline es válido y que ese paso se puede ejecutar en ese ambiente: que el ambiente y el paso
 existen y que las variables que usan los pasos se resuelven. No ejecuta ningún comando ni deja nada en el historial.
@@ -92,7 +92,7 @@ por un error de configuración.`,
 	Example: "  vex check deploy sand\n  vex check test prod",
 	Args: func(cmd *cobra.Command, args []string) error {
 		if len(args) != 2 {
-			return fmt.Errorf("indica el paso y el ambiente: vex check <paso> <ambiente>")
+			return fmt.Errorf("indica el paso y el ambiente: vex check <step> <environment>")
 		}
 		return nil
 	},
