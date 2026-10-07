@@ -18,7 +18,7 @@
 
 ---
 
-**Vex** es un orquestador de despliegues de código abierto que lleva un servicio a producción mediante pipelines reutilizables y parametrizables, sin montar la infraestructura a mano. Está pensado para equipos de desarrollo que quieren desplegar en la nube con comandos simples.
+**Vex** es un orquestador de despliegues de código abierto que lleva código a producción mediante pipelines reutilizables y parametrizables. Está pensado para equipos de desarrollo que quieren desplegar en la nube con comandos simples.
 
 ```sh
 vex init
