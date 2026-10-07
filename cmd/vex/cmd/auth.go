@@ -22,7 +22,7 @@ import (
 // the resulting access token to the local credentials file.
 var authLoginCmd = &cobra.Command{
 	Use:   "login",
-	Short: "Authenticate vex against the portal via browser.",
+	Short: "Inicia sesión en el portal desde el navegador",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return runAuthLogin(cmd.Context())
 	},
@@ -32,7 +32,7 @@ var authLoginCmd = &cobra.Command{
 // is intentionally out of scope until M6+.
 var authLogoutCmd = &cobra.Command{
 	Use:   "logout",
-	Short: "Remove locally stored credentials.",
+	Short: "Borra las credenciales guardadas en este equipo",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return runAuthLogout(cmd.Context())
 	},
@@ -42,7 +42,7 @@ var authLogoutCmd = &cobra.Command{
 // access token by hitting the `whoami` edge function.
 var authWhoamiCmd = &cobra.Command{
 	Use:   "whoami",
-	Short: "Show the user identity bound to the current credentials.",
+	Short: "Muestra con qué usuario has iniciado sesión",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return runAuthWhoami(cmd.Context())
 	},

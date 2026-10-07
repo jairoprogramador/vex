@@ -15,7 +15,7 @@ var (
 
 var versionCmd = &cobra.Command{
 	Use:   "version",
-	Short: "Prints the version of the CLI.",
+	Short: "Muestra la versión de vex",
 	Run: func(cmd *cobra.Command, args []string) {
 
 		fireColor.Println("                 )")

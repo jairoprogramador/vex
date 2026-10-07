@@ -18,7 +18,7 @@ import (
 // The portal handles Fly Machine teardown asynchronously (§6.9).
 var cancelCmd = &cobra.Command{
 	Use:   "cancel <execution-id>",
-	Short: "Cancel a running execution.",
+	Short: "Cancela una ejecución en curso (modo remoto)",
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return runCancel(cmd.Context(), args[0])

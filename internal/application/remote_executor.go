@@ -24,7 +24,7 @@ var ErrExecutionFailed = errors.New("remote execution failed")
 
 // RemoteExecutorService orchestrates a deploy that runs on the portal-side
 // infrastructure (Fly Machines) instead of the local Docker daemon. It is
-// the entry point of the `vex <step> [env] --remote` flow.
+// the entry point of the `vex <step> [env] --mode remote` flow.
 //
 // The service is intentionally CLI-aware: it prints user-facing messages
 // directly to its configured writers (defaulting to os.Stdout / os.Stderr).
@@ -68,7 +68,8 @@ func WithClock(now func() time.Time) RemoteExecutorOption {
 
 // NewRemoteExecutorService wires a service against the supplied
 // dependencies. `follow` is the negation of the user-facing `--no-follow`
-// flag; M4 honors it as a no-op (FollowExecution lands in M5).
+// flag: when false, Run returns as soon as the execution is queued instead of
+// streaming its logs.
 func NewRemoteExecutorService(
 	projectRepository proPor.ProjectRepository,
 	portalClient *portalclient.PortalClient,
@@ -96,9 +97,8 @@ func NewRemoteExecutorService(
 // Run is the single public entry point: it loads vexconfig.yaml, ensures
 // the user is authenticated (driving the device flow when needed),
 // reconciles the project with the portal, syncs the pipeline definition
-// when the portal asks for it, and finally triggers the deploy. Streaming
-// of logs is deferred to M5 (the `follow` flag is wired through but
-// currently surfaces only the queued message).
+// when the portal asks for it, and finally triggers the deploy. With `follow`
+// it then streams the execution's logs until it reaches a terminal state.
 func (s *RemoteExecutorService) Run(ctx context.Context, step, environment string) error {
 	exists, err := s.projectRepository.Exists()
 	if err != nil {

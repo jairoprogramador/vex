@@ -33,13 +33,13 @@ func runModeSelect(cmd *cobra.Command, _ []string) error {
 	var selectedMode string
 	if err := survey.AskOne(&survey.Select{
 		Message: "Modo de ejecución:",
-		Options: []string{"remote", "local"},
-		Default: "remote",
+		Options: []string{"local", "remote"},
+		Default: string(config.DefaultMode),
 		Description: func(value string, _ int) string {
 			if value == "remote" {
 				return "ejecuta en el portal vex"
 			}
-			return "ejecuta en Docker local"
+			return "ejecuta en Docker local (por defecto)"
 		},
 	}, &selectedMode, surveyIcons()); err != nil {
 		return err
