@@ -122,6 +122,8 @@ vex <paso> <ambiente>
 
 El paso indica hasta dónde se ejecuta el pipeline; se hacen también los pasos anteriores que hagan falta. El ambiente es obligatorio.
 
+**Ejecutar**
+
 | Comando | Descripción |
 | :--- | :--- |
 | `vex <step> <env>` | Ejecuta el pipeline hasta ese paso en ese ambiente. |
