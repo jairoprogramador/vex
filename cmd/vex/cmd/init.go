@@ -9,7 +9,7 @@ var nonInteractive bool
 
 var initCmd = &cobra.Command{
 	Use:   "init",
-	Short: "Initializes a new project (creates vexconfig.yaml).",
+	Short: "Prepara un proyecto nuevo (crea vexconfig.yaml)",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		factory := factories.NewServiceFactory()
 

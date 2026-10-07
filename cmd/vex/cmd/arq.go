@@ -7,7 +7,7 @@ import (
 
 var archCmd = &cobra.Command{
 	Use:   "arq",
-	Short: "Designs a production-ready cloud architecture.",
+	Short: "Diseña una arquitectura en la nube lista para producción",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		factory := factories.NewServiceFactory()
 

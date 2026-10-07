@@ -69,7 +69,7 @@ func TestRootArgs_PasoYAmbienteOpcionalPeroNadaMas(t *testing.T) {
 			err := vexCmd.Args(vexCmd, tt.args)
 
 			if tt.wantErr {
-				assert.ErrorContains(t, err, "maximum of two arguments")
+				assert.ErrorContains(t, err, "sobran argumentos")
 			} else {
 				assert.NoError(t, err)
 			}

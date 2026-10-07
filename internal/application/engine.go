@@ -1,20 +1,9 @@
 package application
 
-import (
-	"context"
-	"fmt"
-)
+import "fmt"
 
-// EngineClient es el puerto hacia vex-engine. Cada llamada ejecuta un contenedor
+// Los puertos hacia vex-engine están en engine_ops.go (por rol). Cada llamada ejecuta un contenedor
 // descartable con el motor dentro: el motor atiende una sola petición por proceso.
-type EngineClient interface {
-	// Attempt pide ejecutar el pipeline hasta un paso. onEvent recibe el avance en
-	// vivo. Un intento fallido o cancelado es un resultado, no un error.
-	Attempt(ctx context.Context, spec ContainerSpec, req AttemptRequest, onEvent func(EngineEvent)) (AttemptResult, error)
-
-	// Logs devuelve la salida de los comandos de un intento ya registrado.
-	Logs(ctx context.Context, spec ContainerSpec, req LogsRequest) ([]CommandOutput, error)
-}
 
 // ContainerSpec describe el contenedor donde corre el motor. El orden de Mounts
 // y Env se conserva tal cual para que la ejecución sea determinista.
@@ -136,6 +125,8 @@ const (
 	EngineInternal         EngineErrorKind = "internal"
 	EngineUnknown          EngineErrorKind = "unknown"
 	EngineDidNotRespond    EngineErrorKind = "did_not_respond"
+	// EngineUnknownOperation: la imagen del motor es anterior a la operación pedida.
+	EngineUnknownOperation EngineErrorKind = "unknown_operation"
 )
 
 // PipelineFailure es un incumplimiento de invariante del pipeline.
@@ -153,7 +144,10 @@ type EngineError struct {
 	Environment string
 	AttemptID   string
 	Variable    string
-	Failures    []PipelineFailure
+	// Field y Value son lo que no valía en una petición inválida: el parámetro (p. ej. "Ambiente") y lo que llegó.
+	Field    string
+	Value    string
+	Failures []PipelineFailure
 	// Stderr es la causa interna del contenedor, útil solo para errores internos.
 	Stderr string
 }

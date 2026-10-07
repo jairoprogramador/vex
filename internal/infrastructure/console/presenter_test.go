@@ -54,11 +54,27 @@ func TestPresenter_Fallos(t *testing.T) {
 	p.Event(application.EngineEvent{Kind: application.CommandFinished, Command: "mvn test", Succeeded: false})
 	p.Result(application.AttemptResult{AttemptID: "i1", Status: application.AttemptFailed, Duration: "2s"})
 	p.Warn("falta ARM_ID")
-	p.FailedCommands([]application.CommandOutput{{Step: "test", Command: "mvn test", Text: "boom\n\n"}})
+	p.Failure("01a113d0-7845-79ee-9381-be4f9efac5ab", []application.CommandOutput{{Step: "test", Command: "mvn test", Text: "boom\n\n"}})
 
 	assert.Equal(t, "  ✘ mvn test\n\n✘ Intento i1: fallido (2s)\n", out.String())
-	assert.Equal(t, "! falta ARM_ID\n\n✘ test › mvn test\nboom\n", errOut.String(),
-		"avisos y salida fallida van a stderr, sin saltos de línea de más")
+	assert.Equal(t, "! falta ARM_ID\n\n✘ test › mvn test\nboom\n→ vex why efac5ab · vex log efac5ab --failed\n", errOut.String(),
+		"avisos, salida fallida y pista van a stderr, sin saltos de línea de más")
+}
+
+func TestPresenter_UnFalloSinSalidaLeidaIgualOrienta(t *testing.T) {
+	p, _, errOut := newTestPresenter(t)
+
+	p.Failure("01a113d0-7845-79ee-9381-be4f9efac5ab", nil)
+
+	assert.Equal(t, "→ vex why efac5ab · vex log efac5ab --failed\n", errOut.String())
+}
+
+func TestPresenter_UnFalloSinIdNoInventaPistas(t *testing.T) {
+	p, _, errOut := newTestPresenter(t)
+
+	p.Failure("", nil)
+
+	assert.Empty(t, errOut.String())
 }
 
 func TestPresenter_EstadosDesconocidosSeMuestranTalCual(t *testing.T) {

@@ -11,6 +11,7 @@ type ExecutionPresenter interface {
 	Event(event EngineEvent)
 	// Result muestra el resumen final del intento.
 	Result(result AttemptResult)
-	// FailedCommands muestra la salida de los comandos que fallaron.
-	FailedCommands(outputs []CommandOutput)
+	// Failure muestra la salida de los comandos que fallaron y orienta sobre qué hacer después. outputs puede
+	// venir vacío si no se pudo leer.
+	Failure(attemptID string, outputs []CommandOutput)
 }

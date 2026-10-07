@@ -44,6 +44,10 @@ type ErrorData struct {
 	Intento  string    `json:"intento,omitempty"`
 	Variable string    `json:"variable,omitempty"`
 	Fallos   []Fallo   `json:"fallos,omitempty"`
+	// Campo y Valor son lo que no vale en un parametros_invalidos: el parámetro (p. ej. "Ambiente") y lo que
+	// llegó. En un campo desconocido Valor va vacío; en un tipo equivocado, trae el tipo recibido ("number").
+	Campo string `json:"campo,omitempty"`
+	Valor string `json:"valor,omitempty"`
 }
 
 // EngineError es un error JSON-RPC devuelto por el motor.

@@ -67,13 +67,18 @@ type fakePresenter struct {
 	events   []EngineEvent
 	results  []AttemptResult
 	failed   []CommandOutput
+	failedID string
+	failures int
 }
 
-func (f *fakePresenter) Info(m string)                    { f.infos = append(f.infos, m) }
-func (f *fakePresenter) Warn(m string)                    { f.warnings = append(f.warnings, m) }
-func (f *fakePresenter) Event(e EngineEvent)              { f.events = append(f.events, e) }
-func (f *fakePresenter) Result(r AttemptResult)           { f.results = append(f.results, r) }
-func (f *fakePresenter) FailedCommands(o []CommandOutput) { f.failed = o }
+func (f *fakePresenter) Info(m string)          { f.infos = append(f.infos, m) }
+func (f *fakePresenter) Warn(m string)          { f.warnings = append(f.warnings, m) }
+func (f *fakePresenter) Event(e EngineEvent)    { f.events = append(f.events, e) }
+func (f *fakePresenter) Result(r AttemptResult) { f.results = append(f.results, r) }
+func (f *fakePresenter) Failure(id string, o []CommandOutput) {
+	f.failedID, f.failed = id, o
+	f.failures++
+}
 
 type projectOption func(*projectParts)
 
@@ -150,7 +155,8 @@ func newHarness(t *testing.T, project *aggregates.Project) *harness {
 		},
 	}
 	h.executor = NewLocalExecutorService(
-		&stubProjectRepo{loaded: project, existsBool: project != nil}, h.sources, h.images, h.engine, h.presenter, h.config)
+		NewWorkspace(&stubProjectRepo{loaded: project, existsBool: project != nil}, h.sources, h.images, h.presenter, h.config),
+		h.engine, h.presenter)
 	return h
 }
 
@@ -283,6 +289,7 @@ func TestLocalExecutor_UnIntentoFallidoMuestraLaSalidaDeLosComandosFallidos(t *t
 	assert.ErrorIs(t, err, ErrAttemptFailed)
 	assert.Equal(t, []LogsRequest{{AttemptID: "i1", OnlyFailed: true}}, h.engine.logRequests)
 	assert.Equal(t, h.engine.outputs, h.presenter.failed)
+	assert.Equal(t, "i1", h.presenter.failedID, "el presentador conoce el intento para orientar con `vex why <id>`")
 	assert.Len(t, h.presenter.results, 1, "el resumen se muestra antes de la salida fallida")
 }
 
@@ -295,6 +302,8 @@ func TestLocalExecutor_SiFallanLosLogsElFalloDelIntentoSigueSiendoElError(t *tes
 
 	assert.ErrorIs(t, err, ErrAttemptFailed)
 	assert.Nil(t, h.presenter.failed)
+	assert.Equal(t, 1, h.presenter.failures, "aunque no se leyó la salida, la pista del siguiente paso se muestra")
+	assert.Equal(t, "i1", h.presenter.failedID)
 	require.Len(t, h.presenter.warnings, 1)
 	assert.Contains(t, h.presenter.warnings[0], "docker murió")
 }
@@ -394,4 +403,90 @@ func TestLocalExecutor_SiFallaElBuildNoSeLlamaAlMotor(t *testing.T) {
 
 	assert.ErrorContains(t, err, "construir imagen")
 	assert.Zero(t, h.engine.attempts)
+}
+
+type fakeRecorder struct {
+	saved []RecentAttempt
+	err   error
+}
+
+func (f *fakeRecorder) RememberAttempt(_ string, a RecentAttempt) error {
+	f.saved = append(f.saved, a)
+	return f.err
+}
+
+func newHarnessWithRecorder(t *testing.T, recorder AttemptRecorder) *harness {
+	t.Helper()
+	h := newHarness(t, newProject(t))
+	h.executor = NewLocalExecutorService(
+		NewWorkspace(&stubProjectRepo{loaded: newProject(t), existsBool: true}, h.sources, h.images, h.presenter, h.config),
+		h.engine, h.presenter, WithAttemptRecorder(recorder))
+	return h
+}
+
+func TestLocalExecutor_RecuerdaElIntentoAlAbrirseYSuResultado(t *testing.T) {
+	recorder := &fakeRecorder{}
+	h := newHarnessWithRecorder(t, recorder)
+
+	require.NoError(t, h.executor.Run(context.Background(), "test", "sand"))
+
+	require.Len(t, recorder.saved, 2)
+	assert.Equal(t, "i1", recorder.saved[0].ID)
+	assert.Equal(t, "sand", recorder.saved[0].Environment)
+	assert.Equal(t, "test", recorder.saved[0].UntilStep)
+	assert.False(t, recorder.saved[0].At.IsZero())
+	assert.Equal(t, RecentAttempt{ID: "i1", Status: AttemptSucceeded}, recorder.saved[1],
+		"el resultado solo completa el estado; el resto ya estaba")
+}
+
+func TestLocalExecutor_RecuerdaUnIntentoFallido(t *testing.T) {
+	recorder := &fakeRecorder{}
+	h := newHarnessWithRecorder(t, recorder)
+	h.engine.result = AttemptResult{AttemptID: "i1", Status: AttemptFailed}
+
+	require.ErrorIs(t, h.executor.Run(context.Background(), "test", "sand"), ErrAttemptFailed)
+
+	assert.Equal(t, AttemptFailed, recorder.saved[len(recorder.saved)-1].Status)
+}
+
+func TestLocalExecutor_UnErrorDelMotorConElIntentoAbiertoLoDejaFallido(t *testing.T) {
+	tests := []struct {
+		name       string
+		engineErr  error
+		ctx        func() context.Context
+		wantStatus AttemptStatus
+		wantCause  AttemptCause
+		wantSaved  int
+	}{
+		{"el motor lo cierra como fallido", &EngineError{Kind: EnginePipelineRejected, Variable: "x"},
+			context.Background, AttemptFailed, CauseError, 2},
+		{"cancelado por el motor", &EngineError{Kind: EngineCanceled},
+			context.Background, AttemptCanceled, "", 2},
+		{"si el contenedor murió sin responder no se sabe cómo acabó", &EngineError{Kind: EngineDidNotRespond},
+			context.Background, "", "", 1},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			recorder := &fakeRecorder{}
+			h := newHarnessWithRecorder(t, recorder)
+			h.engine.attemptErr = tt.engineErr
+
+			require.Error(t, h.executor.Run(tt.ctx(), "test", "sand"))
+
+			require.Len(t, recorder.saved, tt.wantSaved)
+			last := recorder.saved[len(recorder.saved)-1]
+			assert.Equal(t, tt.wantStatus, last.Status)
+			assert.Equal(t, tt.wantCause, last.Cause)
+		})
+	}
+}
+
+func TestLocalExecutor_UnFalloAlGuardarLaMemoriaNoAfectaALaEjecucion(t *testing.T) {
+	recorder := &fakeRecorder{err: errors.New("disco lleno")}
+	h := newHarnessWithRecorder(t, recorder)
+
+	err := h.executor.Run(context.Background(), "test", "sand")
+
+	assert.NoError(t, err)
+	assert.NotEmpty(t, recorder.saved, "lo intentó")
 }

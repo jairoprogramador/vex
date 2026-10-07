@@ -52,6 +52,8 @@ func runFakeDocker(args []string) {
 	}
 
 	switch os.Getenv("HELPER_SCENARIO") {
+	case "canned":
+		fmt.Println(os.Getenv("HELPER_REPLY"))
 	case "success":
 		progress("intento_iniciado", `,"intento":"i1"`)
 		progress("paso_iniciado", `,"intento":"i1","paso":"test"`)
@@ -111,6 +113,18 @@ func mustJSON(v any) []byte {
 type fakeDocker struct {
 	engine *DockerEngine
 	dir    string
+}
+
+func newFakeDockerReplying(t *testing.T, reply string) fakeDocker {
+	t.Helper()
+	fake := newFakeDocker(t, "canned")
+	base := fake.engine.newCommand
+	fake.engine.newCommand = func(args ...string) *exec.Cmd {
+		cmd := base(args...)
+		cmd.Env = append(cmd.Env, "HELPER_REPLY="+reply)
+		return cmd
+	}
+	return fake
 }
 
 func newFakeDocker(t *testing.T, scenario string) fakeDocker {

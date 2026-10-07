@@ -58,10 +58,14 @@ func (p *Presenter) Result(result application.AttemptResult) {
 	}
 }
 
-func (p *Presenter) FailedCommands(outputs []application.CommandOutput) {
+func (p *Presenter) Failure(attemptID string, outputs []application.CommandOutput) {
 	for _, output := range outputs {
 		fmt.Fprintf(p.errOut, "\n%s %s › %s\n%s\n",
 			failMark, output.Step, output.Command, strings.TrimRight(output.Text, "\n"))
+	}
+	if attemptID != "" {
+		short := ShortID(attemptID)
+		fmt.Fprintf(p.errOut, "→ vex why %s · vex log %s --failed\n", short, short)
 	}
 }
 

@@ -42,49 +42,6 @@ func NewDockerEngine() *DockerEngine {
 	}
 }
 
-func (d *DockerEngine) Attempt(
-	ctx context.Context,
-	spec application.ContainerSpec,
-	req application.AttemptRequest,
-	onEvent func(application.EngineEvent),
-) (application.AttemptResult, error) {
-	rpc := protocol.NewRequest("1", protocol.MethodIntentar, toAttemptParams(req), req.Secrets)
-
-	reply, err := d.call(ctx, spec, rpc, func(msg *protocol.Message) {
-		if event, ok := toEngineEvent(msg); ok && onEvent != nil {
-			onEvent(event)
-		}
-	})
-	if err != nil {
-		return application.AttemptResult{}, err
-	}
-
-	var result protocol.Resultado
-	if err := protocol.DecodeResult(reply.message, &result); err != nil {
-		return application.AttemptResult{}, translateError(err, reply.stderr)
-	}
-	return toAttemptResult(result), nil
-}
-
-func (d *DockerEngine) Logs(
-	ctx context.Context,
-	spec application.ContainerSpec,
-	req application.LogsRequest,
-) ([]application.CommandOutput, error) {
-	rpc := protocol.NewRequest("1", protocol.MethodLogs, toLogsParams(req), nil)
-
-	reply, err := d.call(ctx, spec, rpc, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	var logs protocol.Logs
-	if err := protocol.DecodeResult(reply.message, &logs); err != nil {
-		return nil, translateError(err, reply.stderr)
-	}
-	return toCommandOutputs(logs), nil
-}
-
 type reply struct {
 	message *protocol.Message
 	stderr  string

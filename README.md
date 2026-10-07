@@ -114,6 +114,31 @@ vex deploy prod    # todos los pasos hasta deploy, en producción
 
 `<paso>` es hasta qué paso del pipeline se ejecuta (se hacen también los anteriores que hagan falta) y `<ambiente>` es el valor del ambiente que declara el pipeline. **El ambiente es obligatorio** en el modo local.
 
+**4. Mira qué pasó y qué sigue.**
+
+```sh
+vex envs                  # ambientes del pipeline (y cuáles están protegidos)
+vex steps                 # pasos del pipeline, en orden
+vex check deploy sand     # ¿está todo listo? (no ejecuta nada)
+vex ls sand               # últimos intentos
+vex why                   # si el último falló: qué cambió desde la última vez que funcionó
+vex log --failed          # la salida exacta del comando que falló
+vex deployments prod      # despliegues de prod, y cuál está lanzado
+vex rollback 91f4b55      # volver a los commits de ese despliegue
+```
+
+### Palabras que se repiten
+
+| Palabra | Qué es |
+| :--- | :--- |
+| **paso** | Una etapa del pipeline (`test`, `package`, `deploy`…). `vex steps` los lista. |
+| **ambiente** | Dónde se ejecuta (`sand`, `stag`, `prod`…). `vex envs` los lista. |
+| **intento** | Cada vez que ejecutas un paso. Queda en el historial, salga bien o mal. |
+| **despliegue** | Un intento que llegó hasta el final con éxito. Es lo que se puede lanzar o recuperar con `rollback`. |
+| **lanzamiento** | Marcar un despliegue como el visible en su ambiente. Pasa solo con cada despliegue exitoso, salvo en los ambientes **protegidos** (`vex protect`), donde lo decides con `vex release`. |
+
+Los ids que ves en las tablas son los últimos 7 caracteres; en cualquier comando vale ese id corto (mínimo 6) o el completo. Sin id, los comandos usan el último intento de este proyecto.
+
 ## `vexconfig.yaml`
 
 ```yaml
@@ -210,20 +235,53 @@ La ruta global es `/etc/vex/config` (Linux), `/usr/local/etc/vex/config` (macOS)
 
 ## Referencia de comandos
 
+**Ejecutar**
+
+| Comando | Descripción |
+| :--- | :--- |
+| `vex <paso> <ambiente>` · `vex run <paso> <ambiente>` | Ejecuta el pipeline hasta ese paso en ese ambiente. `vex run` es la forma explícita: úsala si un paso se llama igual que un comando de vex. |
+| `vex check <paso> <ambiente>` | Comprueba que todo está bien (ambiente, paso y variables) **sin ejecutar nada**. |
+
+**Consultar** (solo lectura, modo local)
+
+| Comando | Descripción |
+| :--- | :--- |
+| `vex envs` | Lista los ambientes del pipeline y cómo se lanza cada uno (automático o manual/protegido). |
+| `vex steps` | Lista los pasos del pipeline, en orden, y avisa de los que chocan con un comando de vex. |
+| `vex ls <ambiente>` | Últimos intentos de un ambiente (`-n` cuántos, `--all` todos). |
+| `vex show [intento]` | Qué pasó en un intento, paso a paso. Sin argumentos, el último. |
+| `vex log [intento]` | Salida de los comandos de un intento (`--failed` solo los fallidos). |
+| `vex why [intento]` | Explica por qué falló un intento: qué cambió (código, instrucciones o variables) desde la última vez que funcionó. Sin argumentos, el último fallido. `--vs <despliegue>` compara con uno concreto. |
+| `vex deployments <ambiente>` | Despliegues de un ambiente; marca el que está lanzado. |
+| `vex releases <ambiente>` | Historial de lanzamientos de un ambiente. |
+
+**Liberar un ambiente atascado**
+
+| Comando | Descripción |
+| :--- | :--- |
+| `vex abandon [intento]` | Libera el ambiente que un intento muerto dejó ocupado. Normalmente no hace falta: el motor lo recupera solo al lanzar otro intento. Pide confirmación (`-y` para no preguntar) y **no detiene** comandos que el proceso siga ejecutando. |
+| `vex rollback <despliegue>` | Vuelve a desplegar los mismos commits de un despliegue anterior (los ves con `vex deployments <ambiente>`). El motor recorre todos los pasos del pipeline, reutilizando los que no cambiaron; el despliegue nuevo queda como hijo del anterior. Clona proyecto y pipeline, así que ambos repositorios deben conservar esos commits. Pide confirmación (`-y` para no preguntar; sin terminal es obligatorio). |
+| `vex release <ambiente> <despliegue> [--name v1]` | Hace visible un despliegue en su ambiente (el que `vex deployments` marca con `●`). Cada despliegue exitoso se lanza solo, salvo en los ambientes protegidos. Solo vale un despliegue del mismo ambiente. |
+| `vex protect <ambiente>` / `vex unprotect <ambiente>` | `protect` evita que el ambiente lance solo: los lanzamientos los decides tú con `vex release`. **No** impide desplegar ni hacer rollback. `vex envs` muestra cuáles están protegidos. |
+
+El id de un intento puede ser el completo o los últimos caracteres (mínimo 6), tal como lo ves en `vex ls`.
+
+**Empezar y configurar**
+
 | Comando | Descripción |
 | :--- | :--- |
 | `vex init` | Inicializa el proyecto y genera `vexconfig.yaml` (`-y` para usar los valores por defecto). |
 | `vex arq` | Ajusta la arquitectura cloud según tus necesidades. |
-| `vex <paso> <ambiente>` | Ejecuta el pipeline hasta ese paso en ese ambiente. |
 | `vex config [clave \| clave=valor]` | Lee y escribe la configuración de la CLI (`list`, `unset`; `--scope project\|user\|global`). |
 | `vex mode` | Elige el modo de ejecución de forma interactiva. |
-| `vex login` · `vex logout` · `vex whoami` | Sesión contra el portal (modo remoto). |
-| `vex cancel <id>` | Cancela una ejecución remota en curso. |
 | `vex version` | Muestra la versión instalada. |
+
+**Modo remoto:** `vex login` · `vex logout` · `vex whoami` · `vex cancel <id>`.
 
 | Flag | Descripción |
 | :--- | :--- |
 | `--mode local\|remote` | Modo de ejecución para esta invocación (por defecto, `local`). |
+| `--no-check` | No comprueba antes de ejecutar que el paso está listo. Ahorra ~250 ms; un ambiente o paso mal escrito se explica igualmente, pero al fallar. |
 | `--no-follow` | Solo en modo remoto: sale en cuanto la ejecución queda encolada, sin transmitir los logs. |
 
 ## Variables de entorno
@@ -243,7 +301,9 @@ En el modo remoto la ejecución no corre en tu máquina: `vex` se autentica cont
 | Mensaje | Qué hacer |
 | :--- | :--- |
 | `Falta el ambiente. Uso: vex <paso> <ambiente>` | Indica el ambiente: `vex test sand`. |
-| `El ambiente "x" ya tiene un intento en curso` | Otro intento usa ese ambiente. Espera a que termine. Si su proceso murió (por ejemplo, mataron el contenedor), un motor reciente lo recupera solo pasados unos 15 segundos; con un motor anterior hay que abandonarlo con la operación `abandonar` de `vexd`. |
+| `El ambiente "x" ya tiene un intento en curso` | Otro intento usa ese ambiente. Espera a que termine. Si su proceso murió (por ejemplo, mataron el contenedor), un motor reciente lo recupera solo pasados unos 15 segundos; con un motor anterior, o si no quieres esperar, usa `vex abandon`. |
+| `El ambiente «x» no existe en este pipeline` · `El paso «x» no existe…` | Error de tecleo: el mensaje sugiere el más parecido y lista los que hay (`vex envs`, `vex steps`). No se crea ningún intento. |
+| `No encuentro ese id entre los que conozco` | `release` y `rollback` piden el id de un **despliegue** (`vex deployments <ambiente>`), no de un intento (`vex ls <ambiente>`). |
 | `El pipeline no pasa la comprobación` | El pipeline tiene un error; el mensaje lista cada fallo con su archivo y su regla. |
 | `La variable "x" no está disponible… (ambiente "y")` | Revisa que el ambiente exista en el pipeline y que la variable esté declarada (compartida o de ese ambiente). |
 | `No se pudo ejecutar el motor en el contenedor` | Comprueba que Docker esté en ejecución y que la imagen exista. |

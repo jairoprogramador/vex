@@ -3,65 +3,74 @@ package application
 import (
 	"context"
 	"errors"
-	"fmt"
-	"os"
-	"strings"
+	"time"
 
 	"github.com/jairoprogramador/vex/internal/domain/project/aggregates"
-	proPor "github.com/jairoprogramador/vex/internal/domain/project/ports"
 )
 
-// Rutas dentro del contenedor. Son parte del contrato con la imagen runtime:
-// vexd lee las tres variables VEX_* y los repos se le pasan como rutas locales.
-const (
-	containerProjectPath  = "/proyecto"
-	containerPipelinePath = "/pipeline"
-	containerStorePath    = "/vex/almacen"
-	containerSpacePath    = "/vex/espacio"
-	containerMaterialPath = "/vex/material"
-)
+// localEngine es lo que el ejecutor necesita del motor: pedir un intento y leer la salida de los comandos fallidos.
+type localEngine interface {
+	Attempt(ctx context.Context, spec ContainerSpec, req AttemptRequest, onEvent func(EngineEvent)) (AttemptResult, error)
+	Logs(ctx context.Context, spec ContainerSpec, req LogsRequest) ([]CommandOutput, error)
+}
 
-// LocalExecutorConfig son los datos del host que el ejecutor necesita y no puede
-// deducir: dónde está el proyecto y dónde persiste el motor su estado.
-type LocalExecutorConfig struct {
-	// WorkDir es el directorio con vexconfig.yaml; es el contexto de build de la imagen.
-	WorkDir string
-	// StoreDir guarda el historial del motor. Es la verdad: no se borra.
-	StoreDir string
-	// SpaceDir y MaterialDir son derivables: el motor los rehace en cada intento.
-	SpaceDir    string
-	MaterialDir string
-	// Requester es quien pide la ejecución, para el historial del motor.
-	Requester string
+// AttemptRecorder recuerda los intentos que el CLI ejecuta, para comandos como `vex why` sin argumentos.
+type AttemptRecorder interface {
+	RememberAttempt(projectID string, attempt RecentAttempt) error
+}
+
+// LocalExecutorOption personaliza el ejecutor.
+type LocalExecutorOption func(*LocalExecutorService)
+
+// WithAttemptRecorder hace que el ejecutor recuerde cada intento que lanza.
+func WithAttemptRecorder(recorder AttemptRecorder) LocalExecutorOption {
+	return func(s *LocalExecutorService) { s.recorder = recorder }
+}
+
+// WithErrorExplainer hace que un ambiente o un paso inexistente, cuando el motor lo rechaza, se explique con los
+// nombres que sí existen y una sugerencia. No cuesta nada en el camino feliz: solo pregunta al motor al fallar.
+func WithErrorExplainer(guard *PipelineGuard) LocalExecutorOption {
+	return func(s *LocalExecutorService) { s.explainer = guard }
+}
+
+// WithPreflight hace que, antes de abrir un intento, el ejecutor compruebe con el guardián que el paso se puede
+// ejecutar (ambiente, paso y variables), sin ejecutar nada. Cuesta un contenedor más por ejecución. También
+// explica los errores, como WithErrorExplainer.
+func WithPreflight(guard *PipelineGuard) LocalExecutorOption {
+	return func(s *LocalExecutorService) {
+		s.guard = guard
+		if s.explainer == nil {
+			s.explainer = guard
+		}
+	}
 }
 
 // LocalExecutorService ejecuta un paso del pipeline con vex-engine en un contenedor
 // local: clona proyecto y pipeline, los monta y le pide un intento al motor.
 type LocalExecutorService struct {
-	projectRepository proPor.ProjectRepository
-	sources           SourceCloner
-	images            ImageBuilder
-	engine            EngineClient
-	presenter         ExecutionPresenter
-	config            LocalExecutorConfig
+	workspace *Workspace
+	engine    localEngine
+	presenter ExecutionPresenter
+	recorder  AttemptRecorder
+	guard     *PipelineGuard // pre-vuelo: nil si no se comprueba antes de ejecutar
+	explainer *PipelineGuard // explica los errores de ambiente/paso: nil si no se explican
 }
 
 func NewLocalExecutorService(
-	projectRepository proPor.ProjectRepository,
-	sources SourceCloner,
-	images ImageBuilder,
-	engine EngineClient,
+	workspace *Workspace,
+	engine localEngine,
 	presenter ExecutionPresenter,
-	config LocalExecutorConfig,
+	options ...LocalExecutorOption,
 ) *LocalExecutorService {
-	return &LocalExecutorService{
-		projectRepository: projectRepository,
-		sources:           sources,
-		images:            images,
-		engine:            engine,
-		presenter:         presenter,
-		config:            config,
+	s := &LocalExecutorService{
+		workspace: workspace,
+		engine:    engine,
+		presenter: presenter,
 	}
+	for _, option := range options {
+		option(s)
+	}
+	return s
 }
 
 var _ Runner = (*LocalExecutorService)(nil)
@@ -71,150 +80,74 @@ func (s *LocalExecutorService) Run(ctx context.Context, step, environment string
 		return ErrEnvironmentRequired
 	}
 
-	err := s.run(ctx, step, environment)
-	// Ctrl+C durante el clonado, el build o el arranque llega como un error
-	// cualquiera de esas herramientas; para quien llama es una cancelación.
-	if err != nil && ctx.Err() != nil && !errors.Is(err, ErrAttemptFailed) {
-		return ErrAttemptCanceled
-	}
-	return err
+	return cancelAware(ctx, s.run(ctx, step, environment))
 }
 
 func (s *LocalExecutorService) run(ctx context.Context, step, environment string) error {
-	project, err := s.loadProject()
+	project, err := s.workspace.LoadProject()
 	if err != nil {
 		return err
 	}
-	if err := s.prepareHostDirs(); err != nil {
+	if err := s.workspace.PrepareDirs(); err != nil {
 		return err
 	}
 
-	projectSource, err := s.clone(ctx, "proyecto", project.Data().URL(), project.Data().Ref())
+	projectSource, err := s.workspace.CloneProject(ctx, project)
 	if err != nil {
 		return err
 	}
-	pipelineSource, err := s.clone(ctx, "pipeline", project.Pipeline().URL(), project.Pipeline().Ref())
-	if err != nil {
-		return err
-	}
-
-	image, err := s.resolveImage(ctx, project)
+	pipelineSource, err := s.workspace.ClonePipeline(ctx, project)
 	if err != nil {
 		return err
 	}
 
-	spec := s.containerSpec(image, project, projectSource, pipelineSource)
+	image, err := s.workspace.ResolveImage(ctx, project)
+	if err != nil {
+		return err
+	}
+
+	spec := s.workspace.ExecutionSpec(image, project, projectSource, pipelineSource)
+	if err := s.preflight(ctx, spec, project.ID().String(), step, environment, pipelineSource, project); err != nil {
+		return err
+	}
 	request := s.attemptRequest(project, step, environment, projectSource, pipelineSource)
 
-	result, err := s.engine.Attempt(ctx, spec, request, s.presenter.Event)
+	tracker := &attemptTracker{
+		recorder: s.recorder, projectID: project.ID().String(), environment: environment, step: step,
+	}
+	result, err := s.engine.Attempt(ctx, spec, request, func(event EngineEvent) {
+		s.presenter.Event(event)
+		tracker.onEvent(event)
+	})
 	if err != nil {
+		tracker.onError(ctx, err)
+		err = s.explain(ctx, spec, project.ID().String(), pipelineSource, err)
 		return withEnvironment(asCanceledIfCanceled(err), environment)
 	}
+	tracker.onResult(result)
 	s.presenter.Result(result)
 	return s.outcome(ctx, spec, result)
 }
 
-func (s *LocalExecutorService) loadProject() (*aggregates.Project, error) {
-	exists, err := s.projectRepository.Exists()
-	if err != nil {
-		return nil, err
+// explain traduce un ambiente o paso rechazado por el motor al error que dice cuáles existen.
+func (s *LocalExecutorService) explain(ctx context.Context, spec ContainerSpec, projectID string, pipeline Source, err error) error {
+	if s.explainer == nil {
+		return err
 	}
-	if !exists {
-		return nil, errors.New(MessageProjectNotInitialized)
-	}
-	return s.projectRepository.Load()
+	return s.explainer.Explain(ctx, spec, projectID, s.workspace.PipelineRef(pipeline), err)
 }
 
-// prepareHostDirs crea los directorios que se montan: Docker los crearía como
-// root y el motor exige que el almacén exista.
-func (s *LocalExecutorService) prepareHostDirs() error {
-	for _, dir := range []string{s.config.StoreDir, s.config.SpaceDir, s.config.MaterialDir} {
-		if err := os.MkdirAll(dir, 0o750); err != nil {
-			return fmt.Errorf("crear directorio %q: %w", dir, err)
-		}
+// preflight comprueba el paso antes de abrir el intento. Sin guardián (--no-check) no hace nada.
+func (s *LocalExecutorService) preflight(
+	ctx context.Context, spec ContainerSpec, projectID, step, environment string, pipeline Source, project *aggregates.Project,
+) error {
+	if s.guard == nil {
+		return nil
 	}
-	return nil
-}
-
-func (s *LocalExecutorService) clone(ctx context.Context, label, url, ref string) (Source, error) {
-	s.presenter.Info(fmt.Sprintf("Preparando %s: %s@%s", label, url, ref))
-	source, err := s.sources.Ensure(ctx, url, ref)
-	if err != nil {
-		return Source{}, fmt.Errorf("preparar %s: %w", label, err)
-	}
-	return source, nil
-}
-
-// resolveImage devuelve la imagen a ejecutar: la del registro tal cual, o una
-// construida localmente cuando runtime.image apunta a un Dockerfile.
-func (s *LocalExecutorService) resolveImage(ctx context.Context, project *aggregates.Project) (string, error) {
-	image := project.Runtime().Image()
-	if image.TagExplicit() {
-		return image.String(), nil
-	}
-
-	tag := fmt.Sprintf("%s%s:%s",
-		strings.ToLower(project.Data().Name()), project.ID().String()[:6], image.Tag())
-	s.presenter.Info(fmt.Sprintf("Construyendo imagen %s desde %s", tag, image.Image()))
-
-	err := s.images.Build(ctx, ImageBuild{
-		Tag:        tag,
-		Dockerfile: image.Image(),
-		ContextDir: s.config.WorkDir,
-		Args:       buildArgs(project),
+	return s.guard.Check(ctx, spec, projectID, CheckRequest{
+		Environment: environment, Requester: s.workspace.Requester(), UntilStep: step,
+		Pipeline: s.workspace.PipelineRef(pipeline), Project: s.workspace.Metadata(project),
 	})
-	if err != nil {
-		return "", fmt.Errorf("construir imagen: %w", err)
-	}
-	return tag, nil
-}
-
-// buildArgs añade el uid/gid del usuario para que los archivos de los volúmenes
-// queden con su dueño (no existen en Windows). Los args del proyecto prevalecen.
-func buildArgs(project *aggregates.Project) []BuildArg {
-	var args []BuildArg
-	if uid, gid := os.Getuid(), os.Getgid(); uid >= 0 && gid >= 0 {
-		args = append(args,
-			BuildArg{Name: "DEV_GID", Value: fmt.Sprint(gid)},
-			BuildArg{Name: "DEV_UID", Value: fmt.Sprint(uid)})
-	}
-	for _, arg := range project.Runtime().Args() {
-		args = withBuildArg(args, BuildArg{Name: arg.Name(), Value: arg.Value()})
-	}
-	return args
-}
-
-func withBuildArg(args []BuildArg, arg BuildArg) []BuildArg {
-	for i := range args {
-		if args[i].Name == arg.Name {
-			args[i] = arg
-			return args
-		}
-	}
-	return append(args, arg)
-}
-
-func (s *LocalExecutorService) containerSpec(
-	image string, project *aggregates.Project, projectSource, pipelineSource Source,
-) ContainerSpec {
-	mounts := []Mount{
-		{Source: projectSource.Path, Target: containerProjectPath, ReadOnly: true},
-		{Source: pipelineSource.Path, Target: containerPipelinePath, ReadOnly: true},
-		{Source: s.config.StoreDir, Target: containerStorePath},
-		{Source: s.config.SpaceDir, Target: containerSpacePath},
-		{Source: s.config.MaterialDir, Target: containerMaterialPath},
-	}
-	for _, volume := range project.Runtime().Volumes() {
-		mounts = append(mounts, Mount{Source: volume.Host(), Target: volume.Container()})
-	}
-
-	// La imagen puede no fijarlas: el ejecutor las pasa siempre.
-	env := []EnvVar{
-		{Name: "VEX_ALMACEN", Value: containerStorePath},
-		{Name: "VEX_ESPACIO", Value: containerSpacePath},
-		{Name: "VEX_MATERIAL", Value: containerMaterialPath},
-	}
-	return ContainerSpec{Image: image, Mounts: mounts, Env: env}
 }
 
 func (s *LocalExecutorService) attemptRequest(
@@ -222,62 +155,20 @@ func (s *LocalExecutorService) attemptRequest(
 ) AttemptRequest {
 	return AttemptRequest{
 		Environment:    environment,
-		Requester:      s.config.Requester,
+		Requester:      s.workspace.Requester(),
 		ProjectSource:  containerProjectPath,
 		ProjectCommit:  projectSource.Commit,
 		PipelineSource: containerPipelinePath,
 		PipelineCommit: pipelineSource.Commit,
 		UntilStep:      step,
-		Project: ProjectMetadata{
-			ID:           project.ID().String(),
-			Name:         project.Data().Name(),
-			Organization: project.Data().Organization(),
-			Team:         project.Data().Team(),
-		},
-		Secrets: s.secrets(project),
+		Project:        s.workspace.Metadata(project),
+		Secrets:        s.workspace.Secrets(project),
 	}
 }
 
-// secrets expande las variables de runtime.run.envs con el entorno del host
-// (`$ARM_CLIENT_SECRET` o `${ARM_CLIENT_SECRET}`), de modo que el valor real
-// nunca se escribe en vexconfig.yaml. Viajan por stdin al motor, no por argv.
-func (s *LocalExecutorService) secrets(project *aggregates.Project) map[string]string {
-	envs := project.Runtime().Env()
-	if len(envs) == 0 {
-		return nil
-	}
-	secrets := make(map[string]string, len(envs))
-	for _, env := range envs {
-		value := os.Expand(env.Value(), os.Getenv)
-		if value == "" {
-			s.presenter.Warn(fmt.Sprintf(
-				"%s no tiene valor (%q se expandió a vacío en este entorno); no se enviará",
-				env.Name(), env.Value()))
-			continue
-		}
-		secrets[env.Name()] = value
-	}
-	return secrets
-}
-
-// outcome convierte el resultado del intento en el error que ve quien llama. Si
-// falló, muestra la salida de los comandos fallidos: el progreso no la trae.
+// outcome convierte el resultado del intento en el error que ve quien llama.
 func (s *LocalExecutorService) outcome(ctx context.Context, spec ContainerSpec, result AttemptResult) error {
-	switch result.Status {
-	case AttemptSucceeded:
-		return nil
-	case AttemptCanceled:
-		return ErrAttemptCanceled
-	}
-
-	outputs, err := s.engine.Logs(ctx, spec, LogsRequest{AttemptID: result.AttemptID, OnlyFailed: true})
-	if err != nil {
-		// El fallo del intento es lo importante; no se tapa con el de los logs.
-		s.presenter.Warn(fmt.Sprintf("No se pudo leer la salida de los comandos fallidos: %v", err))
-		return ErrAttemptFailed
-	}
-	s.presenter.FailedCommands(outputs)
-	return ErrAttemptFailed
+	return reportOutcome(ctx, s.engine, s.presenter, spec, result)
 }
 
 // withEnvironment completa el ambiente pedido en un error del motor que no lo
@@ -296,4 +187,50 @@ func asCanceledIfCanceled(err error) error {
 		return ErrAttemptCanceled
 	}
 	return err
+}
+
+// attemptTracker lleva la cuenta de un intento en la memoria del CLI. Es de mejor esfuerzo: si no se puede
+// guardar, la ejecución sigue igual.
+type attemptTracker struct {
+	recorder    AttemptRecorder
+	projectID   string
+	environment string
+	step        string
+	id          string
+}
+
+func (t *attemptTracker) remember(attempt RecentAttempt) {
+	if t.recorder == nil || t.id == "" {
+		return
+	}
+	attempt.ID = t.id
+	_ = t.recorder.RememberAttempt(t.projectID, attempt)
+}
+
+// onEvent recuerda el intento en cuanto el motor lo abre: así `vex why` lo encuentra aunque el proceso se
+// interrumpa antes de terminar.
+func (t *attemptTracker) onEvent(event EngineEvent) {
+	if event.Kind != AttemptStarted {
+		return
+	}
+	t.id = event.AttemptID
+	t.remember(RecentAttempt{Environment: t.environment, UntilStep: t.step, At: time.Now()})
+}
+
+func (t *attemptTracker) onResult(result AttemptResult) {
+	t.remember(RecentAttempt{Status: result.Status})
+}
+
+// onError: si el intento ya estaba abierto, el motor lo cierra como fallido ante cualquier error (o como
+// cancelado si fue una cancelación). Si el contenedor murió sin responder no se sabe cómo acabó.
+func (t *attemptTracker) onError(ctx context.Context, err error) {
+	var engineErr *EngineError
+	switch {
+	case errors.As(err, &engineErr) && engineErr.Kind == EngineDidNotRespond:
+		return
+	case ctx.Err() != nil || (engineErr != nil && engineErr.Kind == EngineCanceled):
+		t.remember(RecentAttempt{Status: AttemptCanceled})
+	default:
+		t.remember(RecentAttempt{Status: AttemptFailed, Cause: CauseError})
+	}
 }

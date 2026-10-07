@@ -122,6 +122,7 @@ var errorKinds = map[protocol.ErrorKind]application.EngineErrorKind{
 	protocol.ErrEscrituraConcurrente:  application.EngineConcurrentWrite,
 	protocol.ErrHistorialSinIntentos:  application.EngineNoAttempts,
 	protocol.ErrInterno:               application.EngineInternal,
+	protocol.ErrOperacionDesconocida:  application.EngineUnknownOperation,
 }
 
 // translateError convierte un error del motor en application.EngineError; otros
@@ -141,6 +142,8 @@ func translateError(err error, stderr string) error {
 		Environment: engineErr.Data.Ambiente,
 		AttemptID:   engineErr.Data.Intento,
 		Variable:    engineErr.Data.Variable,
+		Field:       engineErr.Data.Campo,
+		Value:       engineErr.Data.Valor,
 	}
 	for _, f := range engineErr.Data.Fallos {
 		translated.Failures = append(translated.Failures, application.PipelineFailure{
