@@ -329,4 +329,4 @@ VEX_IT_IMAGE=<imagen> VEX_IT_PIPELINE=<ruta> go test ./internal/infrastructure/e
 
 ## Licencia
 
-Consulta el archivo [LICENSE](LICENSE) (Business Source License).
+Consulta el archivo [LICENSE](LICENSE) (GNU Affero General Public License v3.0).

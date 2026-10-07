@@ -47,7 +47,7 @@ nfpms:
     maintainer: "Jairo <jairo.jggc@gmail.com>"
     description: "CLI multiplataforma para despliegues automáticos y rápidos de aplicaciones"
     homepage: "https://github.com/jairoprogramador/vex"
-    license: Apache License
+    license: AGPL-3.0-only
     formats:
       - deb
       - rpm
