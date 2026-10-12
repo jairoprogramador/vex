@@ -64,7 +64,7 @@ func TestDeviceFlowClient_Start(t *testing.T) {
 			t.Parallel()
 
 			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				if r.URL.Path != "/functions/v1/device-code" {
+				if r.URL.Path != "/functions/v1/cli-device-code" {
 					t.Errorf("unexpected path: %s", r.URL.Path)
 				}
 				if r.Method != http.MethodPost {
