@@ -104,7 +104,7 @@ type TriggerDeployResponse struct {
 	PortalURL   string `json:"portal_url"`
 }
 
-// CancelExecutionRequest is the body of POST /functions/v1/cancel-execution
+// CancelExecutionRequest is the body of POST /functions/v1/cli-cancel-execution
 // (§6.9). The portal handles idempotency: cancelling an already-finished
 // execution is a no-op that returns 200 (or 404 if it never existed).
 type CancelExecutionRequest struct {

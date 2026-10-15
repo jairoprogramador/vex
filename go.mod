@@ -1,6 +1,6 @@
 module github.com/jairoprogramador/vex
 
-go 1.25.1
+go 1.27.2
 
 require (
 	github.com/AlecAivazis/survey/v2 v2.3.7

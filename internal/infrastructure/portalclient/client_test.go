@@ -345,7 +345,7 @@ func TestPortalClient_CancelExecution(t *testing.T) {
 			var srv *httptest.Server
 			if tt.statusCode != 0 {
 				srv = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-					if r.URL.Path != "/functions/v1/cancel-execution" {
+					if r.URL.Path != "/functions/v1/cli-cancel-execution" {
 						t.Errorf("unexpected path: %s", r.URL.Path)
 					}
 					w.Header().Set("Content-Type", "application/json")

@@ -29,9 +29,9 @@ func newFakePortal(t *testing.T, deviceCase http.HandlerFunc, tokenCases ...http
 	p := &fakePortal{deviceCase: deviceCase, tokenCases: tokenCases}
 	p.server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
-		case "/functions/v1/device-code":
+		case "/functions/v1/cli-device-code":
 			p.deviceCase(w, r)
-		case "/functions/v1/device-token":
+		case "/functions/v1/cli-device-token":
 			idx := int(p.tokenHits.Add(1)) - 1
 			if idx >= len(p.tokenCases) {
 				t.Errorf("device-token hit %d times, only %d responses configured", idx+1, len(p.tokenCases))
