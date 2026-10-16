@@ -24,6 +24,13 @@ func NewYAMLProjectRepository(projectPath string) ports.ProjectRepository {
 
 func (r *yamlProjectRepository) Save(project *aggregates.Project) error {
 	fdConfig := mapper.ToDto(project)
+	// mode no vive en el agregado: se conserva el que ya tenga el archivo.
+	if previous, err := os.ReadFile(r.fdconfigPath()); err == nil {
+		var old dto.FDConfigDTO
+		if yaml.Unmarshal(previous, &old) == nil {
+			fdConfig.Mode = old.Mode
+		}
+	}
 	data, err := yaml.Marshal(fdConfig)
 	if err != nil {
 		return err

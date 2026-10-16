@@ -40,13 +40,9 @@ func NewProject(
 	}, nil
 }
 
-func (p *Project) IsIDDirty() bool {
-	generatedID := proVos.GenerateProjectID(p.data.Name(), p.data.Organization(), p.data.Team())
-	if !p.id.Equals(generatedID) {
-		p.id = generatedID
-		return true
-	}
-	return false
+// WithID reemplaza el ID del proyecto. Solo lo usa la adopción del ID asignado por el portal.
+func (p *Project) WithID(id proVos.ProjectID) {
+	p.id = id
 }
 
 func (p *Project) ID() proVos.ProjectID {
