@@ -61,12 +61,8 @@ func (s *InitializeService) Run(ctx context.Context, interactive bool) error {
 		return err
 	}
 	if exists {
-		project, err := s.projectRepository.Load()
-		if err != nil {
+		if _, err := s.projectRepository.Load(); err != nil {
 			return err
-		}
-		if project.IsIDDirty() {
-			return s.projectRepository.Save(project)
 		}
 		return errors.New(MessageProjectAlreadyExists)
 	}
@@ -141,7 +137,7 @@ func (s *InitializeService) createProjectFromUserInput(executionUnit arqVos.Exec
 
 	runtime := proVos.NewRuntime(proVos.WithImage(executionUnit.Image()))
 
-	projectID, err := s.getProjectID(projectData)
+	projectID, err := proVos.NewRandomProjectID()
 	if err != nil {
 		return nil, err
 	}
@@ -157,17 +153,12 @@ func (s *InitializeService) createDefaultProject(executionUnit arqVos.ExecutionU
 	}
 	runtime := proVos.NewRuntime(proVos.WithImage(executionUnit.Image()))
 
-	projectID, err := s.getProjectID(projectData)
+	projectID, err := proVos.NewRandomProjectID()
 	if err != nil {
 		return nil, err
 	}
 
 	return proAgg.NewProject(projectID, projectData, executionUnit.Template(), runtime)
-}
-
-func (s *InitializeService) getProjectID(data proVos.ProjectData) (proVos.ProjectID, error) {
-	generatedID := proVos.GenerateProjectID(data.Name(), data.Organization(), data.Team())
-	return proVos.NewProjectID(generatedID.String())
 }
 
 func (s *InitializeService) getLevelMin(levels []arqVos.Level) (arqVos.Level, error) {

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 	"time"
 
 	comVos "github.com/jairoprogramador/vex/internal/domain/common/vos"
@@ -126,11 +127,14 @@ func (s *RemoteExecutorService) Run(ctx context.Context, step, environment strin
 	}
 
 	if cgResp.Authoritative != nil {
+		previousID := project.ID()
 		changed, err := s.applyAuthoritative(project, cgResp.Authoritative)
 		if err != nil {
 			return fmt.Errorf("apply authoritative: %w", err)
 		}
-		if changed {
+		if !project.ID().Equals(previousID) {
+			fmt.Fprintf(s.stdout, "vexconfig.yaml: el portal asignó un id nuevo a este proyecto (%s). El historial local anterior queda bajo el id viejo.\n", shortID(project.ID().String()))
+		} else if changed {
 			fmt.Fprintln(s.stdout, "vexconfig.yaml updated from portal (project already exists with different values)")
 		}
 	}
@@ -331,9 +335,20 @@ func (s *RemoteExecutorService) applyAuthoritative(project *aggregates.Project, 
 	pipelineChanged := currentPipeline.URL() != auth.Pipeline.URL || currentPipeline.Ref() != auth.Pipeline.Ref
 	runtimeChanged := currentRuntime.Image().Image() != auth.Pipeline.RuntimeImage || currentRuntime.Image().Tag() != auth.Pipeline.RuntimeTag
 	dataChanged := currentData.URL() != auth.Project.RepoURL || currentData.Ref() != auth.Project.RepoRef
+	idChanged := auth.Project.ID != "" && auth.Project.ID != project.ID().String()
 
-	if !pipelineChanged && !runtimeChanged && !dataChanged {
+	if !pipelineChanged && !runtimeChanged && !dataChanged && !idChanged {
 		return false, nil
+	}
+
+	// Se valida antes de mutar nada: un ID inválido no debe dejar el agregado a medias.
+	var newID proVos.ProjectID
+	if idChanged {
+		var err error
+		newID, err = proVos.ParseProjectUUID(auth.Project.ID)
+		if err != nil {
+			return false, fmt.Errorf("id de proyecto inválido del portal: %w", err)
+		}
 	}
 
 	if pipelineChanged {
@@ -356,6 +371,10 @@ func (s *RemoteExecutorService) applyAuthoritative(project *aggregates.Project, 
 			proVos.WithArgs(currentRuntime.Args()),
 		)
 		project.SetRuntime(newRuntime)
+	}
+
+	if idChanged {
+		project.WithID(newID)
 	}
 
 	if dataChanged {
@@ -434,3 +453,11 @@ func buildCreateOrGetRequest(project *aggregates.Project) portalclient.CreateOrG
 
 // Compile-time contract check.
 var _ Runner = (*RemoteExecutorService)(nil)
+
+// shortID abrevia un UUID a su primer bloque para mensajes de terminal.
+func shortID(id string) string {
+	if i := strings.IndexByte(id, '-'); i > 0 {
+		return id[:i]
+	}
+	return id
+}

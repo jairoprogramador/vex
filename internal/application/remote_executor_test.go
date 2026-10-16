@@ -163,6 +163,45 @@ func TestApplyAuthoritative(t *testing.T) {
 				}
 			},
 		},
+		{
+			name: "portal assigns a different project id",
+			auth: &portalclient.AuthoritativeData{
+				Project: portalclient.AuthoritativeProject{
+					ID:      "9d8d4777-5707-43b3-a636-d6f8433b7a34",
+					RepoURL: "https://github.com/local/repo",
+					RepoRef: "main",
+				},
+				Pipeline: portalclient.AuthoritativePipeline{
+					URL:          "https://github.com/local/pipe",
+					Ref:          "main",
+					RuntimeImage: "local/runtime",
+					RuntimeTag:   "v1",
+				},
+			},
+			wantSet: true,
+			check: func(t *testing.T, p *aggregates.Project) {
+				if got := p.ID().String(); got != "9d8d4777-5707-43b3-a636-d6f8433b7a34" {
+					t.Fatalf("project id: got %q", got)
+				}
+			},
+		},
+		{
+			name: "empty id from an older portal is ignored",
+			auth: &portalclient.AuthoritativeData{
+				Project: portalclient.AuthoritativeProject{
+					ID:      "",
+					RepoURL: "https://github.com/local/repo",
+					RepoRef: "main",
+				},
+				Pipeline: portalclient.AuthoritativePipeline{
+					URL:          "https://github.com/local/pipe",
+					Ref:          "main",
+					RuntimeImage: "local/runtime",
+					RuntimeTag:   "v1",
+				},
+			},
+			wantSet: false,
+		},
 	}
 
 	for _, tt := range tests {
@@ -511,4 +550,36 @@ func indexOf(haystack, needle string) int {
 		}
 	}
 	return -1
+}
+
+func TestApplyAuthoritativeRejectsInvalidID(t *testing.T) {
+	t.Parallel()
+
+	repo := &stubProjectRepo{}
+	svc := &RemoteExecutorService{projectRepository: repo}
+	project := newSeedProject(t)
+
+	_, err := svc.applyAuthoritative(project, &portalclient.AuthoritativeData{
+		Project: portalclient.AuthoritativeProject{
+			ID:      "no-es-uuid",
+			RepoURL: "https://github.com/portal/repo",
+			RepoRef: "main",
+		},
+		Pipeline: portalclient.AuthoritativePipeline{
+			URL: "https://github.com/local/pipe", Ref: "main",
+			RuntimeImage: "local/runtime", RuntimeTag: "v1",
+		},
+	})
+	if err == nil {
+		t.Fatal("se esperaba error por id inválido")
+	}
+	if got := project.ID().String(); got != "seed-id" {
+		t.Fatalf("el proyecto cambió: id %q", got)
+	}
+	if got := project.Data().URL(); got != "https://github.com/local/repo" {
+		t.Fatalf("el proyecto cambió a medias: url %q", got)
+	}
+	if repo.saveCalls != 0 {
+		t.Fatalf("saveCalls: got %d, want 0", repo.saveCalls)
+	}
 }

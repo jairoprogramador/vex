@@ -6,7 +6,7 @@
 
 ```yaml
 project:
-  id: 9d8d4777-5707-43b3-a636-d6f8433b7a34   # lo genera vex init
+  id: 9d8d4777-5707-43b3-a636-d6f8433b7a34   # lo genera vex init (provisional); el portal puede reemplazarlo con el suyo
   name: mi-servicio
   team: mi-equipo
   organization: mi-org

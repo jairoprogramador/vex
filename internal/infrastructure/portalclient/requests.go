@@ -57,6 +57,7 @@ type AuthoritativeData struct {
 
 // AuthoritativeProject is the project portion of AuthoritativeData.
 type AuthoritativeProject struct {
+	ID      string `json:"id"` // vacío si el portal es anterior a 02.01
 	RepoURL string `json:"repo_url"`
 	RepoRef string `json:"repo_ref"`
 }
