@@ -10,3 +10,19 @@
 | `La variable "x" no está disponible… (ambiente "y")` | Revisa que el ambiente exista en el pipeline y que la variable esté declarada (compartida o de ese ambiente). |
 | `No se pudo ejecutar el motor en el contenedor` | Comprueba que Docker esté en ejecución y que la imagen exista. |
 | `La imagen trae un vexd que no habla esta versión del protocolo` | Actualiza la imagen runtime: su `vexd` es anterior al protocolo JSON-RPC. |
+
+## El llavero del sistema no funciona
+
+La CLI guarda el token del portal en el llavero del sistema (Keychain, Credential Manager o Secret Service). Si no hay llavero (Linux sin escritorio, contenedores), usa un archivo con permisos 0600 y lo avisa una vez por proceso. `vex whoami` muestra el almacén en uso (`Store:`).
+
+Para saltar el llavero por completo, define `VEX_TOKEN_STORE=file` y vuelve a ejecutar `vex login`.
+
+Ubicación del archivo:
+
+| Sistema | Ruta |
+| :--- | :--- |
+| Linux | `~/.config/vex/credentials.json` |
+| macOS | `~/Library/Application Support/vex/credentials.json` |
+| Windows | `%AppData%\vex\credentials.json` |
+
+Para borrar a mano la entrada del llavero en macOS: `security delete-generic-password -s vex -a vexPortalToken`.

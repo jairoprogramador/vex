@@ -165,6 +165,9 @@ func runAuthWhoami(parentCtx context.Context) error {
 	fmt.Fprintf(os.Stdout, "User ID:  %s\n", identity.UserID)
 	fmt.Fprintf(os.Stdout, "Email:    %s\n", identity.Email)
 	fmt.Fprintf(os.Stdout, "Token ID: %s\n", identity.TokenID)
+	if located, ok := deps.TokenStore.(interface{ Backend() string }); ok {
+		fmt.Fprintf(os.Stdout, "Store:    %s\n", located.Backend())
+	}
 	return nil
 }
 

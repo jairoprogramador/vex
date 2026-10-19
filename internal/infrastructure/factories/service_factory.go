@@ -30,7 +30,7 @@ type AuthDependencies struct {
 	PortalURL    string
 	HTTPClient   *http.Client
 	DeviceClient *portalauth.DeviceFlowClient
-	TokenStore   *portalauth.FileTokenStore
+	TokenStore   portalauth.TokenStore
 }
 
 type ServiceFactory interface {
@@ -233,7 +233,7 @@ func (f *serviceFactory) BuildRemoteExecutor(follow bool) (*app.RemoteExecutorSe
 		return nil, err
 	}
 
-	tokenStore, err := portalauth.NewFileTokenStore()
+	tokenStore, err := portalauth.NewDefaultTokenStore()
 	if err != nil {
 		return nil, err
 	}
@@ -252,7 +252,7 @@ func (f *serviceFactory) BuildRemoteExecutor(follow bool) (*app.RemoteExecutorSe
 // credentials file. It is used by sub-commands that need the portal but
 // not the full executor flow (e.g. `vex execution cancel`).
 func (f *serviceFactory) BuildPortalClient() (*portalclient.PortalClient, error) {
-	tokenStore, err := portalauth.NewFileTokenStore()
+	tokenStore, err := portalauth.NewDefaultTokenStore()
 	if err != nil {
 		return nil, err
 	}
@@ -282,7 +282,7 @@ func (f *serviceFactory) BuildArchitecture() (*app.ArchitectureService, error) {
 
 // BuildAuth wires the dependencies for the `vex` subcommands.
 func (f *serviceFactory) BuildAuth() (*AuthDependencies, error) {
-	tokenStore, err := portalauth.NewFileTokenStore()
+	tokenStore, err := portalauth.NewDefaultTokenStore()
 	if err != nil {
 		return nil, err
 	}
