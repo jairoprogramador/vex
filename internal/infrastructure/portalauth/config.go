@@ -59,6 +59,7 @@ type DeviceCodeResponse struct {
 	DeviceCode              string `json:"device_code"`
 	UserCode                string `json:"user_code"`
 	VerificationURI         string `json:"verification_uri"`
+	// Deprecado: el portal ya no lo envía y la CLI no lo usa (AJ-12.2).
 	VerificationURIComplete string `json:"verification_uri_complete"`
 	ExpiresIn               int    `json:"expires_in"`
 	Interval                int    `json:"interval"`

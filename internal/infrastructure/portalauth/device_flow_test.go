@@ -6,6 +6,8 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -28,7 +30,6 @@ func TestDeviceFlowClient_Start(t *testing.T) {
 				"device_code": "dev-123",
 				"user_code": "WDJB-MJHT",
 				"verification_uri": "https://portal/cli",
-				"verification_uri_complete": "https://portal/cli?code=WDJB-MJHT",
 				"expires_in": 600,
 				"interval": 5
 			}`,
@@ -235,5 +236,42 @@ func TestTokenResponse_DecodeShape(t *testing.T) {
 	}
 	if got.AccessToken != "a" || got.TokenType != "Bearer" || got.ExpiresIn != 7776000 {
 		t.Fatalf("unexpected decode: %+v", got)
+	}
+}
+
+func TestDeviceFlowClient_Start_SendsClientOrigin(t *testing.T) {
+	hostnameFn = func() (string, error) { return "mi-laptop", nil }
+	t.Cleanup(func() { hostnameFn = os.Hostname })
+
+	var got map[string]string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_ = json.NewDecoder(r.Body).Decode(&got)
+		_, _ = w.Write([]byte(`{"device_code":"d","user_code":"U"}`))
+	}))
+	defer srv.Close()
+
+	if _, err := NewDeviceFlowClient(srv.URL).Start(context.Background()); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !strings.Contains(got["client_os"], "/") {
+		t.Fatalf("client_os: got %q", got["client_os"])
+	}
+	if got["client_hostname"] != "mi-laptop" {
+		t.Fatalf("client_hostname: got %q", got["client_hostname"])
+	}
+}
+
+func TestDeviceFlowClient_Start_RateLimited(t *testing.T) {
+	t.Parallel()
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusTooManyRequests)
+		_, _ = w.Write([]byte(`{"error":"rate_limited"}`))
+	}))
+	defer srv.Close()
+
+	_, err := NewDeviceFlowClient(srv.URL).Start(context.Background())
+	if err == nil || !strings.Contains(err.Error(), "demasiadas solicitudes") {
+		t.Fatalf("expected friendly 429 error, got %v", err)
 	}
 }
