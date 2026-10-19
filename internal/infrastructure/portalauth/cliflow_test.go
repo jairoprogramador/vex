@@ -70,7 +70,6 @@ func writeDeviceCodeOK() http.HandlerFunc {
             "device_code": "dev-1",
             "user_code": "WDJB-MJHT",
             "verification_uri": "https://portal/cli",
-            "verification_uri_complete": "https://portal/cli?code=WDJB-MJHT",
             "expires_in": 600,
             "interval": 0
         }`)
@@ -149,7 +148,7 @@ func TestCLIFlowConfig_Run(t *testing.T) {
 		if browser.called.Load() != 1 {
 			t.Fatalf("browser called: got %d", browser.called.Load())
 		}
-		if got, _ := browser.gotURL.Load().(string); got != "https://portal/cli?code=WDJB-MJHT" {
+		if got, _ := browser.gotURL.Load().(string); got != "https://portal/cli" {
 			t.Fatalf("browser URL: got %q", got)
 		}
 
@@ -157,8 +156,11 @@ func TestCLIFlowConfig_Run(t *testing.T) {
 		if !strings.Contains(out, "Open the following URL") {
 			t.Fatalf("missing announcement: %q", out)
 		}
-		if !strings.Contains(out, "WDJB-MJHT") {
-			t.Fatalf("missing user code: %q", out)
+		if !strings.Contains(out, "Then type this code when asked: WDJB-MJHT\n") {
+			t.Fatalf("missing user code line: %q", out)
+		}
+		if strings.Contains(out, "?code=") {
+			t.Fatalf("output must not carry a prefilled link: %q", out)
 		}
 		if !strings.Contains(out, "Waiting for approval") {
 			t.Fatalf("missing waiting line: %q", out)

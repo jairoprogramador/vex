@@ -68,7 +68,7 @@ func (c CLIFlowConfig) Run(ctx context.Context) (Token, error) {
 	}
 
 	c.announceVerification(device)
-	c.tryOpenBrowser(device.VerificationURIComplete)
+	c.tryOpenBrowser(device.VerificationURI)
 
 	interval := time.Duration(device.Interval) * time.Second
 	if interval <= 0 {
@@ -120,10 +120,12 @@ func (c *CLIFlowConfig) applyDefaults() {
 }
 
 // announceVerification prints the URL/code lines that the end user needs
-// in order to approve the device. Format mirrors what `vex login`
-// has shipped since M2 so existing screenshots/docs stay accurate.
+// in order to approve the device. The code is printed apart from the URL
+// and typed by hand on the portal (RFC 8628 §5.4: no prefilled links).
 func (c CLIFlowConfig) announceVerification(device DeviceCodeResponse) {
-	fmt.Fprintf(c.Stdout, "Open the following URL in your browser: \n%s", device.VerificationURIComplete)
+	fmt.Fprintf(c.Stdout, "Open the following URL in your browser: \n%s\n", device.VerificationURI)
+	fmt.Fprintf(c.Stdout, "Then type this code when asked: %s\n", device.UserCode)
+	fmt.Fprintln(c.Stdout, "(If you did not start this, do not type the code anywhere.)")
 }
 
 // tryOpenBrowser opens the URL best-effort. Failures are surfaced on

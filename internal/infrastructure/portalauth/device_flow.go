@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -47,7 +48,12 @@ func NewDeviceFlowClient(portalURL string) *DeviceFlowClient {
 // returns the device/user codes and the verification URLs the caller must
 // surface to the end user.
 func (c *DeviceFlowClient) Start(ctx context.Context) (DeviceCodeResponse, error) {
-	body, err := json.Marshal(map[string]string{"client_id": ClientID()})
+	osName, host := clientInfo()
+	body, err := json.Marshal(map[string]string{
+		"client_id":       ClientID(),
+		"client_os":       osName,
+		"client_hostname": host,
+	})
 	if err != nil {
 		return DeviceCodeResponse{}, fmt.Errorf("marshal device-code request: %w", err)
 	}
@@ -67,6 +73,9 @@ func (c *DeviceFlowClient) Start(ctx context.Context) (DeviceCodeResponse, error
 
 	defer resp.Body.Close()
 
+	if resp.StatusCode == http.StatusTooManyRequests {
+		return DeviceCodeResponse{}, errors.New("device-code: demasiadas solicitudes desde esta red; espera un rato y reintenta con 'vex login'")
+	}
 	if resp.StatusCode != http.StatusOK {
 		return DeviceCodeResponse{}, decodeError(resp, "device-code")
 	}
