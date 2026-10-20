@@ -56,9 +56,9 @@ func (t Token) Expired() bool {
 // DeviceCodeResponse mirrors the shape of the `device-code` edge function
 // response (§6.1).
 type DeviceCodeResponse struct {
-	DeviceCode              string `json:"device_code"`
-	UserCode                string `json:"user_code"`
-	VerificationURI         string `json:"verification_uri"`
+	DeviceCode      string `json:"device_code"`
+	UserCode        string `json:"user_code"`
+	VerificationURI string `json:"verification_uri"`
 	// Deprecado: el portal ya no lo envía y la CLI no lo usa (AJ-12.2).
 	VerificationURIComplete string `json:"verification_uri_complete"`
 	ExpiresIn               int    `json:"expires_in"`
@@ -74,7 +74,7 @@ type TokenResponse struct {
 }
 
 func PortalURL() string  { return defaultPortalURL }
-func BackendURL() string  { return defaultBackendURL }
+func BackendURL() string { return defaultBackendURL }
 func ClientID() string   { return defaultClientID }
 
 func CredentialsPath() (string, error) {

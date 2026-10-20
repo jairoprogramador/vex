@@ -18,10 +18,10 @@ import (
 // endpoints with the configured payloads. It is local to this file so the
 // public DeviceFlowClient tests stay decoupled from the helper's tests.
 type fakePortal struct {
-	server      *httptest.Server
-	tokenHits   atomic.Int32
-	tokenCases  []http.HandlerFunc
-	deviceCase  http.HandlerFunc
+	server     *httptest.Server
+	tokenHits  atomic.Int32
+	tokenCases []http.HandlerFunc
+	deviceCase http.HandlerFunc
 }
 
 func newFakePortal(t *testing.T, deviceCase http.HandlerFunc, tokenCases ...http.HandlerFunc) *fakePortal {

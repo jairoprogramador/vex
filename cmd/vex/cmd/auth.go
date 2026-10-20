@@ -28,11 +28,10 @@ var authLoginCmd = &cobra.Command{
 	},
 }
 
-// authLogoutCmd removes the local credentials file. Server-side revocation
-// is intentionally out of scope until M6+.
+// authLogoutCmd revokes the token on the portal and removes it locally.
 var authLogoutCmd = &cobra.Command{
 	Use:   "logout",
-	Short: "Borra las credenciales guardadas en este equipo",
+	Short: "Cierra la sesión: revoca el token en el portal y lo borra de este equipo",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return runAuthLogout(cmd.Context())
 	},
@@ -116,19 +115,35 @@ func runAuthLogin(parentCtx context.Context) error {
 	return nil
 }
 
-// runAuthLogout deletes the local credentials file. The operation is
-// idempotent and the server-side token remains valid until expiration.
-func runAuthLogout(_ context.Context) error {
+// runAuthLogout revoca el token en el servidor y después borra el local.
+// Si el servidor no responde el token local se borra igual, y se avisa cómo
+// revocar a mano; un 401 cuenta como "ya estaba revocado o vencido".
+func runAuthLogout(ctx context.Context) error {
 	deps, err := factories.NewServiceFactory().BuildAuth()
 	if err != nil {
 		return fmt.Errorf("auth logout: %w", err)
 	}
+
+	token, err := deps.TokenStore.Load()
+	if errors.Is(err, portalauth.ErrTokenNotFound) {
+		fmt.Fprintln(os.Stdout, "No hay sesión iniciada en este equipo.")
+		return nil
+	}
+	if err != nil {
+		return fmt.Errorf("load credentials: %w", err)
+	}
+
+	revokeErr := deps.DeviceClient.Revoke(ctx, token.AccessToken)
 	if err := deps.TokenStore.Delete(); err != nil {
 		return fmt.Errorf("delete credentials: %w", err)
 	}
-	fmt.Fprintln(os.Stdout, "Local credentials cleared.")
-	fmt.Fprintln(os.Stdout, "Note: the token may still be valid on the server until expiration. "+
-		"Use 'vex revoke' to revoke server-side.")
+
+	if revokeErr == nil || errors.Is(revokeErr, portalauth.ErrAlreadyInvalid) {
+		fmt.Fprintln(os.Stdout, "Sesión cerrada: el token se revocó en el servidor y se borró de este equipo.")
+		return nil
+	}
+	fmt.Fprintf(os.Stderr, "No se pudo revocar en el servidor (%v).\n"+
+		"Se borró el token de este equipo. Revócalo desde el portal: Configuración > Sesiones de la CLI.\n", revokeErr)
 	return nil
 }
 
@@ -165,6 +180,12 @@ func runAuthWhoami(parentCtx context.Context) error {
 	fmt.Fprintf(os.Stdout, "User ID:  %s\n", identity.UserID)
 	fmt.Fprintf(os.Stdout, "Email:    %s\n", identity.Email)
 	fmt.Fprintf(os.Stdout, "Token ID: %s\n", identity.TokenID)
+	if identity.DeviceName != "" {
+		fmt.Fprintf(os.Stdout, "Device:   %s\n", identity.DeviceName)
+	}
+	if expires, ok := formatExpiry(identity.ExpiresAt, time.Now()); ok {
+		fmt.Fprintf(os.Stdout, "Expires:  %s\n", expires)
+	}
 	if located, ok := deps.TokenStore.(interface{ Backend() string }); ok {
 		fmt.Fprintf(os.Stdout, "Store:    %s\n", located.Backend())
 	}
@@ -173,9 +194,25 @@ func runAuthWhoami(parentCtx context.Context) error {
 
 // whoamiResponse mirrors the body of the `whoami` edge function (§6.3).
 type whoamiResponse struct {
-	UserID  string `json:"user_id"`
-	Email   string `json:"email"`
-	TokenID string `json:"token_id"`
+	UserID     string `json:"user_id"`
+	Email      string `json:"email"`
+	TokenID    string `json:"token_id"`
+	DeviceName string `json:"device_name"`
+	ExpiresAt  string `json:"expires_at"`
+}
+
+// formatExpiry renders an RFC 3339 expiry as "2026-11-18 (30 días)".
+// ok is false when the portal did not send a parseable date.
+func formatExpiry(expiresAt string, now time.Time) (string, bool) {
+	t, err := time.Parse(time.RFC3339, expiresAt)
+	if err != nil {
+		return "", false
+	}
+	days := int(t.Sub(now).Hours() / 24)
+	if days < 0 {
+		days = 0
+	}
+	return fmt.Sprintf("%s (%d días)", t.Local().Format("2006-01-02"), days), true
 }
 
 // unauthorizedError signals a 401 from the portal and lets callers branch
