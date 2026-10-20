@@ -16,14 +16,14 @@ import (
 
 // PortalClient is a thin REST client for the portal edge functions
 // involved in the deploy lifecycle. It is concurrency-safe as long as the
-// underlying *http.Client and *FileTokenStore are.
+// underlying *http.Client and portalauth.TokenStore are.
 //
 // The client reads the bearer token lazily on every call so the caller
 // can swap credentials (e.g. after a re-login) without rebuilding the
 // struct.
 type PortalClient struct {
 	baseURL    string
-	tokenStore *portalauth.FileTokenStore
+	tokenStore portalauth.TokenStore
 	httpClient *http.Client
 }
 
@@ -33,7 +33,7 @@ type PortalClient struct {
 //
 // Passing a nil httpClient yields http.DefaultClient. Tests pass an
 // httptest.NewServer-backed client.
-func NewPortalClient(baseURL string, tokenStore *portalauth.FileTokenStore, httpClient *http.Client) *PortalClient {
+func NewPortalClient(baseURL string, tokenStore portalauth.TokenStore, httpClient *http.Client) *PortalClient {
 	if httpClient == nil {
 		httpClient = http.DefaultClient
 	}

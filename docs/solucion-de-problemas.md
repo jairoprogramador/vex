@@ -10,3 +10,30 @@
 | `La variable "x" no está disponible… (ambiente "y")` | Revisa que el ambiente exista en el pipeline y que la variable esté declarada (compartida o de ese ambiente). |
 | `No se pudo ejecutar el motor en el contenedor` | Comprueba que Docker esté en ejecución y que la imagen exista. |
 | `La imagen trae un vexd que no habla esta versión del protocolo` | Actualiza la imagen runtime: su `vexd` es anterior al protocolo JSON-RPC. |
+
+## El llavero del sistema no funciona
+
+La CLI guarda el token del portal en el llavero del sistema (Keychain, Credential Manager o Secret Service). Si no hay llavero (Linux sin escritorio, contenedores), usa un archivo con permisos 0600 y lo avisa una vez por proceso. `vex whoami` muestra el almacén en uso (`Store:`).
+
+Para saltar el llavero por completo, define `VEX_TOKEN_STORE=file` y vuelve a ejecutar `vex login`.
+
+Ubicación del archivo:
+
+| Sistema | Ruta |
+| :--- | :--- |
+| Linux | `~/.config/vex/credentials.json` |
+| macOS | `~/Library/Application Support/vex/credentials.json` |
+| Windows | `%AppData%\vex\credentials.json` |
+
+Para borrar a mano la entrada del llavero en macOS: `security delete-generic-password -s vex -a vexPortalToken`.
+
+## La CLI no abrió el navegador
+
+`vex login` solo abre sola una URL que pertenezca al portal con que se compiló la CLI (mismo esquema, host y puerto). Si no coincide, imprime la URL y un aviso `no pertenece al portal configurado`, y no abre nada.
+
+Causas posibles:
+
+- El backend devolvió una URL de otro host que el `PORTAL_URL` de la compilación (por ejemplo, `www.` de más o un ambiente distinto).
+- Build de desarrollo sin `portalauth/env.go` configurado: sin portal, la CLI no abre nada.
+
+Qué hacer: copia la URL solo si coincide con el sitio oficial (`vexja.com`). Si no la reconoces, no entres ni escribas el código.

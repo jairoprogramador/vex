@@ -12,6 +12,9 @@ import (
 	"time"
 )
 
+// ErrAlreadyInvalid indica que el portal ya no reconoce el token (revocado o vencido).
+var ErrAlreadyInvalid = errors.New("portalauth: token already revoked or expired")
+
 // httpDoer abstracts *http.Client so tests can inject lightweight stubs.
 // It mirrors the standard signature of http.Client.Do.
 type httpDoer interface {
@@ -213,6 +216,36 @@ func (c *DeviceFlowClient) exchangeToken(ctx context.Context, deviceCode string)
 	}
 
 	return TokenResponse{}, tokenStatusUnknown, decodeStatus(resp, "device-token")
+}
+
+// Revoke pide al portal que revoque el token con el que se autentica la
+// llamada (el de esta CLI). Un 401 devuelve ErrAlreadyInvalid.
+func (c *DeviceFlowClient) Revoke(ctx context.Context, accessToken string) error {
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost,
+		c.portalURL+"/functions/v1/cli-revoke-token", nil)
+	if err != nil {
+		return fmt.Errorf("build revoke request: %w", err)
+	}
+	req.Header.Set("Authorization", "Bearer "+accessToken)
+	req.Header.Set("Accept", "application/json")
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("call cli-revoke-token: %w", err)
+	}
+	defer resp.Body.Close()
+
+	switch resp.StatusCode {
+	case http.StatusOK, http.StatusNoContent:
+		return nil
+	case http.StatusUnauthorized:
+		return ErrAlreadyInvalid
+	default:
+		return decodeStatus(resp, "cli-revoke-token")
+	}
 }
 
 // decodeError builds an error for non-2xx responses on Start. It surfaces

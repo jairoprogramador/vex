@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -273,5 +274,58 @@ func TestDeviceFlowClient_Start_RateLimited(t *testing.T) {
 	_, err := NewDeviceFlowClient(srv.URL).Start(context.Background())
 	if err == nil || !strings.Contains(err.Error(), "demasiadas solicitudes") {
 		t.Fatalf("expected friendly 429 error, got %v", err)
+	}
+}
+
+func TestDeviceFlowClient_Revoke(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name       string
+		statusCode int
+		wantErr    error
+		wantAnyErr bool
+	}{
+		{name: "200 revoca", statusCode: http.StatusOK},
+		{name: "401 ya estaba invalido", statusCode: http.StatusUnauthorized, wantErr: ErrAlreadyInvalid},
+		{name: "500 es error", statusCode: http.StatusInternalServerError, wantAnyErr: true},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if r.URL.Path != "/functions/v1/cli-revoke-token" {
+					t.Errorf("unexpected path: %s", r.URL.Path)
+				}
+				if r.Method != http.MethodPost {
+					t.Errorf("unexpected method: %s", r.Method)
+				}
+				if got := r.Header.Get("Authorization"); got != "Bearer tok-abc" {
+					t.Errorf("Authorization: got %q", got)
+				}
+				if body, _ := io.ReadAll(r.Body); len(body) != 0 {
+					t.Errorf("expected empty body, got %q", body)
+				}
+				w.WriteHeader(tt.statusCode)
+			}))
+			defer srv.Close()
+
+			err := NewDeviceFlowClient(srv.URL).Revoke(context.Background(), "tok-abc")
+			switch {
+			case tt.wantErr != nil:
+				if !errors.Is(err, tt.wantErr) {
+					t.Fatalf("expected %v, got %v", tt.wantErr, err)
+				}
+			case tt.wantAnyErr:
+				if err == nil || errors.Is(err, ErrAlreadyInvalid) {
+					t.Fatalf("expected generic error, got %v", err)
+				}
+			case err != nil:
+				t.Fatalf("unexpected error: %v", err)
+			}
+		})
 	}
 }

@@ -35,7 +35,7 @@ type RemoteExecutorService struct {
 	projectRepository proPor.ProjectRepository
 	portalClient      *portalclient.PortalClient
 	deviceFlow        *portalauth.DeviceFlowClient
-	tokenStore        *portalauth.FileTokenStore
+	tokenStore        portalauth.TokenStore
 	follow            bool
 
 	// Surfaces decoupled from the package globals so tests (or future
@@ -75,7 +75,7 @@ func NewRemoteExecutorService(
 	projectRepository proPor.ProjectRepository,
 	portalClient *portalclient.PortalClient,
 	deviceFlow *portalauth.DeviceFlowClient,
-	tokenStore *portalauth.FileTokenStore,
+	tokenStore portalauth.TokenStore,
 	follow bool,
 	opts ...RemoteExecutorOption,
 ) *RemoteExecutorService {
