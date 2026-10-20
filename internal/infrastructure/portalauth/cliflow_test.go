@@ -114,6 +114,7 @@ func TestCLIFlowConfig_Run(t *testing.T) {
 			Stdout:               &stdout,
 			Stderr:               &stderr,
 			Clock:                func() time.Time { return fixedClock },
+			PortalURL:            "https://portal",
 			OpenBrowser:          browser.open,
 			pollIntervalOverride: 1 * time.Millisecond,
 		}
@@ -179,6 +180,7 @@ func TestCLIFlowConfig_Run(t *testing.T) {
 			Client:               NewDeviceFlowClient(portal.server.URL),
 			Store:                store,
 			Stderr:               &stderr,
+			PortalURL:            "https://portal",
 			OpenBrowser:          browser.open,
 			pollIntervalOverride: 1 * time.Millisecond,
 		}
@@ -248,6 +250,62 @@ func TestCLIFlowConfig_Run(t *testing.T) {
 		}
 		if got := stops.Load(); got != 1 {
 			t.Fatalf("OnWaiting stop: got %d, want 1", got)
+		}
+	})
+}
+
+func TestCLIFlowConfig_Run_OpensOnlyPortalURLs(t *testing.T) {
+	t.Parallel()
+
+	foreignURI := func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = fmt.Fprint(w, `{"device_code":"dev-1","user_code":"WDJB-MJHT","verification_uri":"https://evil.example/cli","expires_in":600,"interval":0}`)
+	}
+
+	run := func(t *testing.T, device http.HandlerFunc) (*stubBrowser, string, string) {
+		t.Helper()
+		portal := newFakePortal(t, device, writeTokenSuccess())
+		browser := &stubBrowser{}
+		var stdout, stderr bytes.Buffer
+		cfg := CLIFlowConfig{
+			Client:               NewDeviceFlowClient(portal.server.URL),
+			Store:                NewFileTokenStoreAt(filepath.Join(t.TempDir(), "credentials.json")),
+			Stdout:               &stdout,
+			Stderr:               &stderr,
+			PortalURL:            "https://portal",
+			OpenBrowser:          browser.open,
+			pollIntervalOverride: 1 * time.Millisecond,
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		if _, err := cfg.Run(ctx); err != nil {
+			t.Fatalf("Run: %v", err)
+		}
+		return browser, stdout.String(), stderr.String()
+	}
+
+	t.Run("foreign URL is printed but not opened", func(t *testing.T) {
+		t.Parallel()
+		browser, stdout, stderr := run(t, foreignURI)
+		if browser.called.Load() != 0 {
+			t.Fatalf("browser must not open foreign URL, called %d times", browser.called.Load())
+		}
+		if !strings.Contains(stderr, "no pertenece al portal configurado") {
+			t.Fatalf("expected warning on stderr: %q", stderr)
+		}
+		if !strings.Contains(stdout, "https://evil.example/cli") {
+			t.Fatalf("URL must still be shown to the user: %q", stdout)
+		}
+	})
+
+	t.Run("portal URL is opened once", func(t *testing.T) {
+		t.Parallel()
+		browser, _, stderr := run(t, writeDeviceCodeOK())
+		if browser.called.Load() != 1 {
+			t.Fatalf("browser called: got %d", browser.called.Load())
+		}
+		if stderr != "" {
+			t.Fatalf("unexpected stderr: %q", stderr)
 		}
 	})
 }

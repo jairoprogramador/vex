@@ -31,6 +31,10 @@ type CLIFlowConfig struct {
 	Client *DeviceFlowClient
 	Store  TokenStore
 
+	// PortalURL is the only origin the browser may be opened on
+	// automatically. Defaults to the build-time PortalURL(); tests override it.
+	PortalURL string
+
 	// Stdout receives user-facing instructions (verification URL, code,
 	// "Waiting for approval..."). Defaults to os.Stdout.
 	Stdout io.Writer
@@ -117,6 +121,9 @@ func (c *CLIFlowConfig) applyDefaults() {
 	if c.OpenBrowser == nil {
 		c.OpenBrowser = OpenBrowser
 	}
+	if c.PortalURL == "" {
+		c.PortalURL = PortalURL()
+	}
 }
 
 // announceVerification prints the URL/code lines that the end user needs
@@ -128,11 +135,18 @@ func (c CLIFlowConfig) announceVerification(device DeviceCodeResponse) {
 	fmt.Fprintln(c.Stdout, "(If you did not start this, do not type the code anywhere.)")
 }
 
-// tryOpenBrowser opens the URL best-effort. Failures are surfaced on
-// Stderr as a hint and never abort the flow — the URL is already on
-// Stdout for manual copy/paste.
-func (c CLIFlowConfig) tryOpenBrowser(url string) {
-	if err := c.OpenBrowser(url); err != nil {
+// tryOpenBrowser opens the URL best-effort, but only when it belongs to the
+// configured portal: a URL from anywhere else is left for the user to judge.
+// Failures are surfaced on Stderr as a hint and never abort the flow — the
+// URL is already on Stdout for manual copy/paste.
+func (c CLIFlowConfig) tryOpenBrowser(target string) {
+	if !IsPortalURL(target, c.PortalURL) {
+		fmt.Fprintf(c.Stderr,
+			"aviso: la URL de verificación no pertenece al portal configurado (%s); no se abre sola. Si no la reconoces, no entres.\n",
+			c.PortalURL)
+		return
+	}
+	if err := c.OpenBrowser(target); err != nil {
 		fmt.Fprintf(c.Stderr, "(could not open browser automatically: %v)\n", err)
 	}
 }

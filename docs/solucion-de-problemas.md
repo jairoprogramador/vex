@@ -26,3 +26,14 @@ Ubicación del archivo:
 | Windows | `%AppData%\vex\credentials.json` |
 
 Para borrar a mano la entrada del llavero en macOS: `security delete-generic-password -s vex -a vexPortalToken`.
+
+## La CLI no abrió el navegador
+
+`vex login` solo abre sola una URL que pertenezca al portal con que se compiló la CLI (mismo esquema, host y puerto). Si no coincide, imprime la URL y un aviso `no pertenece al portal configurado`, y no abre nada.
+
+Causas posibles:
+
+- El backend devolvió una URL de otro host que el `PORTAL_URL` de la compilación (por ejemplo, `www.` de más o un ambiente distinto).
+- Build de desarrollo sin `portalauth/env.go` configurado: sin portal, la CLI no abre nada.
+
+Qué hacer: copia la URL solo si coincide con el sitio oficial (`vexja.com`). Si no la reconoces, no entres ni escribas el código.
