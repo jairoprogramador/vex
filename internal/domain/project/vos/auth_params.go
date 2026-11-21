@@ -11,8 +11,8 @@ type AuthParams struct {
 }
 
 func NewAuthParams(
-	clientID, grantType, 
-	clientSecret, scope string, 
+	clientID, grantType,
+	clientSecret, scope string,
 	extra map[string]string) (AuthParams, error) {
 
 	if clientID == "" {
@@ -27,17 +27,17 @@ func NewAuthParams(
 	if scope == "" {
 		return AuthParams{}, errors.New("scope is required")
 	}
-	
+
 	return AuthParams{
-		clientID: clientID,
-		grantType: grantType,
+		clientID:     clientID,
+		grantType:    grantType,
 		clientSecret: clientSecret,
-		scope: scope,
-		extra: extra}, nil
+		scope:        scope,
+		extra:        extra}, nil
 }
 
-func (a AuthParams) ClientID() string { return a.clientID }
-func (a AuthParams) GrantType() string { return a.grantType }
-func (a AuthParams) ClientSecret() string { return a.clientSecret }
-func (a AuthParams) Scope() string { return a.scope }
+func (a AuthParams) ClientID() string         { return a.clientID }
+func (a AuthParams) GrantType() string        { return a.grantType }
+func (a AuthParams) ClientSecret() string     { return a.clientSecret }
+func (a AuthParams) Scope() string            { return a.scope }
 func (a AuthParams) Extra() map[string]string { return a.extra }

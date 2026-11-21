@@ -167,7 +167,7 @@ func newPreflightHarness(t *testing.T, engineResult CheckResult, engineErr error
 	guard := NewPipelineGuard(checker, NewRecentsService(newMemoryStore()))
 	h.executor = NewLocalExecutorService(
 		NewWorkspace(&stubProjectRepo{loaded: newProject(t), existsBool: true}, h.sources, h.images, h.presenter, h.config),
-		h.engine, h.presenter, WithPreflight(guard))
+		h.engine, h.presenter, WithPreflight(guard), WithImageVerifier(&fakeImageVerifier{}))
 	return h, checker
 }
 

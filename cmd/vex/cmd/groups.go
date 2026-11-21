@@ -11,6 +11,7 @@ const (
 	groupRelease = "release"
 	groupConfig  = "config"
 	groupRemote  = "remote"
+	groupCloud   = "cloud"
 )
 
 // groupOf asigna cada comando a su grupo por nombre. Está centralizado aquí a propósito: los comandos nuevos se
@@ -23,6 +24,7 @@ var groupOf = map[string]string{
 	"rollback": groupRelease, "release": groupRelease, "protect": groupRelease, "unprotect": groupRelease,
 	"abandon": groupRelease,
 	"config":  groupConfig, "mode": groupConfig, "version": groupConfig,
+	"bootstrap": groupCloud, "disconnect": groupCloud,
 	"login": groupRemote, "logout": groupRemote, "whoami": groupRemote, "cancel": groupRemote,
 }
 
@@ -31,6 +33,7 @@ var groupTitles = []struct{ id, title string }{
 	{groupRun, "Ejecutar:"},
 	{groupQuery, "Consultar:"},
 	{groupRelease, "Desplegar y lanzar:"},
+	{groupCloud, "Conectar tu nube (credenciales del portal):"},
 	{groupConfig, "Configuración:"},
 	{groupRemote, "Modo remoto (portal):"},
 }

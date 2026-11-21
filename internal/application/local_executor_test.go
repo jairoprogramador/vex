@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -69,7 +70,10 @@ type fakePresenter struct {
 	failed   []CommandOutput
 	failedID string
 	failures int
+	clouds   []CloudNotice
 }
+
+func (f *fakePresenter) CloudConnected(c CloudNotice) { f.clouds = append(f.clouds, c) }
 
 func (f *fakePresenter) Info(m string)          { f.infos = append(f.infos, m) }
 func (f *fakePresenter) Warn(m string)          { f.warnings = append(f.warnings, m) }
@@ -83,13 +87,16 @@ func (f *fakePresenter) Failure(id string, o []CommandOutput) {
 type projectOption func(*projectParts)
 
 type projectParts struct {
+	name    string
 	image   string
 	volumes []proVos.Volume
 	envs    []proVos.EnvVar
 	args    []proVos.Argument
+	cloud   proVos.Cloud
 }
 
 func withImage(spec string) projectOption { return func(p *projectParts) { p.image = spec } }
+func withName(name string) projectOption  { return func(p *projectParts) { p.name = name } }
 func withEnv(t *testing.T, name, value string) projectOption {
 	env, err := proVos.NewEnvVar(name, value)
 	require.NoError(t, err)
@@ -106,16 +113,22 @@ func withRuntimeArg(t *testing.T, name, value string) projectOption {
 	return func(p *projectParts) { p.args = append(p.args, arg) }
 }
 
+func withCloud(t *testing.T, provider, credentials string) projectOption {
+	cloud, err := proVos.NewCloud(provider, credentials)
+	require.NoError(t, err)
+	return func(p *projectParts) { p.cloud = cloud }
+}
+
 func newProject(t *testing.T, opts ...projectOption) *aggregates.Project {
 	t.Helper()
-	parts := projectParts{image: "local/runtime:v1"}
+	parts := projectParts{name: "Demo", image: "local/runtime:v1"}
 	for _, opt := range opts {
 		opt(&parts)
 	}
 
 	id, err := proVos.NewProjectID("seed-id")
 	require.NoError(t, err)
-	data, err := proVos.NewProjectData("Demo", "vex", "shikigami", "desc", "https://github.com/local/app.git", "develop")
+	data, err := proVos.NewProjectData(parts.name, "vex", "shikigami", "desc", "https://github.com/local/app.git", "develop")
 	require.NoError(t, err)
 	pipeline, err := comVos.NewPipeline("https://github.com/local/pipe.git", "main")
 	require.NoError(t, err)
@@ -126,6 +139,7 @@ func newProject(t *testing.T, opts ...projectOption) *aggregates.Project {
 		proVos.WithImage(image), proVos.WithVolumes(parts.volumes), proVos.WithEnv(parts.envs), proVos.WithArgs(parts.args))
 	project, err := aggregates.NewProject(id, data, pipeline, runtime)
 	require.NoError(t, err)
+	project.SetCloud(parts.cloud)
 	return project
 }
 
@@ -156,9 +170,13 @@ func newHarness(t *testing.T, project *aggregates.Project) *harness {
 	}
 	h.executor = NewLocalExecutorService(
 		NewWorkspace(&stubProjectRepo{loaded: project, existsBool: project != nil}, h.sources, h.images, h.presenter, h.config),
-		h.engine, h.presenter)
+		h.engine, h.presenter, WithImageVerifier(&fakeImageVerifier{}))
+	h.executor.now = fixedNow
 	return h
 }
+
+// fixedNow detiene el reloj del ejecutor: los tiempos no entran en las comparaciones.
+func fixedNow() time.Time { return time.Date(2026, 11, 20, 12, 0, 0, 0, time.UTC) }
 
 func TestLocalExecutor_ClonaProyectoYPipelineYArmaLaPeticion(t *testing.T) {
 	h := newHarness(t, newProject(t))
@@ -201,6 +219,7 @@ func TestLocalExecutor_MontajesYVariablesDelMotor(t *testing.T) {
 		{Name: "VEX_ALMACEN", Value: "/vex/almacen"},
 		{Name: "VEX_ESPACIO", Value: "/vex/espacio"},
 		{Name: "VEX_MATERIAL", Value: "/vex/material"},
+		{Name: "VEX_EFIMERO", Value: "/tmp"},
 	}, h.engine.spec.Env)
 }
 
@@ -420,7 +439,8 @@ func newHarnessWithRecorder(t *testing.T, recorder AttemptRecorder) *harness {
 	h := newHarness(t, newProject(t))
 	h.executor = NewLocalExecutorService(
 		NewWorkspace(&stubProjectRepo{loaded: newProject(t), existsBool: true}, h.sources, h.images, h.presenter, h.config),
-		h.engine, h.presenter, WithAttemptRecorder(recorder))
+		h.engine, h.presenter, WithAttemptRecorder(recorder), WithImageVerifier(&fakeImageVerifier{}))
+	h.executor.now = fixedNow
 	return h
 }
 
@@ -489,4 +509,149 @@ func TestLocalExecutor_UnFalloAlGuardarLaMemoriaNoAfectaALaEjecucion(t *testing.
 
 	assert.NoError(t, err)
 	assert.NotEmpty(t, recorder.saved, "lo intentó")
+}
+
+func TestLocalExecutor_PortalConVariableReservadaSeDetieneSinClonar(t *testing.T) {
+	h := newHarness(t, newProject(t, withCloud(t, "", proVos.CredentialsPortal), withEnv(t, "VEX_CLOUD_X", "y")))
+
+	err := h.executor.Run(context.Background(), "test", "sand")
+
+	require.ErrorIs(t, err, ErrCloudConfig)
+	assert.ErrorContains(t, err, "VEX_CLOUD_X")
+	assert.Empty(t, h.sources.calls, "no clona nada")
+	assert.Zero(t, h.engine.attempts)
+}
+
+func TestLocalExecutor_CredencialesEnvAdmitenVariablesReservadas(t *testing.T) {
+	h := newHarness(t, newProject(t, withCloud(t, "azure", proVos.CredentialsEnv), withEnv(t, "VEX_CLOUD_X", "y")))
+
+	require.NoError(t, h.executor.Run(context.Background(), "test", "sand"))
+}
+
+func newPortalHarness(t *testing.T, opts ...projectOption) (*harness, *fakeCredentials) {
+	t.Helper()
+	h := newHarness(t, newProject(t, append(opts, withCloud(t, "", proVos.CredentialsPortal))...))
+	credentials := newFakeCredentials()
+	WithPortalCredentials(credentials)(h.executor)
+	return h, credentials
+}
+
+func TestLocalExecutor_SinPortalLaSesionNoCambiaNada(t *testing.T) {
+	h := newHarness(t, newProject(t))
+	credentials := newFakeCredentials()
+	WithPortalCredentials(credentials)(h.executor)
+
+	require.NoError(t, h.executor.Run(context.Background(), "test", "sand"))
+
+	assert.Empty(t, credentials.requests, "sin cloud.credentials: portal no se toca el portal")
+	assert.Nil(t, h.engine.request.Secrets)
+	assert.Len(t, h.engine.spec.Mounts, 5)
+}
+
+func TestLocalExecutor_PortalCombinaSecretosYMontaLaCredencial(t *testing.T) {
+	t.Setenv("ARM_SECRET", "del-usuario")
+	h, credentials := newPortalHarness(t, withEnv(t, "ARM_CLIENT_SECRET", "$ARM_SECRET"), withEnv(t, "MI_VAR", "x"))
+
+	require.NoError(t, h.executor.Run(context.Background(), "test", "sand"))
+
+	assert.Equal(t, []CloudSessionRequest{
+		{ProjectID: "seed-id", Environment: "sand", Commit: "commit-of-app.git"},
+	}, credentials.requests)
+	assert.Equal(t, map[string]string{
+		"MI_VAR": "x", "VEX_CLOUD_CONTRACT": "nube/v1", "ARM_CLIENT_SECRET": "de-la-sesion",
+	}, h.engine.request.Secrets, "la sesión pisa al usuario")
+	mounts := h.engine.spec.Mounts
+	require.Len(t, mounts, 6)
+	assert.Equal(t, Mount{Source: "/host/credenciales/abc", Target: "/vex/credenciales", ReadOnly: true}, mounts[5],
+		"el montaje de la credencial va al final y es de solo lectura")
+	assert.Equal(t, 1, credentials.session.closes)
+	for _, env := range h.engine.spec.Env {
+		assert.NotContains(t, env.Value, "de-la-sesion", "lo de la sesión no va como env del contenedor")
+	}
+}
+
+func TestLocalExecutor_ElMontajeDeLaCredencialSoloVaEnElIntento(t *testing.T) {
+	h, _ := newPortalHarness(t)
+	h.engine.result = AttemptResult{AttemptID: "i1", Status: AttemptFailed}
+	logs := &specRecordingEngine{fakeEngine: h.engine}
+	h.executor.engine = logs
+
+	err := h.executor.Run(context.Background(), "test", "sand")
+
+	require.ErrorIs(t, err, ErrAttemptFailed)
+	assert.Len(t, h.engine.spec.Mounts, 6)
+	require.Len(t, logs.logSpecs, 1)
+	assert.Len(t, logs.logSpecs[0].Mounts, 5, "leer la salida no necesita la credencial: el spec original no se mutó")
+}
+
+// specRecordingEngine anota con qué contenedor se piden los logs.
+type specRecordingEngine struct {
+	*fakeEngine
+	logSpecs []ContainerSpec
+}
+
+func (e *specRecordingEngine) Logs(ctx context.Context, spec ContainerSpec, req LogsRequest) ([]CommandOutput, error) {
+	e.logSpecs = append(e.logSpecs, spec)
+	return e.fakeEngine.Logs(ctx, spec, req)
+}
+
+func TestLocalExecutor_LaSesionSeCierraUnaVezPaseLoQuePase(t *testing.T) {
+	t.Run("éxito", func(t *testing.T) {
+		h, credentials := newPortalHarness(t)
+
+		require.NoError(t, h.executor.Run(context.Background(), "test", "sand"))
+
+		assert.Equal(t, 1, credentials.session.closes)
+	})
+	t.Run("error del motor", func(t *testing.T) {
+		h, credentials := newPortalHarness(t)
+		h.engine.attemptErr = &EngineError{Kind: EngineInternal, Message: "boom"}
+
+		require.Error(t, h.executor.Run(context.Background(), "test", "sand"))
+
+		assert.Equal(t, 1, credentials.session.closes)
+	})
+	t.Run("contexto cancelado", func(t *testing.T) {
+		h, credentials := newPortalHarness(t)
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+		h.engine.attemptErr = context.Canceled
+
+		err := h.executor.Run(ctx, "test", "sand")
+
+		assert.ErrorIs(t, err, ErrAttemptCanceled)
+		assert.Equal(t, 1, credentials.session.closes, "Ctrl+C no deja la credencial en disco")
+	})
+}
+
+func TestLocalExecutor_SiNoSePuedeAbrirLaSesionNoHayIntento(t *testing.T) {
+	h, credentials := newPortalHarness(t)
+	credentials.openErr = errors.New("el portal dijo que no")
+
+	err := h.executor.Run(context.Background(), "test", "sand")
+
+	require.ErrorIs(t, err, credentials.openErr)
+	assert.Zero(t, h.engine.attempts)
+	assert.Zero(t, credentials.session.closes, "no hay sesión que cerrar")
+}
+
+func TestLocalExecutor_PortalSinFuenteDeCredencialesSeDetieneSinClonar(t *testing.T) {
+	h := newHarness(t, newProject(t, withCloud(t, "", proVos.CredentialsPortal)))
+
+	err := h.executor.Run(context.Background(), "test", "sand")
+
+	require.ErrorIs(t, err, ErrPortalCredentialsUnavailable)
+	assert.Empty(t, h.sources.calls)
+	assert.Zero(t, h.engine.attempts)
+}
+
+func TestLocalExecutor_UnFalloAlCerrarLaSesionSoloSeAvisa(t *testing.T) {
+	h, credentials := newPortalHarness(t)
+	credentials.session.closeErr = errors.New("no se pudo borrar")
+
+	require.NoError(t, h.executor.Run(context.Background(), "test", "sand"), "el resultado del intento no cambia")
+
+	require.Len(t, h.presenter.warnings, 1)
+	assert.Contains(t, h.presenter.warnings[0], "no se pudo borrar")
+	assert.Equal(t, []AttemptResult{h.engine.result}, h.presenter.results)
 }

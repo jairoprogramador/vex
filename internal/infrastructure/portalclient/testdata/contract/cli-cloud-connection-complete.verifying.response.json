@@ -1,0 +1,6 @@
+{
+  "status": "verifying",
+  "retry_after_ms": 10000,
+  "detail_code": "federation_not_found",
+  "message": "Azure aún no reconoce la confianza con vex (puede tardar unos minutos) o fue modificada en Azure. Ejecuta `vex bootstrap sand --reconnect`."
+}

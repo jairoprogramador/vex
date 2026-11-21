@@ -198,3 +198,21 @@ func TestDescribeError_ErroresDeWhyYAbandon(t *testing.T) {
 		})
 	}
 }
+
+func TestDescribeError_UnMetadatoRechazadoPorElMotorDiceQueCorregir(t *testing.T) {
+	err := &application.EngineError{
+		Kind: application.EngineInvalidParams, Field: "Metadatos.ProjectName", Message: "borde: Metadatos.ProjectName inválido",
+	}
+
+	text := DescribeError(err)
+
+	assert.Contains(t, text, "El nombre del proyecto no es válido")
+	assert.Contains(t, text, "→ Corrige project.name en vexconfig.yaml")
+	assert.NotContains(t, text, "borde:")
+}
+
+func TestDescribeError_UnNombreInvalidoAntesDeLanzar(t *testing.T) {
+	text := DescribeError(application.ValidateEngineEnvironment("sand box"))
+
+	assert.Contains(t, text, "El nombre del ambiente no es válido")
+}

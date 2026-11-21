@@ -210,7 +210,7 @@ func TestApplyAuthoritative(t *testing.T) {
 			t.Parallel()
 
 			repo := &stubProjectRepo{}
-			svc := &RemoteExecutorService{projectRepository: repo}
+			svc := &RemoteExecutorService{projectRepository: repo, approve: func([]ProjectChange) (bool, error) { return true, nil }}
 			project := newSeedProject(t)
 
 			changed, err := svc.applyAuthoritative(project, tt.auth)
@@ -581,5 +581,37 @@ func TestApplyAuthoritativeRejectsInvalidID(t *testing.T) {
 	}
 	if repo.saveCalls != 0 {
 		t.Fatalf("saveCalls: got %d, want 0", repo.saveCalls)
+	}
+}
+
+func TestApplyAuthoritativeConservaElBloqueCloud(t *testing.T) {
+	t.Parallel()
+
+	repo := &stubProjectRepo{}
+	svc := &RemoteExecutorService{projectRepository: repo}
+	project := newSeedProject(t)
+	cloud, err := proVos.NewCloud("azure", proVos.CredentialsPortal)
+	if err != nil {
+		t.Fatalf("cloud: %v", err)
+	}
+	project.SetCloud(cloud)
+
+	changed, err := svc.applyAuthoritative(project, &portalclient.AuthoritativeData{
+		Project: portalclient.AuthoritativeProject{RepoURL: "https://github.com/portal/repo", RepoRef: "release"},
+		Pipeline: portalclient.AuthoritativePipeline{
+			URL: "https://github.com/local/pipe", Ref: "main", RuntimeImage: "local/runtime", RuntimeTag: "v1",
+		},
+	})
+	if err != nil || !changed {
+		t.Fatalf("applyAuthoritative: changed=%v err=%v", changed, err)
+	}
+	if project.Data().URL() != "https://github.com/portal/repo" || project.Data().Ref() != "release" {
+		t.Fatalf("los datos del portal no se aplicaron: %+v", project.Data())
+	}
+	if project.Cloud() != cloud {
+		t.Fatalf("cloud se perdió al aplicar los datos del portal: %+v", project.Cloud())
+	}
+	if repo.saved == nil || repo.saved.Cloud() != cloud {
+		t.Fatalf("lo que se guarda no lleva el bloque cloud")
 	}
 }

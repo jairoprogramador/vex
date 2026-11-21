@@ -19,6 +19,7 @@ type ArchitectureService struct {
 	templateRepository ports.TemplateRepository
 	projectRepository  proPor.ProjectRepository
 	inputService       comPor.UserInputService
+	adapters           CloudAdapters
 }
 
 func NewArchitectureService(
@@ -26,7 +27,8 @@ func NewArchitectureService(
 	levelRepository ports.LevelRepository,
 	templateRepository ports.TemplateRepository,
 	projectRepository proPor.ProjectRepository,
-	inputService comPor.UserInputService) *ArchitectureService {
+	inputService comPor.UserInputService,
+	adapters CloudAdapters) *ArchitectureService {
 
 	return &ArchitectureService{
 		questionRepository: questionRepository,
@@ -34,6 +36,7 @@ func NewArchitectureService(
 		templateRepository: templateRepository,
 		projectRepository:  projectRepository,
 		inputService:       inputService,
+		adapters:           adapters,
 	}
 }
 
@@ -106,8 +109,14 @@ func (s *ArchitectureService) Run() error {
 		proVos.WithArgs(project.Runtime().Args()),
 	)
 
+	cloud, err := proVos.ReconcileCloud(project.Cloud(), executionUnit.Contract(), s.adapters.Supports)
+	if err != nil {
+		return err
+	}
+
 	project.SetPipeline(executionUnit.Template())
 	project.SetRuntime(runtime)
+	project.SetCloud(cloud)
 
 	err = s.projectRepository.Save(project)
 	if err != nil {

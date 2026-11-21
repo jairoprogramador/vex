@@ -1,0 +1,14 @@
+{
+  "status": "failed",
+  "provider": "azure",
+  "connection_id": "5b0c8a52-3f0e-4d55-9a6e-0f6d0e1c2a11",
+  "reason": "verify_failed",
+  "hint": "vex bootstrap sand --reconnect",
+  "message": "No se pudo verificar la conexión de nube.",
+  "last_error_code": null,
+  "verified_at": null,
+  "subscription": "1a2b3c4d",
+  "bootstrap_sha256": "be9cd7fb3cf30f9800b778e31b0cc34d3bd9c89907dc158b4079dc7644dcf806",
+  "pipeline_commit": "0123456789abcdef0123456789abcdef01234567",
+  "outputs": null
+}

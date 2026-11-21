@@ -1,0 +1,33 @@
+{
+  "status": "active",
+  "provider": "azure",
+  "connection_id": "5b0c8a52-3f0e-4d55-9a6e-0f6d0e1c2a11",
+  "reason": null,
+  "hint": null,
+  "message": null,
+  "last_error_code": null,
+  "verified_at": "2026-11-10T12:00:00Z",
+  "subscription": "1a2b3c4d",
+  "bootstrap_sha256": "be9cd7fb3cf30f9800b778e31b0cc34d3bd9c89907dc158b4079dc7644dcf806",
+  "pipeline_commit": "0123456789abcdef0123456789abcdef01234567",
+  "outputs": {
+    "contract_id": "azure/v1",
+    "params": {
+      "tenant_id": "11111111-1111-4111-8111-111111111111",
+      "subscription_id": "1a2b3c4d-2222-4222-8222-222222222222",
+      "deploy_client_id": "33333333-3333-4333-8333-333333333333",
+      "deploy_principal_id": "44444444-4444-4444-8444-444444444444",
+      "deploy_identity_id": "/subscriptions/1a2b3c4d-2222-4222-8222-222222222222/resourceGroups/rg-vex-demo-sand-id/providers/Microsoft.ManagedIdentity/userAssignedIdentities/deploy",
+      "resource_group": "rg-vex-demo-sand",
+      "identity_resource_group": "rg-vex-demo-sand-id",
+      "location": "eastus2",
+      "pull_identity_id": "/subscriptions/1a2b3c4d-2222-4222-8222-222222222222/resourceGroups/rg-vex-demo-sand-id/providers/Microsoft.ManagedIdentity/userAssignedIdentities/pull",
+      "pull_client_id": "55555555-5555-4555-8555-555555555555",
+      "state_account": "stvexdemosand",
+      "state_container": "tfstate"
+    },
+    "extras": {
+      "registryLoginServer": "crvexdemosand.azurecr.io"
+    }
+  }
+}

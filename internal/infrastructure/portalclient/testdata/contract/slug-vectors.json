@@ -1,0 +1,59 @@
+{
+  "version": 2,
+  "cases": [
+    {
+      "name": "Pagos API",
+      "project_id": "b5a1c2d4-0000-4000-8000-0000000000b1",
+      "env": "sand",
+      "connection_id": "c0ffee00-0000-4000-8000-0000000000c1",
+      "slug": "pagos-api-b5a1c2",
+      "deployment": "vex-bootstrap-pagos-api-b5a1c2-sand",
+      "subject": "vex:p:b5a1c2d4-0000-4000-8000-0000000000b1:e:sand:c:c0ffee00-0000-4000-8000-0000000000c1"
+    },
+    {
+      "name": "Señalización Ñandú",
+      "project_id": "0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d",
+      "env": "prod",
+      "connection_id": "c0ffee00-0000-4000-8000-0000000000c1",
+      "slug": "senalizacion-0a1b2c",
+      "deployment": "vex-bootstrap-senalizacion-0a1b2c-prod",
+      "subject": "vex:p:0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d:e:prod:c:c0ffee00-0000-4000-8000-0000000000c1"
+    },
+    {
+      "name": "  mi_app (v2) @ ACME!  ",
+      "project_id": "ffffffff-ffff-4fff-8fff-ffffffffffff",
+      "env": "stag",
+      "connection_id": "c0ffee00-0000-4000-8000-0000000000c1",
+      "slug": "mi-app-v2-acm-ffffff",
+      "deployment": "vex-bootstrap-mi-app-v2-acm-ffffff-stag",
+      "subject": "vex:p:ffffffff-ffff-4fff-8fff-ffffffffffff:e:stag:c:c0ffee00-0000-4000-8000-0000000000c1"
+    },
+    {
+      "name": "¡¿***?!",
+      "project_id": "12345678-90ab-4cde-8f01-234567890abc",
+      "env": "sand",
+      "connection_id": "c0ffee00-0000-4000-8000-0000000000c1",
+      "slug": "proj-123456",
+      "deployment": "vex-bootstrap-proj-123456-sand",
+      "subject": "vex:p:12345678-90ab-4cde-8f01-234567890abc:e:sand:c:c0ffee00-0000-4000-8000-0000000000c1"
+    },
+    {
+      "name": "plataforma-de-pagos-internacional",
+      "project_id": "abcdef01-2345-4678-89ab-cdef01234567",
+      "env": "sand",
+      "connection_id": "c0ffee00-0000-4000-8000-0000000000c1",
+      "slug": "plataforma-de-abcdef",
+      "deployment": "vex-bootstrap-plataforma-de-abcdef-sand",
+      "subject": "vex:p:abcdef01-2345-4678-89ab-cdef01234567:e:sand:c:c0ffee00-0000-4000-8000-0000000000c1"
+    },
+    {
+      "name": "servicio-x y-algo-mas",
+      "project_id": "deadbeef-0000-4000-8000-000000000001",
+      "env": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "connection_id": "c0ffee00-0000-4000-8000-0000000000c1",
+      "slug": "servicio-x-y-deadbe",
+      "deployment": "vex-bootstrap-servicio-x-y-deadbe-aaaaaaaaaaaaaaaaaaaaaaa-61c60b",
+      "subject": "vex:p:deadbeef-0000-4000-8000-000000000001:e:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa:c:c0ffee00-0000-4000-8000-0000000000c1"
+    }
+  ]
+}

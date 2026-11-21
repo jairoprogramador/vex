@@ -54,6 +54,7 @@ func TestWorkspace_EjecutarMontaTodoYFijaLasTresVariables(t *testing.T) {
 		{Name: "VEX_ALMACEN", Value: "/vex/almacen"},
 		{Name: "VEX_ESPACIO", Value: "/vex/espacio"},
 		{Name: "VEX_MATERIAL", Value: "/vex/material"},
+		{Name: "VEX_EFIMERO", Value: "/tmp"},
 	}, spec.Env)
 }
 

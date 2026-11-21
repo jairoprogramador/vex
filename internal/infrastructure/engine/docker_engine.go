@@ -11,6 +11,7 @@ import (
 	"io"
 	"os/exec"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/jairoprogramador/vex/internal/application"
@@ -30,6 +31,12 @@ type DockerEngine struct {
 	newCommand  func(args ...string) *exec.Cmd
 	newName     func() string
 	cancelGrace time.Duration
+
+	// platform describe el anfitrión; se consulta una vez, al lanzar el primer contenedor (comandos que no
+	// lanzan ninguno no deben preguntarle nada a docker).
+	platform    func() platform
+	runUserOnce sync.Once
+	runUser     []string
 }
 
 var _ application.EngineClient = (*DockerEngine)(nil)
@@ -39,7 +46,14 @@ func NewDockerEngine() *DockerEngine {
 		newCommand:  func(args ...string) *exec.Cmd { return exec.Command("docker", args...) },
 		newName:     randomContainerName,
 		cancelGrace: defaultCancelGrace,
+		platform:    currentPlatform,
 	}
+}
+
+// hostUser son los argumentos con que el contenedor corre como el usuario del anfitrión (ver hostRunUser).
+func (d *DockerEngine) hostUser() []string {
+	d.runUserOnce.Do(func() { d.runUser = hostRunUser(d.platform()) })
+	return d.runUser
 }
 
 type reply struct {
@@ -60,7 +74,7 @@ func (d *DockerEngine) call(
 	}
 
 	name := d.newName()
-	cmd := d.newCommand(dockerRunArgs(name, spec)...)
+	cmd := d.newCommand(dockerRunArgs(name, spec, d.hostUser())...)
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
 		return reply{}, fmt.Errorf("preparar stdin de docker: %w", err)
@@ -154,9 +168,15 @@ func (d *DockerEngine) kill(name string) {
 	_ = d.newCommand("kill", name).Run()
 }
 
-func dockerRunArgs(name string, spec application.ContainerSpec) []string {
-	args := []string{"run", "--rm", "-i", "--name", name}
+// dockerRunArgs arma el comando. Por -e solo van variables que no son secretas (quedan a la vista en `ps` y en
+// `docker inspect`): los secretos y el token de nube nunca pasan por aquí. runUser va antes de la imagen, como
+// exige docker, y su HOME manda sobre el de spec.
+func dockerRunArgs(name string, spec application.ContainerSpec, runUser []string) []string {
+	args := append([]string{"run", "--rm", "-i", "--name", name}, runUser...)
 	for _, env := range spec.Env {
+		if env.Name == "HOME" && len(runUser) > 0 {
+			continue
+		}
 		args = append(args, "-e", env.Name+"="+env.Value)
 	}
 	for _, m := range spec.Mounts {

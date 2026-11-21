@@ -4,10 +4,18 @@ import (
 	"context"
 	"errors"
 	"time"
+
+	proVos "github.com/jairoprogramador/vex/internal/domain/project/vos"
 )
 
 // ErrDeploymentRequired: se pidió un rollback sin decir a qué despliegue volver.
 var ErrDeploymentRequired = errors.New("falta el despliegue al que volver")
+
+// ErrRollbackEnvironmentUnknown: con las credenciales del portal hace falta saber de qué ambiente es el
+// despliegue (la conexión de nube es por ambiente) y el CLI nunca lo vio.
+var ErrRollbackEnvironmentUnknown = errors.New(
+	"no sé de qué ambiente es ese despliegue y hace falta para usar su conexión de nube.\n→ " +
+		"Ejecuta `vex deployments <ambiente>` para que vex lo conozca y repite el rollback")
 
 // rollbackEngine es lo que el rollback necesita del motor.
 type rollbackEngine interface {
@@ -30,10 +38,41 @@ type RollbackService struct {
 	engine    rollbackEngine
 	presenter ExecutionPresenter
 	recents   *RecentsService
+	// portalCreds es la fuente de credenciales para cloud.credentials: portal; nil si no se inyectó.
+	portalCreds CloudCredentials
+	// preparer prepara los proyectos con cloud.credentials: portal; nil si no se inyectó.
+	preparer *CloudPreparer
+	// verifier comprueba la firma de la imagen de runtime de esos proyectos.
+	verifier ImageVerifier
 }
 
-func NewRollbackService(workspace *Workspace, engine rollbackEngine, presenter ExecutionPresenter, recents *RecentsService) *RollbackService {
-	return &RollbackService{workspace: workspace, engine: engine, presenter: presenter, recents: recents}
+// RollbackOption personaliza el rollback.
+type RollbackOption func(*RollbackService)
+
+// WithRollbackPortalCredentials es WithPortalCredentials para el rollback.
+func WithRollbackPortalCredentials(credentials CloudCredentials) RollbackOption {
+	return func(s *RollbackService) { s.portalCreds = credentials }
+}
+
+// WithRollbackCloudPreparer es WithCloudPreparer para el rollback.
+func WithRollbackCloudPreparer(preparer *CloudPreparer) RollbackOption {
+	return func(s *RollbackService) { s.preparer = preparer }
+}
+
+// WithRollbackImageVerifier es WithImageVerifier para el rollback.
+func WithRollbackImageVerifier(verifier ImageVerifier) RollbackOption {
+	return func(s *RollbackService) { s.verifier = verifier }
+}
+
+func NewRollbackService(
+	workspace *Workspace, engine rollbackEngine, presenter ExecutionPresenter, recents *RecentsService,
+	options ...RollbackOption,
+) *RollbackService {
+	s := &RollbackService{workspace: workspace, engine: engine, presenter: presenter, recents: recents}
+	for _, option := range options {
+		option(s)
+	}
+	return s
 }
 
 // Plan resuelve a qué despliegue se volvería, sin ejecutar nada: quien llama lo muestra y pide confirmación antes
@@ -68,6 +107,24 @@ func (s *RollbackService) run(ctx context.Context, plan RollbackPlan) error {
 	if err != nil {
 		return err
 	}
+	if err := s.workspace.Metadata(project).Validate(); err != nil {
+		return err
+	}
+	if err := ValidateCloudConfig(project, proVos.NeutralReservedEnvPrefixes); err != nil {
+		return err
+	}
+	credentials, err := selectCredentials(project, s.portalCreds)
+	if err != nil {
+		return err
+	}
+	if project.Cloud().IsPortal() && plan.Environment == "" {
+		return ErrRollbackEnvironmentUnknown
+	}
+	preparation, err := beginCloud(ctx, s.preparer, project, nil)
+	if err != nil {
+		return err
+	}
+	defer preparation.Close()
 	if err := s.workspace.PrepareDirs(); err != nil {
 		return err
 	}
@@ -81,7 +138,13 @@ func (s *RollbackService) run(ctx context.Context, plan RollbackPlan) error {
 	if err != nil {
 		return err
 	}
-	image, err := s.workspace.ResolveImage(ctx, project)
+	image, err := resolveRunImage(ctx, s.workspace, project, s.verifier)
+	if err != nil {
+		return err
+	}
+	// La conexión y los pasos de nube son los del pipeline de hoy, aunque el rollback ejecute el de entonces:
+	// lo que se aceptó con `vex bootstrap` es lo vigente.
+	cloud, err := readyCloud(ctx, preparation, pipelineSource, plan.Environment, s.presenter)
 	if err != nil {
 		return err
 	}
@@ -89,14 +152,22 @@ func (s *RollbackService) run(ctx context.Context, plan RollbackPlan) error {
 
 	projectID := project.ID().String()
 	tracker := &attemptTracker{recorder: s.recents, projectID: projectID, environment: plan.Environment}
-	result, err := s.engine.Rollback(ctx, spec, RollbackRequest{
-		DeploymentID: plan.DeploymentID,
-		Requester:    s.workspace.Requester(),
-		Project:      s.workspace.Metadata(project),
-		Secrets:      s.workspace.Secrets(project),
-	}, func(event EngineEvent) {
-		s.presenter.Event(event)
-		tracker.onEvent(event)
+	// Sin Commit: el rollback despliega los commits del despliegue anterior, que solo conoce el motor.
+	result, err := withCloudSession(ctx, credentials, CloudSessionRequest{
+		ProjectID: projectID, Environment: plan.Environment,
+		CloudSteps: cloud.Bootstrap.Manifest.CloudSteps, Connection: cloud.connection(),
+	}, s.presenter, func(ctx context.Context, session CloudSession, observe func(EngineEvent)) (AttemptResult, error) {
+		return s.engine.Rollback(ctx, withSessionMounts(spec, session), RollbackRequest{
+			DeploymentID: plan.DeploymentID,
+			Requester:    s.workspace.Requester(),
+			Project:      s.workspace.Metadata(project),
+			Secrets:      mergeSecrets(s.workspace.Secrets(project), session.Env()),
+			Context:      CloudExecutionContext(cloud),
+		}, func(event EngineEvent) {
+			observe(event)
+			s.presenter.Event(event)
+			tracker.onEvent(event)
+		})
 	})
 	if err != nil {
 		tracker.onError(ctx, err)

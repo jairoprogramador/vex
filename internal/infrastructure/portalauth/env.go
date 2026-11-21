@@ -17,4 +17,8 @@ var (
 	defaultPortalURL  = ""
 	defaultBackendURL = ""
 	defaultClientID   = ""
+	// defaultOIDCIssuer es el emisor de los tokens de nube en el que confía este binario
+	// (https://id.vexja.com en producción, https://id-dev.vexja.com en desarrollo). `vex bootstrap` solo crea
+	// confianzas hacia él; vacío, no crea ninguna.
+	defaultOIDCIssuer = ""
 )

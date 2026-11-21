@@ -40,6 +40,8 @@ type PeticionDeRollback struct {
 	Despliegue  string
 	Solicitante string
 	Metadatos   Metadatos
+	// Contexto es el de PeticionDeIntento.
+	Contexto string `json:",omitempty"`
 }
 
 // PeticionDeSimulacion valida sin ejecutar: la fuente es el repositorio del pipeline y Commit, su SHA completo.

@@ -1,0 +1,22 @@
+{
+ "status": "Succeeded",
+ "changes": [
+  {
+   "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/providers/Microsoft.Authorization/roleDefinitions/11111111-2222-3333-4444-555555555555",
+   "changeType": "Modify",
+   "before": {},
+   "after": {
+    "type": "Microsoft.Authorization/roleDefinitions",
+    "properties": {
+     "permissions": [
+      {
+       "actions": [
+        "*"
+       ]
+      }
+     ]
+    }
+   }
+  }
+ ]
+}

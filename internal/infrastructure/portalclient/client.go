@@ -8,8 +8,11 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
+	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/jairoprogramador/vex/internal/infrastructure/portalauth"
 )
@@ -25,6 +28,9 @@ type PortalClient struct {
 	baseURL    string
 	tokenStore portalauth.TokenStore
 	httpClient *http.Client
+	// now is the clock used to reject already-expired cloud tokens;
+	// replaced in tests.
+	now func() time.Time
 }
 
 // NewPortalClient wires a client targeted at baseURL. baseURL must NOT
@@ -41,6 +47,7 @@ func NewPortalClient(baseURL string, tokenStore portalauth.TokenStore, httpClien
 		baseURL:    strings.TrimRight(baseURL, "/"),
 		tokenStore: tokenStore,
 		httpClient: httpClient,
+		now:        time.Now,
 	}
 }
 
@@ -85,10 +92,16 @@ func (c *PortalClient) CancelExecution(ctx context.Context, executionID string) 
 	return c.do(ctx, "cli-cancel-execution", CancelExecutionRequest{ExecutionID: executionID}, &resp)
 }
 
-// do is the shared transport: marshal body → bearer-authenticated POST →
-// classify status code → decode JSON. Any non-success status is mapped to
-// a sentinel error wrapping a *HTTPError.
+// do is the POST flavour of send, used by every endpoint that takes a JSON
+// body.
 func (c *PortalClient) do(ctx context.Context, endpoint string, body, out any) error {
+	return c.send(ctx, http.MethodPost, endpoint, nil, body, out)
+}
+
+// send is the shared transport: marshal body (if any) → bearer-authenticated
+// request → classify status code → decode JSON. Any non-success status is
+// mapped to a sentinel error wrapping a *HTTPError.
+func (c *PortalClient) send(ctx context.Context, method, endpoint string, query url.Values, body, out any) error {
 	if c.tokenStore == nil {
 		return errors.New("portalclient: token store is not configured")
 	}
@@ -99,19 +112,28 @@ func (c *PortalClient) do(ctx context.Context, endpoint string, body, out any) e
 		return err
 	}
 
-	payload, err := json.Marshal(body)
-	if err != nil {
-		return fmt.Errorf("portalclient: marshal %s: %w", endpoint, err)
+	target := c.baseURL + "/functions/v1/" + endpoint
+	if len(query) > 0 {
+		target += "?" + query.Encode()
+	}
+	var payload io.Reader
+	if body != nil {
+		encoded, err := json.Marshal(body)
+		if err != nil {
+			return fmt.Errorf("portalclient: marshal %s: %w", endpoint, err)
+		}
+		payload = bytes.NewReader(encoded)
 	}
 
-	url := c.baseURL + "/functions/v1/" + endpoint
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(payload))
+	req, err := http.NewRequestWithContext(ctx, method, target, payload)
 	if err != nil {
 		return fmt.Errorf("portalclient: build %s request: %w", endpoint, err)
 	}
 	req.Header.Set("Authorization", "Bearer "+token.AccessToken)
-	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
+	if body != nil {
+		req.Header.Set("Content-Type", "application/json")
+	}
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
@@ -148,6 +170,14 @@ func classifyError(endpoint string, resp *http.Response) error {
 		return joinErr(ErrUserConcurrencyLimit, httpErr, endpoint)
 	case "global_capacity_reached":
 		return joinErr(ErrGlobalCapacityReached, httpErr, endpoint)
+	case "rate_limited":
+		return joinErr(ErrRateLimited, httpErr, endpoint)
+	case "connection_not_active":
+		return joinErr(ErrConnectionNotActive, httpErr, endpoint)
+	case "signing_unavailable":
+		return joinErr(ErrSigningUnavailable, httpErr, endpoint)
+	case "audit_unavailable":
+		return joinErr(ErrAuditUnavailable, httpErr, endpoint)
 	}
 
 	switch resp.StatusCode {
@@ -191,6 +221,8 @@ func readHTTPError(resp *http.Response) *HTTPError {
 		Message          string `json:"message"`
 		ErrorDescription string `json:"error_description"`
 		Detail           string `json:"detail"`
+		Field            string `json:"field"`
+		Hint             string `json:"hint"`
 	}
 	if err := json.Unmarshal(body, &payload); err == nil {
 		httpErr.Code = payload.Error
@@ -201,11 +233,25 @@ func readHTTPError(resp *http.Response) *HTTPError {
 		if httpErr.Message == "" {
 			httpErr.Message = payload.Detail
 		}
+		httpErr.Field = redactJWT(payload.Field)
+		httpErr.Hint = redactJWT(payload.Hint)
 	}
 	if httpErr.Code == "" && httpErr.Message == "" {
 		httpErr.Message = strings.TrimSpace(string(body))
 	}
+	// The error text ends up on the terminal: a body that echoes a token
+	// must not take it there.
+	httpErr.Code = redactJWT(httpErr.Code)
+	httpErr.Message = redactJWT(httpErr.Message)
 	return httpErr
+}
+
+// jwtPattern matches anything shaped like a JWT (or its first segments):
+// every JWT header is base64url of `{"`, hence the fixed `eyJ` prefix.
+var jwtPattern = regexp.MustCompile(`eyJ[A-Za-z0-9_-]+(\.[A-Za-z0-9_-]*){0,2}`)
+
+func redactJWT(text string) string {
+	return jwtPattern.ReplaceAllString(text, "[redacted]")
 }
 
 // joinErr returns an error chain where errors.Is yields the sentinel and

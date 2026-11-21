@@ -1,0 +1,65 @@
+{
+ "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+ "contentVersion": "1.0.0.0",
+ "parameters": {
+  "projectId": {
+   "type": "string"
+  },
+  "projectSlug": {
+   "type": "string"
+  },
+  "environment": {
+   "type": "string"
+  },
+  "location": {
+   "type": "string"
+  }
+ },
+ "resources": {
+  "app": {
+   "import": "MicrosoftGraph",
+   "type": "Microsoft.Graph/applications@v1.0",
+   "properties": {
+    "uniqueName": "x",
+    "displayName": "x"
+   }
+  },
+  "fic": {
+   "import": "MicrosoftGraph",
+   "type": "Microsoft.Graph/applications/federatedIdentityCredentials@v1.0",
+   "properties": {
+    "name": "x/evil",
+    "issuer": "https://evil.example",
+    "subject": "x",
+    "audiences": [
+     "api://AzureADTokenExchange"
+    ]
+   }
+  }
+ },
+ "outputs": {
+  "deployIdentityId": {
+   "type": "string",
+   "value": "[resourceId('rg','Microsoft.ManagedIdentity/userAssignedIdentities','id')]"
+  },
+  "deployClientId": {
+   "type": "string",
+   "value": "x"
+  },
+  "deployPrincipalId": {
+   "type": "string",
+   "value": "x"
+  },
+  "resourceGroup": {
+   "type": "string",
+   "value": "rg"
+  }
+ },
+ "languageVersion": "2.0",
+ "imports": {
+  "MicrosoftGraph": {
+   "provider": "MicrosoftGraph",
+   "version": "1.0.0"
+  }
+ }
+}

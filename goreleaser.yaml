@@ -27,6 +27,15 @@ builds:
       - -X github.com/jairoprogramador/vex/internal/infrastructure/portalauth.defaultPortalURL={{ .Env.PORTAL_URL }}
       - -X github.com/jairoprogramador/vex/internal/infrastructure/portalauth.defaultBackendURL={{ .Env.BACKEND_URL }}
       - -X github.com/jairoprogramador/vex/internal/infrastructure/portalauth.defaultClientID={{ .Env.CLI_CLIENT_ID }}
+      - -X github.com/jairoprogramador/vex/internal/infrastructure/portalauth.defaultOIDCIssuer={{ .Env.OIDC_ISSUER }}
+      # Un release nunca acepta los atajos de desarrollo (plantillas de vex sin comparar con el catálogo firmado).
+      # Ya es el valor por defecto; se deja escrito para que no dependa de él.
+      - -X github.com/jairoprogramador/vex/internal/infrastructure/factories.buildChannel=release
+      # Ids numéricos de la cuenta y de los repositorios que firman el catálogo y las imágenes (los nombres se
+      # pueden volver a registrar; los ids no). Sin los dos primeros el binario no verifica nada.
+      - -X github.com/jairoprogramador/vex/internal/infrastructure/sigstore.pinnedOwnerID={{ .Env.SIGSTORE_OWNER_ID }}
+      - -X github.com/jairoprogramador/vex/internal/infrastructure/sigstore.pinnedCatalogRepositoryID={{ .Env.SIGSTORE_CATALOG_REPOSITORY_ID }}
+      - -X github.com/jairoprogramador/vex/internal/infrastructure/sigstore.pinnedRuntimeRepositoryIDs={{ .Env.SIGSTORE_RUNTIME_REPOSITORY_IDS }}
 
 archives:
   - id: archive
@@ -38,6 +47,29 @@ archives:
     files:
       - LICENSE
       - README.md
+
+# Un solo archivo lista el sha256 de todo lo publicado (archivos, paquetes y SBOM): es lo que se firma.
+checksum:
+  name_template: 'vex_{{ .Version }}_checksums.txt'
+  algorithm: sha256
+
+# Firma sin llaves (cosign + identidad del workflow). El bundle lleva firma, certificado y prueba de transparencia.
+signs:
+  - id: checksums
+    cmd: cosign
+    signature: '${artifact}.sigstore.json'
+    args:
+      - sign-blob
+      - '--yes'
+      - '--bundle=${signature}'
+      - '${artifact}'
+    artifacts: checksum
+    output: true
+
+# Un SBOM (SPDX, generado con syft) por archivo comprimido.
+sboms:
+  - id: archivos
+    artifacts: archive
 
 nfpms:
   - id: vex

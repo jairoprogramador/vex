@@ -2,6 +2,7 @@ package engine
 
 import (
 	"errors"
+	"strings"
 
 	"github.com/jairoprogramador/vex/internal/application"
 	"github.com/jairoprogramador/vex/internal/infrastructure/engine/protocol"
@@ -26,6 +27,7 @@ func toAttemptParams(req application.AttemptRequest) protocol.PeticionDeIntento 
 			ProjectOrganization: req.Project.Organization,
 			ProjectTeam:         req.Project.Team,
 		},
+		Contexto: req.Context,
 	}
 }
 
@@ -48,7 +50,37 @@ func toAttemptResult(r protocol.Resultado) application.AttemptResult {
 		DeploymentID: r.Despliegue,
 		Duration:     r.Detalle.Tiempo,
 		Steps:        steps,
+		Visible:      toVisibleOutputs(r.Visibles),
 	}
+}
+
+func toVisibleOutputs(visibles []protocol.VariableVisible) []application.VisibleOutput {
+	if len(visibles) == 0 {
+		return nil
+	}
+	outputs := make([]application.VisibleOutput, len(visibles))
+	for i, v := range visibles {
+		outputs[i] = application.VisibleOutput{Name: v.Nombre, Description: v.Descripcion, Value: v.Valor}
+	}
+	return outputs
+}
+
+// contextField es el nombre, en el lenguaje del motor, del campo que lleva AttemptRequest.Context.
+const contextField = "Contexto"
+
+// contextUnsupported reconoce el rechazo de un motor anterior al contexto de ejecución: para él es un campo
+// desconocido. Solo puede pasar si se envió, y entonces no se ejecuta nada: sin el contexto, el motor podría
+// reutilizar pasos hechos contra otro destino.
+func contextUnsupported(err error, sent string) error {
+	var engineErr *application.EngineError
+	if sent == "" || !errors.As(err, &engineErr) || engineErr.Kind != application.EngineInvalidParams {
+		return err
+	}
+	if engineErr.Field != contextField && !strings.Contains(engineErr.Message, contextField) {
+		return err
+	}
+	engineErr.Kind = application.EngineContextUnsupported
+	return err
 }
 
 func toAttemptStatus(s string) application.AttemptStatus {

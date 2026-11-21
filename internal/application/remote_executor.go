@@ -9,10 +9,8 @@ import (
 	"strings"
 	"time"
 
-	comVos "github.com/jairoprogramador/vex/internal/domain/common/vos"
 	"github.com/jairoprogramador/vex/internal/domain/project/aggregates"
 	proPor "github.com/jairoprogramador/vex/internal/domain/project/ports"
-	proVos "github.com/jairoprogramador/vex/internal/domain/project/vos"
 	"github.com/jairoprogramador/vex/internal/infrastructure/portalauth"
 	"github.com/jairoprogramador/vex/internal/infrastructure/portalclient"
 )
@@ -46,6 +44,8 @@ type RemoteExecutorService struct {
 	// now is overridable by tests. It backs the timestamp on the persisted
 	// token after a re-login.
 	now func() time.Time
+	// approve confirms pipeline/runtime changes proposed by the portal before vexconfig.yaml is rewritten.
+	approve ChangeApprover
 }
 
 // RemoteExecutorOption customizes a RemoteExecutorService at construction
@@ -60,6 +60,12 @@ func WithStdout(w io.Writer) RemoteExecutorOption {
 // WithStderr overrides the writer used for warnings and recoverable errors.
 func WithStderr(w io.Writer) RemoteExecutorOption {
 	return func(s *RemoteExecutorService) { s.stderr = w }
+}
+
+// WithChangeApprover sets who confirms a pipeline or runtime image change proposed by the portal. Without it
+// such a change is never adopted.
+func WithChangeApprover(approve ChangeApprover) RemoteExecutorOption {
+	return func(s *RemoteExecutorService) { s.approve = approve }
 }
 
 // WithClock overrides the time source used to stamp persisted tokens.
@@ -129,6 +135,10 @@ func (s *RemoteExecutorService) Run(ctx context.Context, step, environment strin
 	if cgResp.Authoritative != nil {
 		previousID := project.ID()
 		changed, err := s.applyAuthoritative(project, cgResp.Authoritative)
+		var declined *PortalChangeError
+		if errors.As(err, &declined) {
+			return err
+		}
 		if err != nil {
 			return fmt.Errorf("apply authoritative: %w", err)
 		}
@@ -275,133 +285,36 @@ type DoneEvent struct {
 	CurrentStage string
 }
 
-// ensureToken loads the persisted token, falling back to the device-code
-// flow when none is found. Any other load error (corrupt file, IO) is
-// surfaced to the caller without re-running the flow.
+// ensureToken makes sure there is a portal session, signing the user in
+// through the shared login when there is none. Sentinel errors are
+// translated into descriptive strings so callers don't need to depend on
+// portalauth's sentinel set.
 func (s *RemoteExecutorService) ensureToken(ctx context.Context) error {
-	if _, err := s.tokenStore.Load(); err == nil {
-		return nil
-	} else if !errors.Is(err, portalauth.ErrTokenNotFound) {
-		return fmt.Errorf("load credentials: %w", err)
+	login := portalauth.Login{
+		Flow: portalauth.CLIFlowConfig{
+			Client: s.deviceFlow,
+			Store:  s.tokenStore,
+			Stdout: s.stdout,
+			Stderr: s.stderr,
+			Clock:  s.now,
+		},
+		Notice: "Not authenticated yet. Starting browser-based login...",
+		Done:   "Authenticated.",
 	}
-	fmt.Fprintln(s.stdout, "Not authenticated yet. Starting browser-based login...")
-	return s.runDeviceFlow(ctx)
+	err := login.EnsureToken(ctx)
+	switch {
+	case errors.Is(err, portalauth.ErrAccessDenied):
+		return errors.New("access denied: portal rejected this device. Run again to retry")
+	case errors.Is(err, portalauth.ErrDeviceCodeExpired):
+		return errors.New("device code expired before approval. Run again to retry")
+	}
+	return err
 }
 
-// runDeviceFlow drives the OAuth Device Authorization Grant against the
-// portal and persists the resulting token. The shared plumbing
-// (device-code request, browser open, polling, persistence) lives in
-// portalauth.CLIFlowConfig — this method only adds the remote-executor's
-// "Authenticated." footer and translates sentinel errors into descriptive
-// strings so callers don't need to depend on portalauth's sentinel set.
-func (s *RemoteExecutorService) runDeviceFlow(ctx context.Context) error {
-	flow := portalauth.CLIFlowConfig{
-		Client: s.deviceFlow,
-		Store:  s.tokenStore,
-		Stdout: s.stdout,
-		Stderr: s.stderr,
-		Clock:  s.now,
-	}
-	if _, err := flow.Run(ctx); err != nil {
-		switch {
-		case errors.Is(err, portalauth.ErrAccessDenied):
-			return errors.New("access denied: portal rejected this device. Run again to retry")
-		case errors.Is(err, portalauth.ErrDeviceCodeExpired):
-			return errors.New("device code expired before approval. Run again to retry")
-		case errors.Is(err, context.Canceled):
-			return err
-		default:
-			return fmt.Errorf("device flow: %w", err)
-		}
-	}
-	fmt.Fprintln(s.stdout, "Authenticated.")
-	return nil
-}
-
-// applyAuthoritative compares the portal-canonical view with the local
-// aggregate, mutates the in-memory aggregate via HydrateProject and
-// persists the result. It returns whether any field actually changed so
-// the caller can decide whether to surface the rewrite to the user.
-//
-// The aggregate's value objects are immutable, so we rebuild Pipeline,
-// Runtime and ProjectData from scratch; HydrateProject lets us bypass
-// NewProject's invariants because the data we receive is the source of
-// truth.
+// applyAuthoritative delegates to ApplyAuthoritative with this executor's
+// repository.
 func (s *RemoteExecutorService) applyAuthoritative(project *aggregates.Project, auth *portalclient.AuthoritativeData) (bool, error) {
-	currentPipeline := project.Pipeline()
-	currentRuntime := project.Runtime()
-	currentData := project.Data()
-
-	pipelineChanged := currentPipeline.URL() != auth.Pipeline.URL || currentPipeline.Ref() != auth.Pipeline.Ref
-	runtimeChanged := currentRuntime.Image().Image() != auth.Pipeline.RuntimeImage || currentRuntime.Image().Tag() != auth.Pipeline.RuntimeTag
-	dataChanged := currentData.URL() != auth.Project.RepoURL || currentData.Ref() != auth.Project.RepoRef
-	idChanged := auth.Project.ID != "" && auth.Project.ID != project.ID().String()
-
-	if !pipelineChanged && !runtimeChanged && !dataChanged && !idChanged {
-		return false, nil
-	}
-
-	// Se valida antes de mutar nada: un ID inválido no debe dejar el agregado a medias.
-	var newID proVos.ProjectID
-	if idChanged {
-		var err error
-		newID, err = proVos.ParseProjectUUID(auth.Project.ID)
-		if err != nil {
-			return false, fmt.Errorf("id de proyecto inválido del portal: %w", err)
-		}
-	}
-
-	if pipelineChanged {
-		newPipeline, err := comVos.NewPipeline(auth.Pipeline.URL, auth.Pipeline.Ref)
-		if err != nil {
-			return false, fmt.Errorf("rebuild pipeline VO: %w", err)
-		}
-		project.SetPipeline(newPipeline)
-	}
-
-	if runtimeChanged {
-		newImage, err := comVos.NewImage(auth.Pipeline.RuntimeImage + ":" + auth.Pipeline.RuntimeTag)
-		if err != nil {
-			return false, fmt.Errorf("rebuild runtime image VO: %w", err)
-		}
-		newRuntime := proVos.NewRuntime(
-			proVos.WithImage(newImage),
-			proVos.WithVolumes(currentRuntime.Volumes()),
-			proVos.WithEnv(currentRuntime.Env()),
-			proVos.WithArgs(currentRuntime.Args()),
-		)
-		project.SetRuntime(newRuntime)
-	}
-
-	if idChanged {
-		project.WithID(newID)
-	}
-
-	if dataChanged {
-		newData, err := proVos.NewProjectData(
-			currentData.Name(),
-			currentData.Organization(),
-			currentData.Team(),
-			currentData.Description(),
-			auth.Project.RepoURL,
-			auth.Project.RepoRef,
-		)
-		if err != nil {
-			return false, fmt.Errorf("rebuild project data VO: %w", err)
-		}
-		// ProjectData lives on the aggregate, but Project has no SetData.
-		// HydrateProject bypasses the invariants: the values come from
-		// the portal which is the source of truth in this branch.
-		updated := aggregates.HydrateProject(project.ID(), newData, project.Pipeline(), project.Runtime())
-		// Mutate the original pointer so the caller's reference stays
-		// valid by reassigning the dereferenced struct.
-		*project = *updated
-	}
-
-	if err := s.projectRepository.Save(project); err != nil {
-		return false, fmt.Errorf("save project: %w", err)
-	}
-	return true, nil
+	return ApplyAuthoritative(s.projectRepository, project, auth, s.approve)
 }
 
 // translateError rewrites portalclient sentinel errors into messages

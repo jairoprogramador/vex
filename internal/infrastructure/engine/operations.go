@@ -45,7 +45,7 @@ func (d *DockerEngine) Attempt(
 	result, err := invoke[protocol.Resultado](
 		ctx, d, spec, protocol.MethodIntentar, toAttemptParams(req), req.Secrets, progress(onEvent))
 	if err != nil {
-		return application.AttemptResult{}, err
+		return application.AttemptResult{}, contextUnsupported(err, req.Context)
 	}
 	return toAttemptResult(result), nil
 }
@@ -55,11 +55,11 @@ func (d *DockerEngine) Rollback(
 ) (application.AttemptResult, error) {
 	params := protocol.PeticionDeRollback{
 		Version: protocol.LanguageVersion, Despliegue: req.DeploymentID, Solicitante: req.Requester,
-		Metadatos: toMetadata(req.Project),
+		Metadatos: toMetadata(req.Project), Contexto: req.Context,
 	}
 	result, err := invoke[protocol.Resultado](ctx, d, spec, protocol.MethodRollback, params, req.Secrets, progress(onEvent))
 	if err != nil {
-		return application.AttemptResult{}, err
+		return application.AttemptResult{}, contextUnsupported(err, req.Context)
 	}
 	return toAttemptResult(result), nil
 }

@@ -151,6 +151,39 @@ func (w *Workspace) ResolveImage(ctx context.Context, project *aggregates.Projec
 	return tag, nil
 }
 
+// ResolveTrustedImage devuelve la imagen que puede recibir credenciales de nube. Una imagen de registro tiene
+// que estar firmada por quien publica las oficiales, y se ejecuta por el digest verificado: el tag no decide
+// qué corre. Una imagen que se construye aquí no se puede verificar: se acepta, avisando.
+func (w *Workspace) ResolveTrustedImage(ctx context.Context, project *aggregates.Project, verifier ImageVerifier) (string, error) {
+	image := project.Runtime().Image()
+	if !image.TagExplicit() {
+		w.notify.Warn("La imagen de runtime se construye en tu máquina: vex no puede verificar su firma. " +
+			"Recibirá las credenciales de nube; úsala solo si confías en tu Dockerfile.")
+		return w.ResolveImage(ctx, project)
+	}
+	if verifier == nil {
+		return "", errors.New("esta instalación de vex no puede verificar la firma de la imagen de runtime: no se entregan credenciales de nube")
+	}
+	w.notify.Info("Verificando la firma de la imagen " + image.String())
+	trusted, err := verifier.Verify(ctx, ImageRef{Repository: image.Image(), Tag: image.Tag(), Digest: image.Digest()})
+	if err != nil {
+		return "", err
+	}
+	if trusted.Mutable {
+		w.notify.Warn(fmt.Sprintf("runtime.image apunta a un tag, que puede cambiar: vex ejecuta %s. "+
+			"Fija el digest en vexconfig.yaml (runtime.image: %s@%s).", trusted.Reference, image.String(), trusted.Digest))
+	}
+	return trusted.Reference, nil
+}
+
+// resolveRunImage elige la imagen de un intento: verificada si va a recibir credenciales del portal.
+func resolveRunImage(ctx context.Context, w *Workspace, project *aggregates.Project, verifier ImageVerifier) (string, error) {
+	if project.Cloud().IsPortal() {
+		return w.ResolveTrustedImage(ctx, project, verifier)
+	}
+	return w.ResolveImage(ctx, project)
+}
+
 // buildArgs añade el uid/gid del usuario para que los archivos de los volúmenes queden con su dueño (no existen
 // en Windows). Los args del proyecto prevalecen.
 func buildArgs(project *aggregates.Project) []BuildArg {
@@ -214,9 +247,12 @@ func (w *Workspace) ExecutionSpec(image string, project *aggregates.Project, pro
 	for _, volume := range project.Runtime().Volumes() {
 		mounts = append(mounts, Mount{Source: volume.Host(), Target: volume.Container()})
 	}
+	// VEX_EFIMERO no es secreto: le dice al motor dónde crear el directorio efímero de cada paso. Un motor anterior
+	// lo ignora.
 	env := append(w.storeEnv(),
 		EnvVar{Name: "VEX_ESPACIO", Value: containerSpacePath},
-		EnvVar{Name: "VEX_MATERIAL", Value: containerMaterialPath})
+		EnvVar{Name: "VEX_MATERIAL", Value: containerMaterialPath},
+		EnvVar{Name: "VEX_EFIMERO", Value: ContainerEphemeralBase})
 	return ContainerSpec{Image: image, Mounts: mounts, Env: env}
 }
 

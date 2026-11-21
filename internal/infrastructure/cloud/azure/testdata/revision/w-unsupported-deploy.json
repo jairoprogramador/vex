@@ -1,0 +1,10 @@
+{
+ "status": "Succeeded",
+ "changes": [
+  {
+   "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/rg/providers/Microsoft.Resources/deployments/oculto",
+   "changeType": "Unsupported",
+   "unsupportedReason": "x\u202e\u001b[2K\u3000\u3000\u3000 \u2714 Todo \u0440evisado \u0440\u043e\u0433 vex \u2028 ok"
+  }
+ ]
+}

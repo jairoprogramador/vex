@@ -91,6 +91,9 @@ type PeticionDeIntento struct {
 	CommitDelPipeline string
 	HastaPaso         string
 	Metadatos         Metadatos
+	// Contexto es opcional (hasta 128 bytes de [A-Za-z0-9._:/@+=-]). Un motor anterior a él lo rechaza como
+	// campo desconocido, así que solo se envía cuando tiene valor.
+	Contexto string `json:",omitempty"`
 }
 
 type Metadatos struct {
@@ -107,6 +110,15 @@ type Resultado struct {
 	Estado     string
 	Despliegue string
 	Detalle    Detalle
+	// Visibles no viene en motores anteriores a las variables con show.
+	Visibles []VariableVisible
+}
+
+// VariableVisible es una variable que el pipeline marcó con show, con su valor.
+type VariableVisible struct {
+	Nombre      string
+	Descripcion string
+	Valor       string
 }
 
 type Detalle struct {
@@ -149,11 +161,20 @@ const (
 )
 
 // Progreso son los params de "progreso". No lleva salida de comandos ni valores
-// de variables; la salida se lee con "logs".
+// de variables, salvo las que el pipeline marcó con show; la salida se lee con "logs".
 type Progreso struct {
 	Evento  string `json:"evento"`
 	Intento string `json:"intento,omitempty"`
 	Paso    string `json:"paso,omitempty"`
 	Comando string `json:"comando,omitempty"`
 	Estado  string `json:"estado,omitempty"`
+	// Visibles solo viene en paso_terminado. La CLI no lo usa (muestra las del resultado final), pero lo
+	// conoce para que el contrato con el motor quede comprobado.
+	Visibles []VisibleDeProgreso `json:"visibles,omitempty"`
+}
+
+type VisibleDeProgreso struct {
+	Nombre      string `json:"nombre"`
+	Descripcion string `json:"descripcion,omitempty"`
+	Valor       string `json:"valor"`
 }

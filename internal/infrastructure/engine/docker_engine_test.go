@@ -132,6 +132,7 @@ func newFakeDocker(t *testing.T, scenario string) fakeDocker {
 	dir := t.TempDir()
 	engine := NewDockerEngine()
 	engine.newName = func() string { return "vex-test" }
+	engine.platform = func() platform { return platform{goos: "darwin"} } // sin --user: el argv no depende de dónde corren los tests
 	engine.cancelGrace = 300 * time.Millisecond
 	engine.newCommand = func(args ...string) *exec.Cmd {
 		cmd := exec.Command(os.Args[0], append([]string{"-test.run=TestHelperProcess", "--"}, args...)...)

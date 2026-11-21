@@ -1,0 +1,270 @@
+{
+  "changes": [
+    {
+      "after": {
+        "apiVersion": "2024-03-01",
+        "id": "/subscriptions/22222222-2222-4222-8222-222222222222/resourceGroups/rg-vex-pagos-api-b5a1c2-sand",
+        "name": "rg-vex-pagos-api-b5a1c2-sand",
+        "type": "Microsoft.Resources/resourceGroups",
+        "location": "eastus2",
+        "tags": {
+          "vex:managed": "true"
+        }
+      },
+      "before": {
+        "apiVersion": "2024-03-01",
+        "id": "/subscriptions/22222222-2222-4222-8222-222222222222/resourceGroups/rg-vex-pagos-api-b5a1c2-sand",
+        "name": "rg-vex-pagos-api-b5a1c2-sand",
+        "type": "Microsoft.Resources/resourceGroups",
+        "location": "eastus2",
+        "tags": {
+          "vex:managed": "true"
+        }
+      },
+      "changeType": "NoChange",
+      "delta": null,
+      "resourceId": "/subscriptions/22222222-2222-4222-8222-222222222222/resourceGroups/rg-vex-pagos-api-b5a1c2-sand",
+      "unsupportedReason": null
+    },
+    {
+      "after": {
+        "apiVersion": "2024-03-01",
+        "id": "/subscriptions/22222222-2222-4222-8222-222222222222/resourceGroups/rg-vex-pagos-api-b5a1c2-sand-id",
+        "name": "rg-vex-pagos-api-b5a1c2-sand-id",
+        "type": "Microsoft.Resources/resourceGroups",
+        "location": "eastus2",
+        "tags": {
+          "vex:managed": "true"
+        }
+      },
+      "before": {
+        "apiVersion": "2024-03-01",
+        "id": "/subscriptions/22222222-2222-4222-8222-222222222222/resourceGroups/rg-vex-pagos-api-b5a1c2-sand-id",
+        "name": "rg-vex-pagos-api-b5a1c2-sand-id",
+        "type": "Microsoft.Resources/resourceGroups",
+        "location": "eastus2",
+        "tags": {
+          "vex:managed": "true"
+        }
+      },
+      "changeType": "NoChange",
+      "delta": null,
+      "resourceId": "/subscriptions/22222222-2222-4222-8222-222222222222/resourceGroups/rg-vex-pagos-api-b5a1c2-sand-id",
+      "unsupportedReason": null
+    },
+    {
+      "after": {
+        "apiVersion": "2023-11-01",
+        "id": "/subscriptions/22222222-2222-4222-8222-222222222222/providers/Microsoft.Consumption/budgets/vex-pagos-api-b5a1c2-sand",
+        "name": "vex-pagos-api-b5a1c2-sand",
+        "type": "Microsoft.Consumption/budgets",
+        "properties": {
+          "amount": 20
+        }
+      },
+      "before": {
+        "apiVersion": "2023-11-01",
+        "id": "/subscriptions/22222222-2222-4222-8222-222222222222/providers/Microsoft.Consumption/budgets/vex-pagos-api-b5a1c2-sand",
+        "name": "vex-pagos-api-b5a1c2-sand",
+        "type": "Microsoft.Consumption/budgets",
+        "properties": {
+          "amount": 20
+        }
+      },
+      "changeType": "NoChange",
+      "delta": null,
+      "resourceId": "/subscriptions/22222222-2222-4222-8222-222222222222/providers/Microsoft.Consumption/budgets/vex-pagos-api-b5a1c2-sand",
+      "unsupportedReason": null
+    },
+    {
+      "after": {
+        "apiVersion": "2023-01-31",
+        "id": "/subscriptions/22222222-2222-4222-8222-222222222222/resourceGroups/rg-vex-pagos-api-b5a1c2-sand-id/providers/Microsoft.ManagedIdentity/userAssignedIdentities/id-vex-pagos-api-b5a1c2-sand-deploy",
+        "name": "id-vex-pagos-api-b5a1c2-sand-deploy",
+        "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+        "location": "eastus2",
+        "properties": {
+          "principalId": "33333333-3333-4333-8333-333333333333"
+        }
+      },
+      "before": {
+        "apiVersion": "2023-01-31",
+        "id": "/subscriptions/22222222-2222-4222-8222-222222222222/resourceGroups/rg-vex-pagos-api-b5a1c2-sand-id/providers/Microsoft.ManagedIdentity/userAssignedIdentities/id-vex-pagos-api-b5a1c2-sand-deploy",
+        "name": "id-vex-pagos-api-b5a1c2-sand-deploy",
+        "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+        "location": "eastus2",
+        "properties": {
+          "principalId": "33333333-3333-4333-8333-333333333333"
+        }
+      },
+      "changeType": "NoChange",
+      "delta": null,
+      "resourceId": "/subscriptions/22222222-2222-4222-8222-222222222222/resourceGroups/rg-vex-pagos-api-b5a1c2-sand-id/providers/Microsoft.ManagedIdentity/userAssignedIdentities/id-vex-pagos-api-b5a1c2-sand-deploy",
+      "unsupportedReason": null
+    },
+    {
+      "after": {
+        "apiVersion": "2023-01-31",
+        "id": "/subscriptions/22222222-2222-4222-8222-222222222222/resourceGroups/rg-vex-pagos-api-b5a1c2-sand-id/providers/Microsoft.ManagedIdentity/userAssignedIdentities/id-vex-pagos-api-b5a1c2-sand-pull",
+        "name": "id-vex-pagos-api-b5a1c2-sand-pull",
+        "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+        "location": "eastus2",
+        "properties": {
+          "principalId": "55555555-5555-4555-8555-555555555555"
+        }
+      },
+      "before": {
+        "apiVersion": "2023-01-31",
+        "id": "/subscriptions/22222222-2222-4222-8222-222222222222/resourceGroups/rg-vex-pagos-api-b5a1c2-sand-id/providers/Microsoft.ManagedIdentity/userAssignedIdentities/id-vex-pagos-api-b5a1c2-sand-pull",
+        "name": "id-vex-pagos-api-b5a1c2-sand-pull",
+        "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+        "location": "eastus2",
+        "properties": {
+          "principalId": "55555555-5555-4555-8555-555555555555"
+        }
+      },
+      "changeType": "NoChange",
+      "delta": null,
+      "resourceId": "/subscriptions/22222222-2222-4222-8222-222222222222/resourceGroups/rg-vex-pagos-api-b5a1c2-sand-id/providers/Microsoft.ManagedIdentity/userAssignedIdentities/id-vex-pagos-api-b5a1c2-sand-pull",
+      "unsupportedReason": null
+    },
+    {
+      "after": {
+        "apiVersion": "2022-04-01",
+        "id": "/subscriptions/22222222-2222-4222-8222-222222222222/resourceGroups/rg-vex-pagos-api-b5a1c2-sand/providers/Microsoft.Authorization/roleAssignments/aaaaaaaa-1111-4111-8111-111111111111",
+        "name": "aaaaaaaa-1111-4111-8111-111111111111",
+        "type": "Microsoft.Authorization/roleAssignments",
+        "properties": {
+          "principalId": "33333333-3333-4333-8333-333333333333",
+          "principalType": "ServicePrincipal",
+          "roleDefinitionId": "/subscriptions/22222222-2222-4222-8222-222222222222/providers/Microsoft.Authorization/roleDefinitions/b24988ac-6180-42a0-ab88-20f7382dd24c",
+          "scope": "/subscriptions/22222222-2222-4222-8222-222222222222/resourceGroups/rg-vex-pagos-api-b5a1c2-sand"
+        }
+      },
+      "before": {
+        "apiVersion": "2022-04-01",
+        "id": "/subscriptions/22222222-2222-4222-8222-222222222222/resourceGroups/rg-vex-pagos-api-b5a1c2-sand/providers/Microsoft.Authorization/roleAssignments/aaaaaaaa-1111-4111-8111-111111111111",
+        "name": "aaaaaaaa-1111-4111-8111-111111111111",
+        "type": "Microsoft.Authorization/roleAssignments",
+        "properties": {
+          "principalId": "33333333-3333-4333-8333-333333333333",
+          "principalType": "ServicePrincipal",
+          "roleDefinitionId": "/subscriptions/22222222-2222-4222-8222-222222222222/providers/Microsoft.Authorization/roleDefinitions/b24988ac-6180-42a0-ab88-20f7382dd24c",
+          "scope": "/subscriptions/22222222-2222-4222-8222-222222222222/resourceGroups/rg-vex-pagos-api-b5a1c2-sand"
+        }
+      },
+      "changeType": "NoChange",
+      "delta": null,
+      "resourceId": "/subscriptions/22222222-2222-4222-8222-222222222222/resourceGroups/rg-vex-pagos-api-b5a1c2-sand/providers/Microsoft.Authorization/roleAssignments/aaaaaaaa-1111-4111-8111-111111111111",
+      "unsupportedReason": null
+    },
+    {
+      "after": {
+        "apiVersion": "2022-04-01",
+        "id": "/subscriptions/22222222-2222-4222-8222-222222222222/resourceGroups/rg-vex-pagos-api-b5a1c2-sand/providers/Microsoft.Authorization/roleAssignments/aaaaaaaa-2222-4222-8222-222222222222",
+        "name": "aaaaaaaa-2222-4222-8222-222222222222",
+        "type": "Microsoft.Authorization/roleAssignments",
+        "properties": {
+          "principalId": "55555555-5555-4555-8555-555555555555",
+          "principalType": "ServicePrincipal",
+          "roleDefinitionId": "/subscriptions/22222222-2222-4222-8222-222222222222/providers/Microsoft.Authorization/roleDefinitions/7f951dda-4ed3-4680-a7ca-43fe172d538d",
+          "scope": "/subscriptions/22222222-2222-4222-8222-222222222222/resourceGroups/rg-vex-pagos-api-b5a1c2-sand"
+        }
+      },
+      "before": {
+        "apiVersion": "2022-04-01",
+        "id": "/subscriptions/22222222-2222-4222-8222-222222222222/resourceGroups/rg-vex-pagos-api-b5a1c2-sand/providers/Microsoft.Authorization/roleAssignments/aaaaaaaa-2222-4222-8222-222222222222",
+        "name": "aaaaaaaa-2222-4222-8222-222222222222",
+        "type": "Microsoft.Authorization/roleAssignments",
+        "properties": {
+          "principalId": "55555555-5555-4555-8555-555555555555",
+          "principalType": "ServicePrincipal",
+          "roleDefinitionId": "/subscriptions/22222222-2222-4222-8222-222222222222/providers/Microsoft.Authorization/roleDefinitions/7f951dda-4ed3-4680-a7ca-43fe172d538d",
+          "scope": "/subscriptions/22222222-2222-4222-8222-222222222222/resourceGroups/rg-vex-pagos-api-b5a1c2-sand"
+        }
+      },
+      "changeType": "NoChange",
+      "delta": null,
+      "resourceId": "/subscriptions/22222222-2222-4222-8222-222222222222/resourceGroups/rg-vex-pagos-api-b5a1c2-sand/providers/Microsoft.Authorization/roleAssignments/aaaaaaaa-2222-4222-8222-222222222222",
+      "unsupportedReason": null
+    },
+    {
+      "after": {
+        "apiVersion": "2022-04-01",
+        "id": "/subscriptions/22222222-2222-4222-8222-222222222222/resourceGroups/rg-vex-pagos-api-b5a1c2-sand-id/providers/Microsoft.ManagedIdentity/userAssignedIdentities/id-vex-pagos-api-b5a1c2-sand-pull/providers/Microsoft.Authorization/roleAssignments/aaaaaaaa-3333-4333-8333-333333333333",
+        "name": "aaaaaaaa-3333-4333-8333-333333333333",
+        "type": "Microsoft.Authorization/roleAssignments",
+        "properties": {
+          "principalId": "33333333-3333-4333-8333-333333333333",
+          "principalType": "ServicePrincipal",
+          "roleDefinitionId": "/subscriptions/22222222-2222-4222-8222-222222222222/providers/Microsoft.Authorization/roleDefinitions/f1a07417-d97a-45cb-824c-7a7467783830",
+          "scope": "/subscriptions/22222222-2222-4222-8222-222222222222/resourceGroups/rg-vex-pagos-api-b5a1c2-sand-id/providers/Microsoft.ManagedIdentity/userAssignedIdentities/id-vex-pagos-api-b5a1c2-sand-pull"
+        }
+      },
+      "before": {
+        "apiVersion": "2022-04-01",
+        "id": "/subscriptions/22222222-2222-4222-8222-222222222222/resourceGroups/rg-vex-pagos-api-b5a1c2-sand-id/providers/Microsoft.ManagedIdentity/userAssignedIdentities/id-vex-pagos-api-b5a1c2-sand-pull/providers/Microsoft.Authorization/roleAssignments/aaaaaaaa-3333-4333-8333-333333333333",
+        "name": "aaaaaaaa-3333-4333-8333-333333333333",
+        "type": "Microsoft.Authorization/roleAssignments",
+        "properties": {
+          "principalId": "33333333-3333-4333-8333-333333333333",
+          "principalType": "ServicePrincipal",
+          "roleDefinitionId": "/subscriptions/22222222-2222-4222-8222-222222222222/providers/Microsoft.Authorization/roleDefinitions/f1a07417-d97a-45cb-824c-7a7467783830",
+          "scope": "/subscriptions/22222222-2222-4222-8222-222222222222/resourceGroups/rg-vex-pagos-api-b5a1c2-sand-id/providers/Microsoft.ManagedIdentity/userAssignedIdentities/id-vex-pagos-api-b5a1c2-sand-pull"
+        }
+      },
+      "changeType": "NoChange",
+      "delta": null,
+      "resourceId": "/subscriptions/22222222-2222-4222-8222-222222222222/resourceGroups/rg-vex-pagos-api-b5a1c2-sand-id/providers/Microsoft.ManagedIdentity/userAssignedIdentities/id-vex-pagos-api-b5a1c2-sand-pull/providers/Microsoft.Authorization/roleAssignments/aaaaaaaa-3333-4333-8333-333333333333",
+      "unsupportedReason": null
+    },
+    {
+      "after": {
+        "apiVersion": "2020-05-01",
+        "id": "/subscriptions/22222222-2222-4222-8222-222222222222/resourceGroups/rg-vex-pagos-api-b5a1c2-sand-id/providers/Microsoft.Authorization/locks/vex-protect-identities",
+        "name": "vex-protect-identities",
+        "type": "Microsoft.Authorization/locks",
+        "properties": {
+          "level": "CanNotDelete"
+        }
+      },
+      "before": {
+        "apiVersion": "2020-05-01",
+        "id": "/subscriptions/22222222-2222-4222-8222-222222222222/resourceGroups/rg-vex-pagos-api-b5a1c2-sand-id/providers/Microsoft.Authorization/locks/vex-protect-identities",
+        "name": "vex-protect-identities",
+        "type": "Microsoft.Authorization/locks",
+        "properties": {
+          "level": "CanNotDelete"
+        }
+      },
+      "changeType": "NoChange",
+      "delta": null,
+      "resourceId": "/subscriptions/22222222-2222-4222-8222-222222222222/resourceGroups/rg-vex-pagos-api-b5a1c2-sand-id/providers/Microsoft.Authorization/locks/vex-protect-identities",
+      "unsupportedReason": null
+    },
+    {
+      "after": null,
+      "before": {
+        "id": "/subscriptions/22222222-2222-4222-8222-222222222222/resourceGroups/rg-vex-pagos-api-b5a1c2-sand-id/providers/Microsoft.ManagedIdentity/userAssignedIdentities/id-vex-pagos-api-b5a1c2-sand-deploy/federatedIdentityCredentials/vex-oidc",
+        "name": "vex-oidc",
+        "type": "Microsoft.ManagedIdentity/userAssignedIdentities/federatedIdentityCredentials"
+      },
+      "changeType": "Ignore",
+      "delta": null,
+      "resourceId": "/subscriptions/22222222-2222-4222-8222-222222222222/resourceGroups/rg-vex-pagos-api-b5a1c2-sand-id/providers/Microsoft.ManagedIdentity/userAssignedIdentities/id-vex-pagos-api-b5a1c2-sand-deploy/federatedIdentityCredentials/vex-oidc",
+      "unsupportedReason": null
+    },
+    {
+      "after": null,
+      "before": null,
+      "changeType": "Ignore",
+      "delta": null,
+      "resourceId": "/subscriptions/22222222-2222-4222-8222-222222222222/resourceGroups/rg-vex-pagos-api-b5a1c2-sand/providers/Microsoft.App/containerApps/pagos-api",
+      "unsupportedReason": null
+    }
+  ],
+  "diagnostics": [],
+  "error": null,
+  "potentialChanges": [],
+  "status": "Succeeded"
+}

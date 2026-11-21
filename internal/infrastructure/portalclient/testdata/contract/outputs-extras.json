@@ -1,0 +1,4 @@
+{
+  "containerAppsEnvironmentId": "/subscriptions/22222222-2222-4222-8222-222222222222/resourceGroups/rg-pagos-sand/providers/Microsoft.App/managedEnvironments/cae-pagos-sand",
+  "registryLoginServer": "crpagossand.azurecr.io"
+}

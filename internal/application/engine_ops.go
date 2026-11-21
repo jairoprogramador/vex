@@ -144,6 +144,8 @@ type RollbackRequest struct {
 	Project      ProjectMetadata
 	// Secrets viajan por stdin hacia los comandos del pipeline, igual que en un intento.
 	Secrets map[string]string
+	// Context es el de AttemptRequest.
+	Context string
 }
 
 // --- Pipeline ---

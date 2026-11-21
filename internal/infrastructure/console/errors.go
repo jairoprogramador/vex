@@ -6,12 +6,16 @@ import (
 	"strings"
 
 	"github.com/jairoprogramador/vex/internal/application"
+	"github.com/jairoprogramador/vex/internal/infrastructure/portalauth"
 )
 
 // DescribeError traduce un error de la ejecución local al mensaje que ve la
 // persona usuaria. Devuelve "" cuando no hay nada que añadir porque el detalle
 // ya se mostró (un intento fallido muestra su propio resumen y salida).
-func DescribeError(err error) string {
+//
+// Los errores de nube, portal, bootstrap y cadena de suministro salen del catálogo (application.ExplainError);
+// catalogs son los de los adaptadores de nube.
+func DescribeError(err error, catalogs ...application.ErrorCatalog) string {
 	var engineErr *application.EngineError
 	var ambiguous *application.AmbiguousIDError
 	var unknownEnvironment *application.UnknownEnvironmentError
@@ -49,6 +53,10 @@ func DescribeError(err error) string {
 		return describeUnknownStep(unknownStep)
 	case errors.As(err, &checkFailed):
 		return describeCheckFailure(checkFailed)
+	case errors.Is(err, portalauth.ErrAccessDenied):
+		return "El portal rechazó el inicio de sesión de este equipo.\n→ Vuelve a ejecutar el comando para intentarlo otra vez"
+	case errors.Is(err, portalauth.ErrDeviceCodeExpired):
+		return "El código de inicio de sesión venció antes de que lo aprobaras.\n→ Vuelve a ejecutar el comando para obtener otro"
 	case errors.Is(err, application.ErrAttemptFailed):
 		return ""
 	case errors.Is(err, application.ErrAttemptCanceled):
@@ -58,7 +66,33 @@ func DescribeError(err error) string {
 	case errors.As(err, &engineErr):
 		return describeEngineError(engineErr)
 	}
+	if explained, ok := application.ExplainError(err, catalogs...); ok {
+		return describeActionable(explained)
+	}
 	return err.Error()
+}
+
+// describeActionable muestra qué pasó, qué hacer y, si las hay, las líneas que acompañan a la acción. Los datos
+// del error pueden venir de fuera (el portal, la nube, el registro): se limpian de caracteres de control.
+func describeActionable(e *application.ActionableError) string {
+	var b strings.Builder
+	b.WriteString(printableLines(e.Message))
+	if e.Action != "" {
+		b.WriteString("\n→ " + printableLines(e.Action))
+	}
+	for _, line := range e.Extra {
+		b.WriteString("\n    " + printable(line))
+	}
+	return b.String()
+}
+
+// printableLines limpia un texto conservando sus saltos de línea.
+func printableLines(text string) string {
+	lines := strings.Split(text, "\n")
+	for i, line := range lines {
+		lines[i] = printable(line)
+	}
+	return strings.Join(lines, "\n")
 }
 
 func describeAmbiguousID(e *application.AmbiguousIDError) string {
@@ -150,6 +184,10 @@ func describeEngineError(e *application.EngineError) string {
 		return "La imagen trae un vexd que no habla esta versión del protocolo.\n" +
 			"Actualiza la imagen runtime (o la versión de vex)." + detail(e.Message)
 	case application.EngineInvalidParams:
+		// El motor valida lo mismo que la CLI; si aun así lo rechaza, se dice qué corregir y no su mensaje interno.
+		if invalid, ok := application.InvalidEngineField(e.Field); ok {
+			return invalid.Error()
+		}
 		return "El motor no aceptó la petición." + detail(e.Message)
 	case application.EngineNotFound:
 		return "El motor no encontró lo que se le pidió." + detail(e.Message) + "\n→ vex ls <ambiente> y vex deployments <ambiente> muestran lo que existe"
@@ -158,6 +196,9 @@ func describeEngineError(e *application.EngineError) string {
 	case application.EngineUnknownOperation:
 		return "La imagen runtime que usas es anterior a esta función.\n" +
 			"  Actualiza `runtime.image` en vexconfig.yaml a una imagen con un vexd más reciente."
+	case application.EngineContextUnsupported:
+		return "La imagen de runtime trae un motor sin soporte para credenciales de nube del portal; el intento no empezó.\n" +
+			"→ Actualiza `runtime.image` en vexconfig.yaml a una imagen con un vexd más reciente"
 	case application.EngineInvalidConfig:
 		return "El motor está mal configurado dentro de la imagen " +
 			"(faltan VEX_ALMACEN o VEX_ESPACIO, o el almacén no existe)." + detail(e.Message)

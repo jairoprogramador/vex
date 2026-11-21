@@ -9,6 +9,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	proVos "github.com/jairoprogramador/vex/internal/domain/project/vos"
 )
 
 type fakeRollbackEngine struct {
@@ -55,7 +57,7 @@ func newRollbackHarness(t *testing.T, opts ...projectOption) *rollbackHarness {
 	engine := &fakeRollbackEngine{result: AttemptResult{AttemptID: "r1", Status: AttemptSucceeded, DeploymentID: "d-new"}}
 	recents := NewRecentsService(newMemoryStore())
 	return &rollbackHarness{
-		service: NewRollbackService(workspace, engine, presenter, recents), engine: engine,
+		service: NewRollbackService(workspace, engine, presenter, recents, WithRollbackImageVerifier(&fakeImageVerifier{})), engine: engine,
 		sources: sources, presenter: presenter, recents: recents,
 	}
 }
@@ -228,4 +230,92 @@ func TestRollback_SiFallaElClonadoNoSeLlamaAlMotor(t *testing.T) {
 
 	assert.ErrorContains(t, err, "sin acceso")
 	assert.Zero(t, h.engine.attempts)
+}
+
+func TestRollback_PortalConVariableReservadaSeDetieneSinClonar(t *testing.T) {
+	h := newRollbackHarness(t, withCloud(t, "", proVos.CredentialsPortal), withEnv(t, "VEX_BOOTSTRAP_X", "y"))
+
+	err := h.service.Run(context.Background(), RollbackPlan{DeploymentID: idB, Environment: "prod"})
+
+	require.ErrorIs(t, err, ErrCloudConfig)
+	assert.ErrorContains(t, err, "VEX_BOOTSTRAP_X")
+	assert.Empty(t, h.sources.calls, "no clona nada")
+	assert.Zero(t, h.engine.attempts)
+}
+
+func newPortalRollbackHarness(t *testing.T, opts ...projectOption) (*rollbackHarness, *fakeCredentials) {
+	t.Helper()
+	h := newRollbackHarness(t, append(opts, withCloud(t, "", proVos.CredentialsPortal))...)
+	credentials := newFakeCredentials()
+	WithRollbackPortalCredentials(credentials)(h.service)
+	return h, credentials
+}
+
+var rollbackPlan = RollbackPlan{DeploymentID: idB, Environment: "prod"}
+
+func TestRollback_PortalCombinaSecretosYMontaLaCredencial(t *testing.T) {
+	t.Setenv("ARM_SECRET", "del-usuario")
+	h, credentials := newPortalRollbackHarness(t, withEnv(t, "ARM_CLIENT_SECRET", "$ARM_SECRET"))
+
+	require.NoError(t, h.service.Run(context.Background(), rollbackPlan))
+
+	assert.Equal(t, []CloudSessionRequest{{ProjectID: "seed-id", Environment: "prod"}}, credentials.requests)
+	assert.Equal(t, map[string]string{"VEX_CLOUD_CONTRACT": "nube/v1", "ARM_CLIENT_SECRET": "de-la-sesion"},
+		h.engine.request.Secrets, "la sesión pisa al usuario")
+	mounts := h.engine.spec.Mounts
+	require.Len(t, mounts, 6)
+	assert.Equal(t, Mount{Source: "/host/credenciales/abc", Target: "/vex/credenciales", ReadOnly: true}, mounts[5])
+	assert.Equal(t, 1, credentials.session.closes)
+}
+
+func TestRollback_LaSesionSeCierraUnaVezPaseLoQuePase(t *testing.T) {
+	t.Run("error del motor", func(t *testing.T) {
+		h, credentials := newPortalRollbackHarness(t)
+		h.engine.err = &EngineError{Kind: EngineInternal, Message: "boom"}
+
+		require.Error(t, h.service.Run(context.Background(), rollbackPlan))
+
+		assert.Equal(t, 1, credentials.session.closes)
+	})
+	t.Run("contexto cancelado", func(t *testing.T) {
+		h, credentials := newPortalRollbackHarness(t)
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+		h.engine.err = context.Canceled
+
+		err := h.service.Run(ctx, rollbackPlan)
+
+		assert.ErrorIs(t, err, ErrAttemptCanceled)
+		assert.Equal(t, 1, credentials.session.closes, "Ctrl+C no deja la credencial en disco")
+	})
+}
+
+func TestRollback_SiNoSePuedeAbrirLaSesionNoHayRollback(t *testing.T) {
+	h, credentials := newPortalRollbackHarness(t)
+	credentials.openErr = errors.New("el portal dijo que no")
+
+	err := h.service.Run(context.Background(), rollbackPlan)
+
+	require.ErrorIs(t, err, credentials.openErr)
+	assert.Zero(t, h.engine.attempts)
+}
+
+func TestRollback_PortalSinFuenteDeCredencialesSeDetieneSinClonar(t *testing.T) {
+	h := newRollbackHarness(t, withCloud(t, "", proVos.CredentialsPortal))
+
+	err := h.service.Run(context.Background(), rollbackPlan)
+
+	require.ErrorIs(t, err, ErrPortalCredentialsUnavailable)
+	assert.Empty(t, h.sources.calls)
+	assert.Zero(t, h.engine.attempts)
+}
+
+func TestRollback_UnFalloAlCerrarLaSesionSoloSeAvisa(t *testing.T) {
+	h, credentials := newPortalRollbackHarness(t)
+	credentials.session.closeErr = errors.New("no se pudo borrar")
+
+	require.NoError(t, h.service.Run(context.Background(), rollbackPlan))
+
+	require.Len(t, h.presenter.warnings, 1)
+	assert.Contains(t, h.presenter.warnings[0], "no se pudo borrar")
 }

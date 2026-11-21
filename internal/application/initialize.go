@@ -27,6 +27,8 @@ type InitializeService struct {
 	questionRepository arqPor.QuestionRepository
 	templateRepository arqPor.TemplateRepository
 	gitInfo            proPor.GitInfo
+	adapters           CloudAdapters
+	notify             Notifier
 	projectPath        string
 	projectName        string
 }
@@ -41,6 +43,8 @@ func NewInitializeService(
 	questionRepository arqPor.QuestionRepository,
 	templateRepository arqPor.TemplateRepository,
 	gitInfo proPor.GitInfo,
+	adapters CloudAdapters,
+	notify Notifier,
 ) *InitializeService {
 	return &InitializeService{
 		projectRepository:  repository,
@@ -50,6 +54,8 @@ func NewInitializeService(
 		questionRepository: questionRepository,
 		templateRepository: templateRepository,
 		gitInfo:            gitInfo,
+		adapters:           adapters,
+		notify:             notify,
 		projectName:        projectName,
 		projectPath:        projectPath,
 	}
@@ -69,10 +75,19 @@ func (s *InitializeService) Run(ctx context.Context, interactive bool) error {
 
 	executionUnit, err := s.GetExecutionUnit()
 	if err != nil {
-		fmt.Println("Warning: Error getting pipeline:", err)
+		// Un contrato que esta versión no conoce no se arregla con la plantilla genérica: el proyecto nacería sin
+		// forma de obtener credenciales.
+		if !catalogUnavailable(err) {
+			return err
+		}
+		s.notify.Warn(fmt.Sprintf("No se pudo usar el catálogo de plantillas (%v): se usa una plantilla genérica sin ref fijado.", err))
 		image, _ := comVos.NewImage("")
 		pipeline, _ := comVos.NewPipeline(comVos.DefaultPipelineUrl, comVos.DefaultPipelineRef)
 		executionUnit = arqVos.NewExecutionUnit(image, pipeline)
+	}
+	cloud, err := proVos.ReconcileCloud(proVos.Cloud{}, executionUnit.Contract(), s.adapters.Supports)
+	if err != nil {
+		return err
 	}
 
 	url, ref := s.detectGitInfo(ctx)
@@ -90,7 +105,14 @@ func (s *InitializeService) Run(ctx context.Context, interactive bool) error {
 		}
 	}
 
+	project.SetCloud(cloud)
 	return s.projectRepository.Save(project)
+}
+
+// catalogUnavailable dice si el fallo al elegir plantilla es de disponibilidad (sin red, sin entrada para la
+// consulta): solo entonces vale la plantilla genérica. Una firma que no verifica o un retroceso no son eso.
+func catalogUnavailable(err error) bool {
+	return !errors.Is(err, arqPor.ErrCatalogSignature) && !errors.Is(err, arqPor.ErrCatalogRollback)
 }
 
 func (s *InitializeService) detectGitInfo(ctx context.Context) (url, ref string) {

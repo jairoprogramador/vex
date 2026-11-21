@@ -1,0 +1,14 @@
+{
+  "status": "absent",
+  "provider": null,
+  "connection_id": null,
+  "reason": "no_connection",
+  "hint": "vex bootstrap sand",
+  "message": "Este ambiente no tiene una conexión de nube.",
+  "last_error_code": null,
+  "verified_at": null,
+  "subscription": null,
+  "bootstrap_sha256": null,
+  "pipeline_commit": null,
+  "outputs": null
+}

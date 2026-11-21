@@ -20,4 +20,4 @@ func NewState(backend, url string) (State, error) {
 }
 
 func (s State) Backend() string { return s.backend }
-func (s State) URL() string { return s.url }
+func (s State) URL() string     { return s.url }

@@ -43,6 +43,25 @@ var (
 	// execution is already in a terminal state (succeeded/failed/canceled)
 	// and cannot transition any further.
 	ErrConflict = errors.New("portalclient: conflict")
+
+	// ErrRateLimited maps to HTTP 429 with body `{"error": "rate_limited"}`:
+	// too many cloud tokens were issued in the current window. Retry-After
+	// says when the window reopens.
+	ErrRateLimited = errors.New("portalclient: límite de emisiones de credenciales")
+
+	// ErrConnectionNotActive maps to HTTP 409 with body
+	// `{"error": "connection_not_active"}`: the environment has no active
+	// cloud connection to issue a token for.
+	ErrConnectionNotActive = errors.New("portalclient: la conexión de nube no está activa")
+
+	// ErrSigningUnavailable maps to HTTP 502 with body
+	// `{"error": "signing_unavailable"}`. Transient: retrying may help.
+	ErrSigningUnavailable = errors.New("portalclient: el portal no puede firmar ahora")
+
+	// ErrAuditUnavailable maps to HTTP 503 with body
+	// `{"error": "audit_unavailable"}`: the portal refuses to issue what it
+	// cannot audit. Transient: retrying may help.
+	ErrAuditUnavailable = errors.New("portalclient: el portal no puede auditar ahora")
 )
 
 // HTTPError captures the raw shape of a non-success response. It is wrapped
@@ -59,6 +78,11 @@ type HTTPError struct {
 	// RetryAfter is the parsed `Retry-After` header in seconds, or 0 when
 	// absent or unparseable. Only meaningful for 503/429 responses.
 	RetryAfter int
+	// Field names the rejected input when the portal says which one it was
+	// (JSON `field`). It never carries the value.
+	Field string
+	// Hint is the command the portal suggests (JSON `hint`), when present.
+	Hint string
 }
 
 // Error implements the error interface with a stable shape suitable for

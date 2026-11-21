@@ -17,5 +17,5 @@ func NewVolume(host, container string) (Volume, error) {
 	return Volume{host: host, container: container}, nil
 }
 
-func (v Volume) Host() string { return v.host }
+func (v Volume) Host() string      { return v.host }
 func (v Volume) Container() string { return v.container }

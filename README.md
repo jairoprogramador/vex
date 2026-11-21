@@ -195,6 +195,7 @@ Consulta [CONTRIBUTING.md](CONTRIBUTING.md).
 - Motor de ejecución: [vex-engine](https://github.com/jairoprogramador/vex-engine)
 - Plantillas: [vex-template-store](https://github.com/jairoprogramador/vex-template-store)
 - [Comandos](docs/comandos.md) · [Configuración](docs/configuracion.md) · [Solución de problemas](docs/solucion-de-problemas.md)
+- [Seguridad](docs/seguridad.md) · [Contrato para autores de plantillas](docs/contrato-plantillas.md) · [Verificar la descarga](docs/verificar-descarga.md)
 - Errores y sugerencias: [Issues](https://github.com/jairoprogramador/vex/issues)
 
 ## Licencia

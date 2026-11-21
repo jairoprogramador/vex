@@ -1,0 +1,17 @@
+{
+ "status": "Succeeded",
+ "changes": [
+  {
+   "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/providers/Microsoft.Authorization/roleAssignmentScheduleRequests/11111111-2222-3333-4444-555555555555",
+   "changeType": "Create",
+   "after": {
+    "type": "Microsoft.Authorization/roleAssignmentScheduleRequests",
+    "properties": {
+     "roleDefinitionId": "/subscriptions/00000000-0000-0000-0000-000000000001/providers/Microsoft.Authorization/roleDefinitions/8e3af657-a8ff-443c-a75c-2fe8c4bcb635",
+     "principalId": "99999999-9999-9999-9999-999999999999",
+     "requestType": "AdminAssign"
+    }
+   }
+  }
+ ]
+}

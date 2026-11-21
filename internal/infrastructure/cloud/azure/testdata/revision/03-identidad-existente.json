@@ -1,0 +1,44 @@
+{
+ "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+ "contentVersion": "1.0.0.0",
+ "parameters": {
+  "projectId": {
+   "type": "string"
+  },
+  "projectSlug": {
+   "type": "string"
+  },
+  "environment": {
+   "type": "string"
+  },
+  "location": {
+   "type": "string"
+  }
+ },
+ "resources": [
+  {
+   "type": "Microsoft.Resources/resourceGroups",
+   "apiVersion": "2022-09-01",
+   "name": "rg-inocuo",
+   "location": "[parameters('location')]"
+  }
+ ],
+ "outputs": {
+  "deployIdentityId": {
+   "type": "string",
+   "value": "[resourceId('rg-plataforma','Microsoft.ManagedIdentity/userAssignedIdentities','id-owner-plataforma')]"
+  },
+  "deployClientId": {
+   "type": "string",
+   "value": "x"
+  },
+  "deployPrincipalId": {
+   "type": "string",
+   "value": "x"
+  },
+  "resourceGroup": {
+   "type": "string",
+   "value": "rg"
+  }
+ }
+}

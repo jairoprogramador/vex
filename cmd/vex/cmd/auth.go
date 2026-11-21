@@ -56,8 +56,8 @@ func init() {
 // runAuthLogin orchestrates the user-facing portion of the device flow:
 // kick off the request, surface the verification URL/code, open the browser
 // (best-effort), poll until approval, persist the token, and finish with a
-// whoami greeting. The shared device-flow plumbing lives in
-// portalauth.CLIFlowConfig — this function only contributes the auth-only
+// whoami greeting. The sign-in itself is the shared portalauth.Login — this
+// function only contributes the auth-only
 // UX (progress dots, custom exit codes for sentinel errors, whoami after
 // success).
 func runAuthLogin(parentCtx context.Context) error {
@@ -69,7 +69,7 @@ func runAuthLogin(parentCtx context.Context) error {
 		return fmt.Errorf("auth login: %w", err)
 	}
 
-	flow := portalauth.CLIFlowConfig{
+	login := portalauth.Login{Flow: portalauth.CLIFlowConfig{
 		Client: deps.DeviceClient,
 		Store:  deps.TokenStore,
 		Stdout: os.Stdout,
@@ -85,9 +85,9 @@ func runAuthLogin(parentCtx context.Context) error {
 				fmt.Fprintln(os.Stdout)
 			}
 		},
-	}
+	}}
 
-	token, err := flow.Run(ctx)
+	token, err := login.Run(ctx)
 	switch {
 	case errors.Is(err, context.Canceled):
 		fmt.Fprintln(os.Stderr, "Login canceled.")

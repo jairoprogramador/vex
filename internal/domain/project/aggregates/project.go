@@ -12,6 +12,7 @@ type Project struct {
 	data     proVos.ProjectData
 	pipeline comVos.Pipeline
 	runtime  proVos.Runtime
+	cloud    proVos.Cloud
 }
 
 func NewProject(
@@ -69,16 +70,15 @@ func (p *Project) SetRuntime(runtime proVos.Runtime) {
 	p.runtime = runtime
 }
 
-func HydrateProject(
-	id proVos.ProjectID,
-	data proVos.ProjectData,
-	pipeline comVos.Pipeline,
-	runtime proVos.Runtime,
-) *Project {
-	return &Project{
-		id:       id,
-		data:     data,
-		pipeline: pipeline,
-		runtime:  runtime,
-	}
+// Cloud dice de dónde salen las credenciales de nube; es el valor cero si vexconfig.yaml no trae el bloque cloud.
+func (p *Project) Cloud() proVos.Cloud {
+	return p.cloud
+}
+
+func (p *Project) SetCloud(cloud proVos.Cloud) {
+	p.cloud = cloud
+}
+
+func (p *Project) SetData(data proVos.ProjectData) {
+	p.data = data
 }

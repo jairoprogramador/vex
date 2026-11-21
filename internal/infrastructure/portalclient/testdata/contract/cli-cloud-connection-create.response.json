@@ -1,0 +1,19 @@
+{
+  "connection_id": "c0ffee00-0000-4000-8000-0000000000c1",
+  "resumed": false,
+  "replaces_connection_id": null,
+  "subject": "vex:p:b5a1c2d4-0000-4000-8000-0000000000b1:e:sand:c:c0ffee00-0000-4000-8000-0000000000c1",
+  "issuer": "https://id-dev.vexja.com",
+  "audience": "api://AzureADTokenExchange",
+  "pending_expires_at": "2026-11-10T12:30:00.000Z",
+  "project": {
+    "id": "b5a1c2d4-0000-4000-8000-0000000000b1",
+    "name": "Pagos API",
+    "slug": "pagos-api-b5a1c2"
+  },
+  "owner": {
+    "name": "Ana Pérez",
+    "email": "ana@ejemplo.com"
+  },
+  "is_owner": false
+}

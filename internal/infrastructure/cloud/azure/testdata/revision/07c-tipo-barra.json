@@ -1,0 +1,59 @@
+{
+ "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+ "contentVersion": "1.0.0.0",
+ "parameters": {
+  "projectId": {
+   "type": "string"
+  },
+  "projectSlug": {
+   "type": "string"
+  },
+  "environment": {
+   "type": "string"
+  },
+  "location": {
+   "type": "string"
+  }
+ },
+ "resources": [
+  {
+   "type": "Microsoft.Resources/deployments",
+   "apiVersion": "2022-09-01",
+   "name": "d",
+   "resourceGroup": "rg",
+   "properties": {
+    "mode": "Incremental",
+    "template": {
+     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+     "contentVersion": "1.0.0.0",
+     "resources": [
+      {
+       "type": "Microsoft.ManagedIdentity/userAssignedIdentities/federatedIdentityCredentials/",
+       "apiVersion": "2023-01-31",
+       "name": "id/evil",
+       "properties": {}
+      }
+     ]
+    }
+   }
+  }
+ ],
+ "outputs": {
+  "deployIdentityId": {
+   "type": "string",
+   "value": "[resourceId('rg','Microsoft.ManagedIdentity/userAssignedIdentities','id')]"
+  },
+  "deployClientId": {
+   "type": "string",
+   "value": "x"
+  },
+  "deployPrincipalId": {
+   "type": "string",
+   "value": "x"
+  },
+  "resourceGroup": {
+   "type": "string",
+   "value": "rg"
+  }
+ }
+}

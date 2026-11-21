@@ -41,11 +41,23 @@ Los ids que aparecen en las tablas son los últimos 7 caracteres; en cualquier c
 | `vex release <ambiente> <despliegue> [--name v1]` | Hace visible un despliegue en su ambiente (el que `vex deployments` marca con `●`). Cada despliegue exitoso se lanza solo, salvo en los ambientes protegidos. Solo vale un despliegue del mismo ambiente. |
 | `vex protect <ambiente>` / `vex unprotect <ambiente>` | `protect` evita que el ambiente lance solo: los lanzamientos se deciden con `vex release`. **No** impide desplegar ni hacer rollback. `vex envs` muestra cuáles están protegidos. |
 
+## Conectar la nube
+
+Solo para proyectos con `cloud: {credentials: portal}`. Detalle en [Configuración](configuracion.md#conectar-la-nube-vex-bootstrap).
+
+| Comando | Descripción |
+| :--- | :--- |
+| `vex bootstrap <ambiente> [--location <región>]` | Conecta la nube del ambiente con vex usando **tu** sesión de la nube (para Azure, `az login`): comprueba y aplica la plantilla `bootstrap/<nube>/` del pipeline, crea la credencial federada `vex-oidc` y espera a que el portal verifique la conexión. Muestra antes con qué cuenta, sobre qué suscripción, para qué proyecto, qué commit del pipeline y qué cambiaría; no aplica nada sin tu confirmación. Los permisos resaltados se aceptan **tecleando el nombre del ambiente**. Necesita una terminal interactiva: no hay `-y`. Volver a ejecutarlo retoma lo que quedó a medias. `--location` es obligatoria la primera vez. |
+| `vex bootstrap <ambiente> --reconnect` | Rehace la conexión aunque el bootstrap del pipeline no haya cambiado (si cambió, `vex bootstrap <ambiente>` ya reconecta solo). **Corta el acceso del ambiente**: al aplicar, la confianza `vex-oidc` pasa de inmediato a la conexión nueva y la anterior deja de obtener tokens hasta que la nueva se verifique (hasta 5 minutos; si la verificación falla, hasta que `vex bootstrap <ambiente>` termine bien). |
+| `vex bootstrap <ambiente> --check` | **Solo lee.** Audita la conexión punto por punto: huella del bootstrap, que la identidad de despliegue solo confíe en vex, que `vex-oidc` tenga el emisor, el subject y la audiencia esperados, que la plantilla no traiga cambios pendientes y que el canje de un token funcione. Sale con código `1` si algo no está como vex lo dejó. No necesita terminal interactiva. |
+| `vex disconnect <ambiente>` | Revoca la conexión en el portal (si el portal no lo confirma, se detiene sin tocar la nube) y después borra `vex-oidc` con tu sesión de la nube. **No borra recursos ni permisos**: imprime los comandos para hacerlo tú. Si un bloqueo impide borrar la credencial, no lo quita: imprime los comandos exactos. Sale con `1` si la confianza sigue en la nube. Pide confirmación (`-y` para no preguntar). |
+
 ## Empezar y configurar
 
 | Comando | Descripción |
 | :--- | :--- |
-| `vex init` | Inicializa el proyecto y genera `vexconfig.yaml` (`-y` para usar los valores por defecto). |
+| `vex init` | Inicializa el proyecto y genera `vexconfig.yaml` (`-y` para usar los valores por defecto). Toma la plantilla del [catálogo firmado](configuracion.md#catálogo-firmado-de-plantillas): escribe `pipeline.ref` con un commit, `runtime.image` con su digest y, si la plantilla declara un contrato de nube, el bloque `cloud`. |
+| `vex arq` | Vuelve a elegir plantilla con el cuestionario de arquitectura y actualiza `pipeline`, `runtime.image` y, sin pisar lo que hayas escrito, `cloud`. |
 | `vex version` | Muestra la versión instalada. |
 
 ## Flags globales

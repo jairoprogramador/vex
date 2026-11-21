@@ -9,6 +9,8 @@ import (
 	"strings"
 
 	"golang.org/x/term"
+
+	"github.com/jairoprogramador/vex/internal/application"
 )
 
 // ErrNotInteractive: el comando pide confirmación y no hay una persona al otro lado (un script, un CI).
@@ -19,6 +21,23 @@ type Confirmer struct {
 	in          io.Reader
 	out         io.Writer
 	interactive bool
+}
+
+// Interactive dice si hay una persona al otro lado a quien preguntar.
+func (c *Confirmer) Interactive() bool { return c.interactive }
+
+// ConfirmTyped pide teclear expected para aceptar algo que no debe confirmarse por inercia. Devuelve lo tecleado,
+// sin espacios alrededor; quien llama decide si vale.
+func (c *Confirmer) ConfirmTyped(question, expected string) (string, error) {
+	if !c.interactive {
+		return "", ErrNotInteractive
+	}
+	fmt.Fprintf(c.out, "%s\nEscribe %q para aceptar: ", question, expected)
+	line, err := bufio.NewReader(c.in).ReadString('\n')
+	if err != nil && line == "" && !errors.Is(err, io.EOF) {
+		return "", err
+	}
+	return strings.TrimSpace(line), nil
 }
 
 // NewConfirmer lee de stdin y pregunta por out (stderr, para no mezclar la pregunta con la salida del comando).
@@ -50,4 +69,18 @@ func (c *Confirmer) Confirm(question string) (bool, error) {
 		return true, nil
 	}
 	return false, nil
+}
+
+// ApprovePortalChanges enseña los cambios de pipeline o de imagen que propone el portal y pregunta si se adoptan.
+// Sin terminal devuelve false sin preguntar: quien llama se detiene con un mensaje que incluye la diferencia.
+func (c *Confirmer) ApprovePortalChanges(changes []application.ProjectChange) (bool, error) {
+	if !c.interactive {
+		return false, nil
+	}
+	fmt.Fprintf(c.out, "%s El portal propone cambiar en vexconfig.yaml de dónde sale lo que se ejecuta:\n", warnMark)
+	for _, change := range changes {
+		fmt.Fprintf(c.out, "  %s: %s → %s\n", change.Field, printable(change.Current), printable(change.Proposed))
+	}
+	fmt.Fprintln(c.out, "  Acéptalo solo si el cambio es tuyo (lo hiciste en el portal). Si no lo reconoces, responde no.")
+	return c.Confirm("¿Escribir estos cambios en vexconfig.yaml y usarlos?")
 }

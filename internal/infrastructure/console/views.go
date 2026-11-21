@@ -15,6 +15,8 @@ import (
 type Views struct {
 	out io.Writer
 	now func() time.Time
+	// cloudHints explican los errores típicos de las nubes que esta versión conoce; vacío si no se dieron.
+	cloudHints []application.ErrorHint
 }
 
 func NewViews(out io.Writer) *Views {
@@ -24,6 +26,12 @@ func NewViews(out io.Writer) *Views {
 // WithClock cambia el reloj con el que se calcula «hace 5 min»; sirve para probar con salidas exactas.
 func (v *Views) WithClock(now func() time.Time) *Views {
 	v.now = now
+	return v
+}
+
+// WithCloudHints hace que la salida de los comandos fallidos lleve las instrucciones de cada nube.
+func (v *Views) WithCloudHints(hints []application.ErrorHint) *Views {
+	v.cloudHints = hints
 	return v
 }
 
@@ -210,6 +218,8 @@ func (v *Views) Logs(logs application.AttemptLogs, onlyFailed bool) {
 		v.printf("No hay salida guardada: los pasos reutilizados no ejecutan comandos.\n")
 		return
 	}
+	// Las consultas no saben en qué ambiente corrió el intento: la instrucción lo deja por rellenar.
+	hints := &hintPrinter{hints: v.cloudHints}
 	for _, output := range logs.Outputs {
 		mark := okMark
 		if !output.Succeeded {
@@ -218,6 +228,11 @@ func (v *Views) Logs(logs application.AttemptLogs, onlyFailed bool) {
 		v.printf("%s %s › %s\n", mark, output.Step, output.Command)
 		if text := strings.TrimRight(output.Text, "\n"); text != "" {
 			v.printf("%s\n", Indent(text, "  "))
+		}
+		if onlyFailed {
+			for _, hint := range hints.next(output.Text) {
+				v.printf("  → %s\n", hint)
+			}
 		}
 	}
 }

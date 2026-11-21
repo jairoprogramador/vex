@@ -1,0 +1,62 @@
+{
+ "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+ "contentVersion": "1.0.0.0",
+ "parameters": {
+  "projectId": {
+   "type": "string"
+  },
+  "projectSlug": {
+   "type": "string"
+  },
+  "environment": {
+   "type": "string"
+  },
+  "location": {
+   "type": "string"
+  }
+ },
+ "resources": [
+  {
+   "type": "Microsoft.Resources/deployments",
+   "apiVersion": "2022-09-01",
+   "name": "d",
+   "resourceGroup": "prod-datos",
+   "properties": {
+    "mode": "Incremental",
+    "template": {
+     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+     "contentVersion": "1.0.0.0",
+     "resources": [
+      {
+       "type": "Microsoft.Authorization/roleAssignments",
+       "apiVersion": "2022-04-01",
+       "name": "[guid('a')]",
+       "properties": {
+        "principalId": "99999999-9999-9999-9999-999999999999",
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions','b24988ac-6180-42a0-ab88-20f7382dd24c')]"
+       }
+      }
+     ]
+    }
+   }
+  }
+ ],
+ "outputs": {
+  "deployIdentityId": {
+   "type": "string",
+   "value": "[resourceId('rg','Microsoft.ManagedIdentity/userAssignedIdentities','id')]"
+  },
+  "deployClientId": {
+   "type": "string",
+   "value": "x"
+  },
+  "deployPrincipalId": {
+   "type": "string",
+   "value": "x"
+  },
+  "resourceGroup": {
+   "type": "string",
+   "value": "rg"
+  }
+ }
+}

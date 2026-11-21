@@ -238,6 +238,34 @@ func TestContract_TodasLasOperaciones(t *testing.T) {
 		}
 	})
 
+	// La CLI valida lo mismo antes de lanzar y traduce estos campos a la clave de vexconfig.yaml que hay que
+	// corregir: si el motor cambia el nombre del campo, esto lo dice.
+	t.Run("un metadato o un ambiente que no es un nombre simple se rechaza sin repetir el valor", func(t *testing.T) {
+		with := func(change func(*protocol.PeticionDeIntento)) protocol.PeticionDeIntento {
+			req := s.attempt("sand", "test")
+			change(&req)
+			return req
+		}
+		cases := []struct {
+			field string
+			req   protocol.PeticionDeIntento
+		}{
+			{"Metadatos.ProjectName", with(func(r *protocol.PeticionDeIntento) { r.Metadatos.ProjectName = "Pagos API" })},
+			{"Metadatos.ProjectId", with(func(r *protocol.PeticionDeIntento) { r.Metadatos.ProjectId = "p1;id" })},
+			{"Metadatos.ProjectOrganization", with(func(r *protocol.PeticionDeIntento) { r.Metadatos.ProjectOrganization = "$(id)" })},
+			{"Metadatos.ProjectTeam", with(func(r *protocol.PeticionDeIntento) { r.Metadatos.ProjectTeam = "-equipo" })},
+			{"Ambiente", with(func(r *protocol.PeticionDeIntento) { r.Ambiente = "sand box" })},
+		}
+		for _, c := range cases {
+			t.Run(c.field, func(t *testing.T) {
+				err := s.fails(s.call(protocol.MethodIntentar, c.req))
+				assert.ErrorIs(t, err, protocol.ErrParametrosInvalidos)
+				assert.Equal(t, c.field, err.Data.Campo)
+				assert.Empty(t, err.Data.Valor)
+			})
+		}
+	})
+
 	t.Run("un parámetro desconocido o de otro tipo también dice el campo", func(t *testing.T) {
 		unknown := s.fails(s.call(protocol.MethodIntentos, map[string]any{"Version": "1", "Ambiente": "sand", "Otro": 1}))
 		assert.Equal(t, "Otro", unknown.Data.Campo)
@@ -286,7 +314,7 @@ func TestContract_TodasLasOperaciones(t *testing.T) {
 	t.Run("rollback vuelve a los commits de un despliegue anterior", func(t *testing.T) {
 		var result protocol.Resultado
 		run := s.call(protocol.MethodRollback, protocol.PeticionDeRollback{
-			Version: "1", Despliegue: first.Despliegue, Solicitante: "contract-test",
+			Version: "1", Despliegue: first.Despliegue, Solicitante: "contract-test", Contexto: "nube/v1:0123456789abcdef",
 		})
 		s.ok(run, &result)
 		assert.Equal(t, protocol.EstadoExitoso, result.Estado)
@@ -298,6 +326,19 @@ func TestContract_TodasLasOperaciones(t *testing.T) {
 		s.ok(s.call(protocol.MethodDespliegues, protocol.PeticionPorAmbiente{Version: "1", Ambiente: "sand"}), &deployments)
 		require.Len(t, deployments, 2)
 		assert.Equal(t, first.Despliegue, deployments[1].Padre, "el rollback cuelga del despliegue al que vuelve")
+	})
+
+	t.Run("el contexto de ejecución se acepta en intentar y uno mal formado dice el campo", func(t *testing.T) {
+		withContext := s.attempt("sand", "test")
+		withContext.Contexto = "nube/v1:0123456789abcdef"
+		var result protocol.Resultado
+		s.ok(s.call(protocol.MethodIntentar, withContext), &result)
+		assert.NotEmpty(t, result.Intento, "el motor abre el intento: conoce el campo")
+
+		withContext.Contexto = "con espacios y ñ"
+		err := s.fails(s.call(protocol.MethodIntentar, withContext))
+		assert.ErrorIs(t, err, protocol.ErrParametrosInvalidos)
+		assert.Equal(t, "Contexto", err.Data.Campo)
 	})
 
 	t.Run("abandonar un intento cerrado, y consultar uno que no existe", func(t *testing.T) {

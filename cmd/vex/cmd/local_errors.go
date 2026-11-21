@@ -8,6 +8,7 @@ import (
 
 	"github.com/jairoprogramador/vex/internal/application"
 	"github.com/jairoprogramador/vex/internal/infrastructure/console"
+	"github.com/jairoprogramador/vex/internal/infrastructure/factories"
 )
 
 // exitCodeCanceled es la convención de shell para una interrupción por Ctrl+C
@@ -26,7 +27,7 @@ func exitCode(err error) int {
 // la CLI y evita que cobra lo imprima por segunda vez con su "Error: ...".
 func reportLocalError(cmd *cobra.Command, err error) {
 	cmd.SilenceErrors = true
-	if message := console.DescribeError(err); message != "" {
+	if message := console.DescribeError(err, factories.CloudErrorCatalogs()...); message != "" {
 		fmt.Fprintf(cmd.ErrOrStderr(), "Error: %s\n", message)
 	}
 }

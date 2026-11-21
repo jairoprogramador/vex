@@ -1,0 +1,19 @@
+{
+ "status": "Succeeded",
+ "changes": [
+  {
+   "resourceId": null,
+   "changeType": "Create",
+   "symbolicName": "fic",
+   "extension": {
+    "name": "MicrosoftGraph"
+   },
+   "identifiers": {
+    "name": "x"
+   },
+   "after": {
+    "type": "Microsoft.Graph/applications/federatedIdentityCredentials@v1.0"
+   }
+  }
+ ]
+}

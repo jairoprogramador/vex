@@ -85,7 +85,18 @@ func ToDomain(configDto dto.FDConfigDTO) (*aggregates.Project, error) {
 		return nil, err
 	}
 
-	return aggregates.NewProject(id, data, pipeline, runtime)
+	project, err := aggregates.NewProject(id, data, pipeline, runtime)
+	if err != nil {
+		return nil, err
+	}
+	if configDto.Cloud != nil {
+		cloud, err := proVos.NewCloud(configDto.Cloud.Provider, configDto.Cloud.Credentials)
+		if err != nil {
+			return nil, err
+		}
+		project.SetCloud(cloud)
+	}
+	return project, nil
 }
 
 func ToRuntimeDto(runtime proVos.Runtime) dto.RuntimeDTO {
@@ -144,9 +155,13 @@ func ToDto(config *aggregates.Project) dto.FDConfigDTO {
 
 	runtimeDto := ToRuntimeDto(config.Runtime())
 
-	return dto.FDConfigDTO{
+	fdConfig := dto.FDConfigDTO{
 		Project:  projectDto,
 		Pipeline: pipelineDto,
 		Runtime:  runtimeDto,
 	}
+	if cloud := config.Cloud(); !cloud.IsZero() {
+		fdConfig.Cloud = &dto.CloudDTO{Provider: cloud.Provider(), Credentials: cloud.Credentials()}
+	}
+	return fdConfig
 }

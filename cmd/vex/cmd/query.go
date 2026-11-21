@@ -154,7 +154,7 @@ Sin argumentos usa el último intento que ejecutaste en este proyecto.`,
 			if err != nil {
 				return err
 			}
-			views.Logs(logs, failedFlag)
+			views.WithCloudHints(factories.CloudErrorHints()).Logs(logs, failedFlag)
 			return nil
 		})
 	},

@@ -17,5 +17,5 @@ func NewEnvVar(name, value string) (EnvVar, error) {
 	return EnvVar{name: name, value: value}, nil
 }
 
-func (e EnvVar) Name() string { return e.name }
+func (e EnvVar) Name() string  { return e.name }
 func (e EnvVar) Value() string { return e.value }

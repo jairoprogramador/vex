@@ -77,6 +77,10 @@ func PortalURL() string  { return defaultPortalURL }
 func BackendURL() string { return defaultBackendURL }
 func ClientID() string   { return defaultClientID }
 
+// OIDCIssuer es el emisor de tokens de nube fijado al compilar. No se pregunta al portal: si el portal propone
+// otro, la CLI no continúa.
+func OIDCIssuer() string { return defaultOIDCIssuer }
+
 func CredentialsPath() (string, error) {
 	configDir, err := os.UserConfigDir()
 	if err != nil {
